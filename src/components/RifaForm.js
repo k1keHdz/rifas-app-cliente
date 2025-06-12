@@ -10,6 +10,14 @@ import { useRifas } from "../context/RifasContext";
 function RifaForm() {
   const { rifaSeleccionada, ocultarFormulario } = useRifas();
 
+  // ==================================================================
+  // INICIO DE CAMBIOS: Nuevo estado para controlar el proceso de envío
+  // ==================================================================
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // ==================================================================
+  // FIN DE CAMBIOS
+  // ==================================================================
+
   const [formulario, setFormulario] = useState({
     nombre: "",
     precio: "",
@@ -34,6 +42,7 @@ function RifaForm() {
         fechaCierre: rifaSeleccionada.fechaCierre?.toDate ? rifaSeleccionada.fechaCierre.toDate().toISOString().split("T")[0] : "",
       });
       setImagenesPreview(rifaSeleccionada.imagenes || []);
+      setImagenesFiles([]); // Limpiamos la selección de archivos al editar
     }
   }, [rifaSeleccionada]);
 
@@ -47,12 +56,9 @@ function RifaForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // CAMBIO: Añadimos una validación directa en el handleChange para el número de boletos
-    if (name === 'boletos') {
-      if (Number(value) > 100000) {
-        mostrarAlertaConTimeout("El número máximo de boletos es 100,000.", "error");
-        return;
-      }
+    if (name === 'boletos' && Number(value) > 100000) {
+      mostrarAlertaConTimeout("El número máximo de boletos es 100,000.", "error");
+      return;
     }
     setFormulario((prev) => ({ ...prev, [name]: value }));
   };
@@ -64,16 +70,30 @@ function RifaForm() {
     setImagenesPreview(previews);
   };
 
+  // ==================================================================
+  // INICIO DE CAMBIOS: Se añade manejo de errores dentro de la función de subida
+  // ==================================================================
   const subirImagenes = async (rifaId) => {
     const urls = [];
-    for (const [i, file] of imagenesFiles.entries()) {
+    // Usamos Promise.all para subir todas las imágenes en paralelo, es más rápido.
+    const uploadPromises = imagenesFiles.map((file, i) => {
       const imagenRef = ref(storage, `imagenes/${rifaId}/${Date.now()}_${i}`);
-      await uploadBytes(imagenRef, file);
-      const url = await getDownloadURL(imagenRef);
-      urls.push(url);
+      return uploadBytes(imagenRef, file).then(() => getDownloadURL(imagenRef));
+    });
+
+    // Si una sola imagen falla, todo el proceso se detendrá y lanzará un error.
+    try {
+      const resolvedUrls = await Promise.all(uploadPromises);
+      return resolvedUrls;
+    } catch (error) {
+      console.error("Error específico durante la subida de una imagen:", error);
+      // Lanzamos el error para que sea capturado por el catch del handleSubmit
+      throw new Error("Una o más imágenes no se pudieron subir. Verifica los permisos de Storage.");
     }
-    return urls;
   };
+  // ==================================================================
+  // FIN DE CAMBIOS
+  // ==================================================================
 
   const borrarImagenesAnteriores = async (rifaId) => {
     const carpetaRef = ref(storage, `imagenes/${rifaId}`);
@@ -87,17 +107,25 @@ function RifaForm() {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return; // Evitar doble envío
 
     if (!formulario.nombre || !formulario.precio || !formulario.boletos) {
       return mostrarAlertaConTimeout("Completa los campos obligatorios: Nombre, Precio y Boletos.", "error");
     }
-    // CAMBIO: Doble validación en el submit por si acaso
     if (Number(formulario.boletos) > 100000) {
       return mostrarAlertaConTimeout("El número máximo de boletos no puede ser mayor a 100,000.", "error");
     }
     if (!rifaSeleccionada && imagenesFiles.length === 0) {
       return mostrarAlertaConTimeout("Debes seleccionar al menos una imagen para una nueva rifa.", "error");
     }
+
+    // ==================================================================
+    // INICIO DE CAMBIOS: Activamos el estado de carga
+    // ==================================================================
+    setIsSubmitting(true);
+    // ==================================================================
+    // FIN DE CAMBIOS
+    // ==================================================================
 
     try {
       const datosRifa = {
@@ -109,23 +137,19 @@ function RifaForm() {
       };
 
       if (rifaSeleccionada) {
-        // Lógica para ACTUALIZAR una rifa existente
+        // ACTUALIZAR
         const rifaRef = doc(db, "rifas", rifaSeleccionada.id);
+        let urlsImagenesFinales = rifaSeleccionada.imagenes || [];
         if (imagenesFiles.length > 0) {
+          // Si el usuario sube nuevas fotos, borramos las viejas y subimos las nuevas
           await borrarImagenesAnteriores(rifaSeleccionada.id);
-          const nuevasUrls = await subirImagenes(rifaSeleccionada.id);
-          await updateDoc(rifaRef, { ...datosRifa, imagenes: nuevasUrls });
-        } else {
-          await updateDoc(rifaRef, datosRifa);
+          urlsImagenesFinales = await subirImagenes(rifaSeleccionada.id);
         }
+        await updateDoc(rifaRef, { ...datosRifa, imagenes: urlsImagenesFinales });
         mostrarAlertaConTimeout("Rifa actualizada correctamente", "exito");
       } else {
-        // Lógica para CREAR una rifa nueva
-        const nuevaRifa = {
-          ...datosRifa,
-          fechaCreacion: serverTimestamp(),
-          boletosVendidos: 0,
-        };
+        // CREAR
+        const nuevaRifa = { ...datosRifa, fechaCreacion: serverTimestamp(), boletosVendidos: 0 };
         const docRef = await addDoc(collection(db, "rifas"), nuevaRifa);
         const nuevasUrls = await subirImagenes(docRef.id);
         await updateDoc(docRef, { imagenes: nuevasUrls });
@@ -134,7 +158,15 @@ function RifaForm() {
       ocultarFormulario();
     } catch (error) {
       console.error("Error al guardar la rifa:", error);
-      mostrarAlertaConTimeout("Hubo un error al guardar la rifa.", "error");
+      mostrarAlertaConTimeout("Hubo un error al guardar la rifa. Revisa la consola para más detalles.", "error");
+    } finally {
+      // ==================================================================
+      // INICIO DE CAMBIOS: Desactivamos el estado de carga al finalizar
+      // ==================================================================
+      setIsSubmitting(false);
+      // ==================================================================
+      // FIN DE CAMBIOS
+      // ==================================================================
     }
   };
 
@@ -146,14 +178,14 @@ function RifaForm() {
 
       {mensaje && <Alerta mensaje={mensaje} tipo={tipoMensaje} onClose={() => setMensaje("")} />}
       
+      {/* El resto del formulario no cambia, excepto el botón de submit */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label className="block mb-2">Nombre: <input type="text" name="nombre" value={formulario.nombre} onChange={handleChange} className="w-full border rounded p-2 mt-1" /></label>
         <label className="block mb-2">Precio: <input type="number" name="precio" value={formulario.precio} onChange={handleChange} className="w-full border rounded p-2 mt-1" min="0" /></label>
         <div>
             <label className="block mb-2">Total de Boletos:</label>
-            {/* CAMBIO: Añadimos min y max al input de boletos */}
             <input type="number" name="boletos" value={formulario.boletos} onChange={handleChange} className="w-full border rounded p-2 mt-1" min="1" max="100000" />
-            <p className="text-xs text-gray-500 mt-1">Máximo 100,000 boletos para compatibilidad con Lotería Nacional.</p>
+            <p className="text-xs text-gray-500 mt-1">Máximo 100,000 boletos.</p>
         </div>
         <label className="block mb-2">Estado: 
           <select name="estado" value={formulario.estado} onChange={handleChange} className="w-full border rounded p-2 mt-1">
@@ -185,9 +217,19 @@ function RifaForm() {
       </div>
 
       <div className="flex items-center gap-4 mt-6">
-        <button type="submit" className="bg-blue-600 text-white font-bold px-6 py-2 rounded hover:bg-blue-700 transition-colors">
-          {rifaSeleccionada ? "Actualizar Rifa" : "Guardar Rifa"}
+        {/* ================================================================== */}
+        {/* INICIO DE CAMBIOS: Botón de envío ahora muestra estado de carga */}
+        {/* ================================================================== */}
+        <button 
+          type="submit" 
+          disabled={isSubmitting}
+          className="bg-blue-600 text-white font-bold px-6 py-2 rounded hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? 'Guardando...' : (rifaSeleccionada ? "Actualizar Rifa" : "Guardar Rifa")}
         </button>
+        {/* ================================================================== */}
+        {/* FIN DE CAMBIOS */}
+        {/* ================================================================== */}
         <button type="button" onClick={ocultarFormulario} className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition-colors">
           Cancelar
         </button>
