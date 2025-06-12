@@ -1,0 +1,61 @@
+// src/components/SelectorBoletos.js
+import React from 'react';
+
+const SelectorBoletos = ({
+  boletosOcupados,
+  boletosSeleccionados,
+  onToggleBoleto,
+  filtroActivo,
+  // PAGINACIÓN: Recibimos el rango en lugar del total
+  rangoInicio,
+  rangoFin,
+}) => {
+  const paddingLength = 5;
+
+  return (
+    <div className="mt-2 w-full">
+      <div className="overflow-auto max-h-[500px] p-2 bg-gray-50 rounded-lg border">
+        {/* RESPONSIVO: Cambiamos las columnas según el tamaño de pantalla */}
+        <div className="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-10 gap-1 sm:gap-1.5 w-max mx-auto">
+          {/* PAGINACIÓN: El bucle ahora usa el rango */}
+          {Array.from({ length: rangoFin - rangoInicio }, (_, i) => {
+            const numeroBoleto = rangoInicio + i;
+            const estaOcupado = boletosOcupados.has(numeroBoleto);
+
+            if (filtroActivo && estaOcupado) {
+              return null;
+            }
+
+            const estaSeleccionado = boletosSeleccionados.includes(numeroBoleto);
+            let color = 'bg-white text-gray-800 border-gray-300 hover:bg-gray-200';
+
+            if (estaSeleccionado) {
+              color = 'bg-green-600 text-white border-green-700';
+            } else if (estaOcupado) {
+              const estado = boletosOcupados.get(numeroBoleto);
+              if (estado === 'apartado') {
+                color = 'bg-yellow-400 text-black border-yellow-500 cursor-not-allowed';
+              } else {
+                color = 'bg-red-600 text-white border-red-700 cursor-not-allowed';
+              }
+            }
+            
+            return (
+              <button
+                key={numeroBoleto}
+                onClick={() => onToggleBoleto(numeroBoleto)}
+                // RESPONSIVO: Ajustamos el tamaño del botón
+                className={`border w-14 h-10 sm:w-12 rounded text-xs sm:text-sm font-mono transition-transform transform hover:scale-110 ${color}`}
+                disabled={estaOcupado}
+              >
+                {numeroBoleto.toString().padStart(paddingLength, '0')}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default React.memo(SelectorBoletos);

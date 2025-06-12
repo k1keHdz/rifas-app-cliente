@@ -1,0 +1,9 @@
+🔐 Agregar reglas de seguridad a Firebase Storage
+
+🗑️ Eliminar PDF automáticamente al marcar una rifa como finalizada
+
+📥 Permitir descarga directa del PDF desde la app
+
+📧 Mejorar el diseño visual del correo enviado con EmailJS
+
+🔐 Ocultar claves con .env.local y actualizar emailConfig.js
