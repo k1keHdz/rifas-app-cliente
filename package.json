@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "react-scripts start"
+    "start": "set NODE_OPTIONS=--max-old-space-size=4096 && react-scripts start"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",

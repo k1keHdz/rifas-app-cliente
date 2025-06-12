@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-// CAMBIO: Se añadió 'onSnapshot' a la lista de importaciones
 import { doc, getDoc, collection, addDoc, serverTimestamp, Timestamp, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { useAuth } from '../context/AuthContext';
@@ -97,6 +96,13 @@ function RifaDetalle() {
         fechaApartado: serverTimestamp(),
         fechaExpiracion: Timestamp.fromDate(new Date(Date.now() + 24 * 60 * 60 * 1000)),
         userId: currentUser ? currentUser.uid : null,
+        
+        // --- NUEVO: CAMPOS DENORMALIZADOS AÑADIDOS PARA OPTIMIZACIÓN ---
+        rifaId: id,
+        nombreRifa: rifa.nombre,
+        imagenRifa: rifa.imagen || null, // Guardamos la imagen principal de la rifa
+        // ----------------------------------------------------------------
+
       };
       
       await addDoc(collection(db, "rifas", id, "ventas"), ventaData);
@@ -202,11 +208,11 @@ function RifaDetalle() {
           </div>
           
           <div className="flex flex-col items-center">
-             <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={seleccionarBoleto} />
-             {boletosSeleccionados.length > 0 && ( <div className="text-center my-4 p-4 bg-gray-50 border rounded-lg w-full max-w-lg animate-fade-in"> <p className="font-bold mb-2 text-gray-800">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> <div className="flex justify-center flex-wrap gap-2 mb-2"> {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-green-600 text-white rounded-md font-mono cursor-pointer hover:bg-red-600" title="Haz clic para quitar">{String(n).padStart(paddingLength, "0")}</span> ))} </div> <p className="text-xs text-gray-500 italic my-2">Para eliminar un boleto, solo haz clic sobre él.</p> <button onClick={limpiarSeleccion} className="mt-1 text-red-600 underline text-sm hover:text-red-800">Eliminar todos</button> <div className="mt-4 pt-4 border-t border-gray-200 flex flex-col sm:flex-row justify-center gap-3"> <button onClick={handleApartar} className="w-full sm:w-auto bg-yellow-500 text-black font-semibold px-4 py-2 rounded-md hover:bg-yellow-600 transition shadow-sm text-sm">Solo Apartar (Máx. 10)</button> <button onClick={handleComprar} className="w-full sm:w-auto bg-blue-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-700 transition shadow-sm text-sm">Comprar Ahora</button> </div> </div> )}
-             <div className="w-full max-w-lg text-center my-2"> <button onClick={() => setFiltroDisponibles(!filtroDisponibles)} className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors"> {filtroDisponibles ? 'Mostrar Todos los Boletos' : 'Mostrar Solo Disponibles'} </button> </div>
-             <div className="flex justify-center items-center gap-4 my-4 w-full"> <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"> Anterior </button> <span className="font-mono text-lg"> Página {currentPage} de {totalPaginas} </span> <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPaginas} className="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"> Siguiente </button> </div>
-             {cargandoBoletos ? <p className="text-center py-10">Cargando boletos...</p> : <SelectorBoletos boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onToggleBoleto={toggleBoleto} filtroActivo={filtroDisponibles} rangoInicio={rangoInicio} rangoFin={Math.min(rangoFin, rifa.boletos)} /> }
+              <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={seleccionarBoleto} />
+              {boletosSeleccionados.length > 0 && ( <div className="text-center my-4 p-4 bg-gray-50 border rounded-lg w-full max-w-lg animate-fade-in"> <p className="font-bold mb-2 text-gray-800">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> <div className="flex justify-center flex-wrap gap-2 mb-2"> {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-green-600 text-white rounded-md font-mono cursor-pointer hover:bg-red-600" title="Haz clic para quitar">{String(n).padStart(paddingLength, "0")}</span> ))} </div> <p className="text-xs text-gray-500 italic my-2">Para eliminar un boleto, solo haz clic sobre él.</p> <button onClick={limpiarSeleccion} className="mt-1 text-red-600 underline text-sm hover:text-red-800">Eliminar todos</button> <div className="mt-4 pt-4 border-t border-gray-200 flex flex-col sm:flex-row justify-center gap-3"> <button onClick={handleApartar} className="w-full sm:w-auto bg-yellow-500 text-black font-semibold px-4 py-2 rounded-md hover:bg-yellow-600 transition shadow-sm text-sm">Solo Apartar (Máx. 10)</button> <button onClick={handleComprar} className="w-full sm:w-auto bg-blue-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-700 transition shadow-sm text-sm">Comprar Ahora</button> </div> </div> )}
+              <div className="w-full max-w-lg text-center my-2"> <button onClick={() => setFiltroDisponibles(!filtroDisponibles)} className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors"> {filtroDisponibles ? 'Mostrar Todos los Boletos' : 'Mostrar Solo Disponibles'} </button> </div>
+              <div className="flex justify-center items-center gap-4 my-4 w-full"> <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"> Anterior </button> <span className="font-mono text-lg"> Página {currentPage} de {totalPaginas} </span> <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPaginas} className="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"> Siguiente </button> </div>
+              {cargandoBoletos ? <p className="text-center py-10">Cargando boletos...</p> : <SelectorBoletos boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onToggleBoleto={toggleBoleto} filtroActivo={filtroDisponibles} rangoInicio={rangoInicio} rangoFin={Math.min(rangoFin, rifa.boletos)} /> }
           </div>
         </div>
       </div>

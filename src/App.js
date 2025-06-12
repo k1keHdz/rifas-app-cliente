@@ -4,14 +4,13 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // Contextos
 import { RifasProvider, useRifas } from "./context/RifasContext";
-// CAMBIO: LÍNEA DE IMPORTACIÓN RESTAURADA
 import { AuthProvider } from "./context/AuthContext";
 
-// Componentes Principales
+// Componentes y Páginas
 import Navbar from "./components/Navbar";
 import Login from "./components/Login";
 import Registro from "./components/Registro";
-import RifasPublic from "./components/RifasPublic";
+import RifasPublic from "./components/RifasPublic"; // Esta sigue siendo nuestra página /rifas
 import RifaDetalle from "./components/RifaDetalle";
 import RifaDetalleAdmin from "./components/RifaDetalleAdmin";
 import RifaForm from "./components/RifaForm";
@@ -21,6 +20,13 @@ import CompletarPerfil from "./components/CompletarPerfil";
 import AdminDashboard from "./components/AdminDashboard";
 import MiPerfil from "./components/MiPerfil";
 import SeleccionarRifaHistorial from "./components/SeleccionarRifaHistorial";
+// ==================================================================
+// INICIO DE CAMBIOS: Importamos la nueva página de Inicio
+// ==================================================================
+import Home from "./pages/Home";
+// ==================================================================
+// FIN DE CAMBIOS
+// ==================================================================
 
 const GestionarRifasPage = () => {
   const { isFormVisible, iniciarCreacionRifa } = useRifas();
@@ -52,7 +58,13 @@ function App() {
           <main>
             <Routes>
               {/* --- Rutas Públicas --- */}
-              <Route path="/" element={<RifasPublic />} />
+              {/* ================================================================== */}
+              {/* INICIO DE CAMBIOS: La ruta principal ahora es Home */}
+              {/* ================================================================== */}
+              <Route path="/" element={<Home />} />
+              {/* ================================================================== */}
+              {/* FIN DE CAMBIOS */}
+              {/* ================================================================== */}
               <Route path="/rifas" element={<RifasPublic />} />
               <Route path="/rifas/:id" element={<RifaDetalle />} />
               <Route path="/login" element={<Login />} />

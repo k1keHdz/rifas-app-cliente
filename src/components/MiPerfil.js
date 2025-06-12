@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getAuth, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { doc, updateDoc, collectionGroup, query, where, getDocs, getDoc, orderBy } from 'firebase/firestore';
+import { doc, updateDoc, collectionGroup, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { Link } from 'react-router-dom';
 
@@ -12,58 +12,48 @@ const HistorialIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" h
 const DatosIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 const SeguridadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
 
+// Icono para el acordeón
+const ChevronDownIcon = ({ isOpen }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
+    className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
+
+
 function MiPerfil() {
   const { currentUser, userData } = useAuth();
   
   const [activeTab, setActiveTab] = useState('historial');
-  
   const [nombre, setNombre] = useState(userData?.nombre || '');
   const [telefono, setTelefono] = useState(userData?.telefono || '');
-  
   const [newEmail, setNewEmail] = useState('');
   const [currentPasswordForEmail, setCurrentPasswordForEmail] = useState('');
-  
   const [currentPasswordForPass, setCurrentPasswordForPass] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-
   const [misCompras, setMisCompras] = useState([]);
   const [cargandoCompras, setCargandoCompras] = useState(true);
+  const [openAccordionId, setOpenAccordionId] = useState(null);
 
   useEffect(() => {
     const fetchMisCompras = async () => {
       if (!currentUser) return;
-      
       setCargandoCompras(true);
       setError('');
-      
       try {
         const q = query(collectionGroup(db, 'ventas'), where('userId', '==', currentUser.uid), orderBy('fechaApartado', 'desc'));
         const querySnapshot = await getDocs(q);
-        
-        const comprasPromises = querySnapshot.docs.map(async (ventaDoc) => {
-          const ventaData = ventaDoc.data();
-          const rifaId = ventaDoc.ref.parent.parent.id;
-          const rifaRef = doc(db, 'rifas', rifaId);
-          const rifaSnap = await getDoc(rifaRef);
-          
-          return {
-            ...ventaData,
-            id: ventaDoc.id,
-            nombreRifa: rifaSnap.exists() ? rifaSnap.data().nombre : "Rifa ya no disponible",
-            rifaId: rifaId,
-          };
-        });
-
-        const comprasResueltas = await Promise.all(comprasPromises);
+        const comprasResueltas = querySnapshot.docs.map((ventaDoc) => ({
+          ...ventaDoc.data(),
+          id: ventaDoc.id,
+        }));
         setMisCompras(comprasResueltas);
-
       } catch (err) {
         console.error("Error al obtener historial de compras:", err);
-        setError("No se pudo cargar el historial de compras. Si el problema persiste, puede que falte un índice en Firestore. Revisa la consola (F12) para ver el enlace de creación.");
+        setError("No se pudo cargar el historial de compras.");
       }
       setCargandoCompras(false);
     };
@@ -99,19 +89,15 @@ function MiPerfil() {
       setError('Debes proporcionar el nuevo correo y tu contraseña actual.');
       return;
     }
-
     const auth = getAuth();
     const user = auth.currentUser;
-
     try {
       const credential = EmailAuthProvider.credential(user.email, currentPasswordForEmail);
       await reauthenticateWithCredential(user, credential);
       await verifyBeforeUpdateEmail(user, newEmail);
-      
       setNewEmail('');
       setCurrentPasswordForEmail('');
       setMessage('¡Verificación enviada! Revisa la bandeja de entrada de tu nuevo correo (' + newEmail + ') y haz clic en el enlace para completar el cambio.');
-
     } catch (err) {
       console.error("Error al solicitar cambio de email:", err.code);
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
@@ -128,7 +114,6 @@ function MiPerfil() {
     e.preventDefault();
     setError('');
     setMessage('');
-
     if (!currentPasswordForPass || !newPassword || !confirmPassword) {
       setError('Por favor, completa todos los campos.');
       return;
@@ -141,15 +126,12 @@ function MiPerfil() {
       setError('La nueva contraseña debe tener al menos 6 caracteres.');
       return;
     }
-    
     const auth = getAuth();
     const user = auth.currentUser;
-
     try {
       const credential = EmailAuthProvider.credential(user.email, currentPasswordForPass);
       await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPassword);
-
       setCurrentPasswordForPass('');
       setNewPassword('');
       setConfirmPassword('');
@@ -169,7 +151,7 @@ function MiPerfil() {
 
   return (
     <div className="bg-gray-100 min-h-screen">
-      <div className="max-w-5xl mx-auto p-4 sm:p-8">
+      <div className="max-w-4xl mx-auto p-4 sm:p-8">
         <div className="text-center mb-8">
             <img src={currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.nombre)}&background=random&color=fff`} alt="Avatar" className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-white shadow-lg"/>
             <h1 className="text-4xl font-bold text-gray-800">Hola, {userData.nombre}</h1>
@@ -186,24 +168,60 @@ function MiPerfil() {
         
         <div className="animate-fade-in">
           {activeTab === 'historial' && (
-            <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Mi Historial de Boletos</h2>
-              {cargandoCompras ? <p>Cargando tu historial...</p> : misCompras.length === 0 ? <p className="text-gray-600">Aún no has participado en ninguna rifa.</p> : (
-                <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Mi Historial de Boletos</h2>
+              {cargandoCompras ? <p className="text-center py-8">Cargando tu historial...</p> : misCompras.length === 0 ? <p className="text-gray-600 text-center py-8">Aún no has participado en ninguna rifa.</p> : (
+                // ==================================================================
+                // INICIO DE CAMBIOS: Nuevo diseño de ACORDEÓN para el historial
+                // ==================================================================
+                <div className="space-y-3">
                   {misCompras.map(compra => (
-                    <div key={compra.id} className="border p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                      <div>
-                        <p className="font-bold text-lg text-gray-800">{compra.nombreRifa}</p>
-                        <p className="text-sm text-gray-600">Números: <span className="font-mono">{compra.numeros.map(n => String(n).padStart(5, '0')).join(', ')}</span></p>
-                        <p className="text-xs text-gray-500">Fecha: {new Date(compra.fechaApartado.seconds * 1000).toLocaleString('es-MX')}</p>
-                      </div>
-                      <div className="flex items-center gap-4 mt-3 sm:mt-0 self-end sm:self-center">
-                        <span className={`px-3 py-1 text-xs font-bold text-white rounded-full ${compra.estado === 'comprado' ? 'bg-red-600' : 'bg-yellow-500'}`}>{compra.estado}</span>
-                        <Link to={`/rifas/${compra.rifaId}`} className="text-sm text-blue-600 hover:underline whitespace-nowrap">Ir a la Rifa</Link>
-                      </div>
+                    <div key={compra.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <button 
+                        className="w-full flex justify-between items-center p-4 text-left hover:bg-gray-50 transition-colors"
+                        onClick={() => setOpenAccordionId(openAccordionId === compra.id ? null : compra.id)}
+                      >
+                        <div className="flex-1">
+                          <p className="font-bold text-gray-800">{compra.nombreRifa}</p>
+                          <p className="text-sm text-gray-500">{compra.cantidad} boleto(s)</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${compra.estado === 'comprado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                            {compra.estado}
+                          </span>
+                          <ChevronDownIcon isOpen={openAccordionId === compra.id} />
+                        </div>
+                      </button>
+
+                      {openAccordionId === compra.id && (
+                        <div className="border-t border-gray-200 p-4 bg-gray-50 animate-fade-in">
+                          <div className="flex flex-col sm:flex-row gap-4">
+                            <img 
+                              src={compra.imagenRifa || `https://ui-avatars.com/api/?name=${encodeURIComponent(compra.nombreRifa || 'R')}&background=random&color=fff`} 
+                              alt={compra.nombreRifa} 
+                              className="w-full sm:w-32 h-32 object-cover rounded-md"
+                            />
+                            <div className="flex-1">
+                              <p className="font-semibold text-gray-700 mb-2">Números comprados:</p>
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                {compra.numeros.map(n => <span key={n} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-mono text-sm">{String(n).padStart(5, '0')}</span>)}
+                              </div>
+                              <p className="text-xs text-gray-500 mb-4">
+                                Fecha de compra: {compra.fechaApartado?.seconds ? new Date(compra.fechaApartado.seconds * 1000).toLocaleString('es-MX') : 'N/A'}
+                              </p>
+                              <Link to={`/rifa/${compra.rifaId}`} className="text-sm font-semibold text-blue-600 hover:underline">
+                                Ir a la Rifa →
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
+                 // ==================================================================
+                // FIN DE CAMBIOS: Diseño de Acordeón
+                // ==================================================================
               )}
             </div>
           )}
@@ -221,7 +239,7 @@ function MiPerfil() {
           )}
 
           {activeTab === 'seguridad' && isPasswordUser && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="bg-white p-8 rounded-xl shadow-lg">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Cambiar Correo</h2>
                 <form onSubmit={handleEmailUpdate} className="space-y-4">
