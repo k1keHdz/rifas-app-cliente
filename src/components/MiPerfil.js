@@ -218,7 +218,7 @@ function MiPerfil() {
                               <p className="text-xs text-gray-500 mb-4">
                                 Fecha de compra: {compra.fechaApartado?.seconds ? new Date(compra.fechaApartado.seconds * 1000).toLocaleString('es-MX') : 'N/A'}
                               </p>
-                              <Link to={`/rifa/${compra.rifaId}`} className="text-sm font-semibold text-blue-600 hover:underline">
+                              <Link to={`/rifas/${compra.rifaId}`} className="text-sm font-semibold text-blue-600 hover:underline">
                                 Ir a la Rifa →
                               </Link>
                             </div>

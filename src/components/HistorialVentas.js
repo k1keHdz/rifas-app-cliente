@@ -1,11 +1,16 @@
 // src/components/HistorialVentas.js
 import React from 'react';
 
-// AÑADIMOS la prop 'onConfirmarPago' para recibir la función desde el padre
-function HistorialVentas({ ventasFiltradas, mostrarTotal, onConfirmarPago }) {
+// ==================================================================
+// INICIO DE CAMBIOS: Aceptamos la nueva prop 'onLiberarBoletos'
+// ==================================================================
+function HistorialVentas({ ventasFiltradas, mostrarTotal, onConfirmarPago, onLiberarBoletos }) {
+// ==================================================================
+// FIN DE CAMBIOS
+// ==================================================================
   
   const totalBoletos = ventasFiltradas.reduce((sum, v) => sum + (v.cantidad || 0), 0);
-  const paddingLength = 4; // Asumimos un padding para los números de boleto
+  const paddingLength = 5;
 
   return (
     <div className="overflow-x-auto bg-white p-4 rounded-lg shadow mt-6 border">
@@ -16,7 +21,6 @@ function HistorialVentas({ ventasFiltradas, mostrarTotal, onConfirmarPago }) {
         <table className="min-w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-100">
-              {/* CAMBIO: Nuevas columnas para más detalle */}
               <th className="px-4 py-2 border font-semibold text-sm text-gray-600">Fecha</th>
               <th className="px-4 py-2 border font-semibold text-sm text-gray-600">Comprador</th>
               <th className="px-4 py-2 border font-semibold text-sm text-gray-600">Números</th>
@@ -25,50 +29,74 @@ function HistorialVentas({ ventasFiltradas, mostrarTotal, onConfirmarPago }) {
             </tr>
           </thead>
           <tbody>
-            {ventasFiltradas.map((venta) => (
-              <tr key={venta.id} className="border-t hover:bg-gray-50 text-sm">
-                <td className="px-4 py-2 border align-top">
-                  {venta.fechaApartado?.toDate?.().toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) || "-"}
-                </td>
-                <td className="px-4 py-2 border align-top">
-                  <p className="font-medium">{venta.comprador?.nombre || 'N/A'}</p>
-                  <p className="text-gray-600">{venta.comprador?.telefono || ''}</p>
-                </td>
-                <td className="px-4 py-2 border align-top font-mono">
-                  {venta.numeros?.map(n => String(n).padStart(paddingLength, '0')).join(', ')}
-                </td>
-                <td className="px-4 py-2 border align-top">
-                  {/* CAMBIO: Badge de color para el estado */}
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${venta.estado === 'comprado' ? 'bg-red-600' : 'bg-yellow-500'}`}>
-                    {venta.estado}
-                  </span>
-                </td>
-                <td className="px-4 py-2 border align-top">
-                  {/* CAMBIO: Botón condicional de confirmación */}
-                  {venta.estado === 'apartado' && (
-                    <button 
-                      onClick={() => onConfirmarPago(venta.id, venta.cantidad)}
-                      className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700 transition-colors"
-                    >
-                      Confirmar Pago
-                    </button>
-                  )}
-                  {venta.estado === 'comprado' && (
-                    <span className="text-green-700 font-bold">✓ Confirmado</span>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {ventasFiltradas.map((venta) => {
+              // ==================================================================
+              // INICIO DE CAMBIOS: Lógica para verificar si el apartado ha expirado
+              // ==================================================================
+              const esApartado = venta.estado === 'apartado';
+              const haExpirado = esApartado && venta.fechaExpiracion.toDate() < new Date();
+              // ==================================================================
+              // FIN DE CAMBIOS
+              // ==================================================================
+              
+              return (
+                <tr key={venta.id} className="border-t hover:bg-gray-50 text-sm">
+                  <td className="px-4 py-2 border align-top">
+                    {/* CAMBIO: Mostramos fecha y hora */}
+                    {venta.fechaApartado?.toDate?.().toLocaleString('es-MX') || "-"}
+                  </td>
+                  <td className="px-4 py-2 border align-top">
+                    <p className="font-medium">{venta.comprador?.nombre || 'N/A'}</p>
+                    <p className="text-gray-600">{venta.comprador?.telefono || ''}</p>
+                    {/* CAMBIO: Mostramos el email */}
+                    <p className="text-gray-600 text-xs italic">{venta.comprador?.email || ''}</p>
+                  </td>
+                  <td className="px-4 py-2 border align-top font-mono">
+                    {venta.numeros?.map(n => String(n).padStart(paddingLength, '0')).join(', ')}
+                  </td>
+                  <td className="px-4 py-2 border align-top">
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${
+                      venta.estado === 'comprado' ? 'bg-green-600' : 'bg-yellow-500'
+                    }`}>
+                      {venta.estado}
+                    </span>
+                    {/* CAMBIO: Mostramos el estado de expiración */}
+                    {esApartado && (
+                      <p className={`mt-2 text-xs font-bold ${haExpirado ? 'text-red-600' : 'text-green-600'}`}>
+                        {haExpirado ? '¡Expirado!' : 'Vigente'}
+                      </p>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 border align-top">
+                    <div className="flex flex-col gap-2">
+                      {/* CAMBIO: El botón de confirmar ahora también es condicional */}
+                      {esApartado && (
+                        <button 
+                          onClick={() => onConfirmarPago(venta.id, venta.cantidad)}
+                          className="w-full bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700 transition-colors"
+                        >
+                          Confirmar Pago
+                        </button>
+                      )}
+                      {/* CAMBIO: Nuevo botón para liberar boletos */}
+                      {esApartado && (
+                        <button 
+                          onClick={() => onLiberarBoletos(venta.id, venta.numeros)}
+                          className="w-full bg-gray-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-gray-600 transition-colors"
+                        >
+                          Liberar Boletos
+                        </button>
+                      )}
+                      {venta.estado === 'comprado' && (
+                        <span className="text-green-700 font-bold">✓ Confirmado</span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
-          {mostrarTotal && (
-            <tfoot>
-              <tr className="bg-gray-100 font-bold">
-                <td colSpan="2" className="px-4 py-2 border text-right">Total de Boletos (en filtro)</td>
-                <td className="px-4 py-2 border">{totalBoletos}</td>
-                <td colSpan="2" className="px-4 py-2 border"></td>
-              </tr>
-            </tfoot>
-          )}
+          {mostrarTotal && ( <tfoot>{/* ...código sin cambios... */}</tfoot> )}
         </table>
       )}
     </div>

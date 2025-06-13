@@ -14,7 +14,23 @@ export const RifasProvider = ({ children }) => {
   const [rifas, setRifas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [rifaSeleccionada, setRifaSeleccionada] = useState(null);
-  const [isFormVisible, setIsFormVisible] = useState(false); // NUEVO: Estado para controlar la visibilidad
+  const [isFormVisible, setIsFormVisible] = useState(false);
+
+  // ==================================================================
+  // INICIO DE CAMBIOS: Nuevo estado para manejar mensajes de feedback
+  // ==================================================================
+  const [feedback, setFeedback] = useState({ msg: '', type: '' });
+
+  const showFeedback = (msg, type = 'info') => {
+    setFeedback({ msg, type });
+    setTimeout(() => {
+      setFeedback({ msg: '', type: '' });
+    }, 4000);
+  };
+  // ==================================================================
+  // FIN DE CAMBIOS
+  // ==================================================================
+
 
   useEffect(() => {
     const q = query(collection(db, "rifas"), orderBy("fechaCreacion", "desc"));
@@ -28,17 +44,17 @@ export const RifasProvider = ({ children }) => {
 
   const seleccionarRifaParaEditar = (rifa) => {
     setRifaSeleccionada(rifa);
-    setIsFormVisible(true); // NUEVO: Al editar, también mostramos el form
+    setIsFormVisible(true);
   };
 
   const iniciarCreacionRifa = () => {
-    setRifaSeleccionada(null); // Nos aseguramos que no hay ninguna seleccionada
-    setIsFormVisible(true); // NUEVO: Mostramos el form para crear
+    setRifaSeleccionada(null);
+    setIsFormVisible(true);
   };
 
   const ocultarFormulario = () => {
     setRifaSeleccionada(null);
-    setIsFormVisible(false); // NUEVO: Función para ocultar el form
+    setIsFormVisible(false);
   };
   
   const value = {
@@ -46,12 +62,17 @@ export const RifasProvider = ({ children }) => {
     cargando,
     rifaSeleccionada,
     seleccionarRifaParaEditar,
-    // La función deseleccionarRifa ya no la necesitamos, ocultarFormulario hace su trabajo
-    
-    // Funciones nuevas que estarán disponibles en el "tablero"
     isFormVisible,
     iniciarCreacionRifa,
     ocultarFormulario,
+    // ==================================================================
+    // INICIO DE CAMBIOS: Exportamos la función de feedback
+    // ==================================================================
+    feedback,
+    showFeedback,
+    // ==================================================================
+    // FIN DE CAMBIOS
+    // ==================================================================
   };
 
   return <RifasContext.Provider value={value}>{children}</RifasContext.Provider>;
