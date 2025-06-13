@@ -3,22 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getAuth, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { doc, updateDoc, collectionGroup, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { doc, updateDoc, collectionGroup, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { Link } from 'react-router-dom';
+import ContadorRegresivo from './ContadorRegresivo';
 
-// Iconos SVG para las pestañas
+// Iconos
 const HistorialIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>;
 const DatosIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 const SeguridadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
-
-// Icono para el acordeón
-const ChevronDownIcon = ({ isOpen }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
-    className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-    <path d="m6 9 6 6 6-6"/>
-  </svg>
-);
+const ChevronDownIcon = ({ isOpen }) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6"/></svg>);
+const WhatsAppIcon = () => <svg viewBox="0 0 32 32" className="w-6 h-6"><path d=" M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 0 1-.315-.1c-.802-.402-1.504-.817-2.163-1.447-.545-.516-1.146-1.29-1.46-1.963a.426.426 0 0 1-.073-.215c0-.33.99-.945.99-1.49 0-.143-.73-2.09-.832-2.335-.143-.372-.214-.487-.6-.487-.187 0-.36-.044-.53-.044a.765.765 0 0 0-.51.235c-.41.372-1.016 1.38-1.016 2.484s.281 3.58.91 4.098c.63.518 2.045 3.23 4.925 4.925 1.016.582 1.56.674 1.99.674.214 0 .487-.044.732-.214.582-.372.827-.85.91-1.094s.044-.674-.044-1.094c-.089-.419-.372-1.016-.6-.945z" fill="#43d854"></path><path d=" M16.035 32C7.195 32 0 24.82 0 16 0 7.18 7.195 0 16.035 0c8.84 0 16.035 7.18 16.035 16 0 8.82-7.195 16-16.035 16z" fill="none"></path></svg>;
+const TelegramIcon = () => <svg viewBox="0 0 48 48" className="w-6 h-6"><path fill="#29a9ea" d="M42.7,4.2c-1.3-1.3-3.2-1.8-5-1.5L6,14.5c-3.5,0.6-5.4,4.2-3.8,7.4l6.6,12.2c1.6,2.9,5.4,4,8.5,2.4l5.1-2.7c0.8-0.4,1.8-0.4,2.6,0l7.8,4.7c3,1.8,6.8,0,7.8-3.3l5.5-18.1C50.2,7.9,47.2,3.2,42.7,4.2z M22.9,32.3c-0.6,0.6-1.6,0.7-2.3,0.3l-5.1-2.7c-1-0.5-2.2,0-2.7,1l-2.6,5.1c-0.8,1.6-2.9,1.9-4.1,0.6c-1.2-1.3-1.1-3.3,0.3-4.4l6.6-12.2c0.7-1.3,2.4-1.8,3.8-1.1l20.8,9.7c1.6,0.8,2,2.9,0.9,4.1L22.9,32.3z"></path></svg>;
+const FacebookIcon = () => <svg viewBox="0 0 50 50" className="w-6 h-6"><path d="M41,4H9C6.24,4,4,6.24,4,9v32c0,2.76,2.24,5,5,5h32c2.76,0,5-2.24,5-5V9C46,6.24,43.76,4,41,4z" fill="#3B5998"></path><path d="M34.5,46V30h5.5l0.8-6.4h-6.3v-4.1c0-1.8,0.5-3.1,3.1-3.1h3.3V11c-0.6-0.1-2.5-0.2-4.8-0.2c-4.8,0-8,2.9-8,8.3v4.7h-8v6.4h8V46H34.5z" fill="#FFFFFF"></path></svg>;
 
 
 function MiPerfil() {
@@ -37,30 +34,47 @@ function MiPerfil() {
   const [misCompras, setMisCompras] = useState([]);
   const [cargandoCompras, setCargandoCompras] = useState(true);
   const [openAccordionId, setOpenAccordionId] = useState(null);
+  
+  const tuNumeroDeWhatsApp = '527773367064';
+  const tuUsuarioDeTelegram = 'tu_usuario_tg';
+  const tuPaginaDeFacebook = 'https://facebook.com/tu_pagina';
+
+  const generarMensajeSoporte = (compra) => {
+    const boletosTexto = compra.numeros.map(n => String(n).padStart(5, '0')).join(', ');
+    let mensaje = `¡Hola! 👋 Tengo una consulta sobre mi compra para la rifa "${compra.nombreRifa}".\n\n`;
+    mensaje += `Mis números son: *${boletosTexto}*.\n`;
+    mensaje += `Mi compra aún aparece como 'apartado' y me gustaría verificar el estado de mi pago. ¡Gracias!`;
+    return encodeURIComponent(mensaje);
+  };
 
   useEffect(() => {
-    const fetchMisCompras = async () => {
-      if (!currentUser) return;
-      setCargandoCompras(true);
-      setError('');
-      try {
-        const q = query(collectionGroup(db, 'ventas'), where('userId', '==', currentUser.uid), orderBy('fechaApartado', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const comprasResueltas = querySnapshot.docs.map((ventaDoc) => ({
-          ...ventaDoc.data(),
-          id: ventaDoc.id,
-        }));
-        setMisCompras(comprasResueltas);
-      } catch (err) {
-        console.error("Error al obtener historial de compras:", err);
-        setError("No se pudo cargar el historial de compras.");
-      }
-      setCargandoCompras(false);
-    };
-
-    if (activeTab === 'historial') {
-      fetchMisCompras();
+    if (!currentUser || activeTab !== 'historial') {
+      return;
     }
+
+    setCargandoCompras(true);
+    
+    const q = query(
+      collectionGroup(db, 'ventas'), 
+      where('userId', '==', currentUser.uid), 
+      orderBy('fechaApartado', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const comprasData = querySnapshot.docs.map((ventaDoc) => ({
+        ...ventaDoc.data(),
+        id: ventaDoc.id,
+      }));
+      setMisCompras(comprasData);
+      setCargandoCompras(false);
+    }, (error) => {
+      console.error("Error al obtener historial de compras en tiempo real:", error);
+      setError("No se pudo cargar el historial de compras.");
+      setCargandoCompras(false);
+    });
+
+    return () => unsubscribe();
+
   }, [currentUser, activeTab]);
 
   const handleProfileUpdate = async (e) => {
@@ -139,8 +153,6 @@ function MiPerfil() {
     } catch (err) {
       console.error("Error al cambiar contraseña:", err);
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
-        setError('La contraseña actual que ingresaste es incorrecta.');
-      } else {
         setError('Hubo un error al cambiar la contraseña. Inténtalo de nuevo.');
       }
     }
@@ -171,9 +183,6 @@ function MiPerfil() {
             <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Mi Historial de Boletos</h2>
               {cargandoCompras ? <p className="text-center py-8">Cargando tu historial...</p> : misCompras.length === 0 ? <p className="text-gray-600 text-center py-8">Aún no has participado en ninguna rifa.</p> : (
-                // ==================================================================
-                // INICIO DE CAMBIOS: Nuevo diseño de ACORDEÓN para el historial
-                // ==================================================================
                 <div className="space-y-3">
                   {misCompras.map(compra => (
                     <div key={compra.id} className="border border-gray-200 rounded-lg overflow-hidden">
@@ -181,7 +190,7 @@ function MiPerfil() {
                         className="w-full flex justify-between items-center p-4 text-left hover:bg-gray-50 transition-colors"
                         onClick={() => setOpenAccordionId(openAccordionId === compra.id ? null : compra.id)}
                       >
-                        <div className="flex-1">
+                        <div className="flex-1 pr-4">
                           <p className="font-bold text-gray-800">{compra.nombreRifa}</p>
                           <p className="text-sm text-gray-500">{compra.cantidad} boleto(s)</p>
                         </div>
@@ -214,14 +223,30 @@ function MiPerfil() {
                               </Link>
                             </div>
                           </div>
+                          
+                          {compra.estado === 'apartado' && (
+                            <div className="mt-4 pt-4 border-t border-dashed border-gray-300">
+                              <div className="flex justify-center mb-4">
+                                <ContadorRegresivo fechaExpiracion={compra.fechaExpiracion} />
+                              </div>
+                              <p className="text-xs text-center text-gray-600 mb-4 italic max-w-md mx-auto">
+                                Si ya realizaste el pago, por favor espera a que un administrador lo confirme. El estado cambiará a 'Pagado'.
+                              </p>
+                              <div className="text-center mt-6">
+                                <p className="text-sm font-semibold text-gray-700 mb-2">¿Necesitas ayuda con tu compra?</p>
+                                <div className="flex justify-center items-center space-x-4">
+                                  <a href={`https://wa.me/${tuNumeroDeWhatsApp}?text=${generarMensajeSoporte(compra)}`} target="_blank" rel="noopener noreferrer" title="WhatsApp"><WhatsAppIcon /></a>
+                                  <a href={`https://t.me/${tuUsuarioDeTelegram}`} target="_blank" rel="noopener noreferrer" title="Telegram"><TelegramIcon /></a>
+                                  <a href={tuPaginaDeFacebook} target="_blank" rel="noopener noreferrer" title="Facebook"><FacebookIcon /></a>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
-                 // ==================================================================
-                // FIN DE CAMBIOS: Diseño de Acordeón
-                // ==================================================================
               )}
             </div>
           )}

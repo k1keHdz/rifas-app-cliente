@@ -13,7 +13,7 @@ function RifasPublic() {
   const [cargandoMas, setCargandoMas] = useState(false);
   const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(true);
-  const RIFAS_POR_PAGINA = 9; // Aumentado a 9 para que se vea bien en la cuadrícula
+  const RIFAS_POR_PAGINA = 9;
 
   useEffect(() => {
     const fetchInitialRifas = async () => {
@@ -21,7 +21,7 @@ function RifasPublic() {
       try {
         const q = query(
           collection(db, "rifas"), 
-          where("estado", "==", RIFAS_ESTADOS.ACTIVA), // Mostramos solo las rifas activas
+          where("estado", "==", RIFAS_ESTADOS.ACTIVA),
           orderBy("fechaCreacion", "desc"),
           limit(RIFAS_POR_PAGINA)
         );
@@ -84,21 +84,24 @@ function RifasPublic() {
                 const conditionText = getDrawConditionText(rifa);
 
                 return (
-                  <div key={rifa.id} className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow flex flex-col sm:flex-row overflow-hidden">
+                  <Link to={`/rifas/${rifa.id}`} key={rifa.id} className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow flex flex-col sm:flex-row overflow-hidden group">
+                    {/* Contenedor de la Imagen */}
                     <div className="w-full sm:w-1/3 md:w-1/4">
                       <img
                         src={rifa.imagenes?.[0] || "https://via.placeholder.com/400x300?text=Sin+imagen"}
                         alt={rifa.nombre}
-                        className="w-full h-48 sm:h-full object-cover"
+                        className="w-full h-48 sm:h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
-                    <div className="p-5 flex flex-col flex-1 justify-between">
+                    {/* Contenedor del Contenido */}
+                    <div className="p-5 flex flex-col flex-1">
                       <div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">{rifa.nombre}</h3>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{rifa.nombre}</h3>
                         <p className="text-2xl font-bold text-blue-600 mb-3">${rifa.precio.toLocaleString('es-MX')} <span className="text-sm font-normal text-gray-500">por boleto</span></p>
                         <p className="text-xs text-gray-500 mb-4 italic">{conditionText}</p>
                       </div>
-                      <div className="w-full">
+                      {/* El div mt-auto empuja este bloque hacia abajo */}
+                      <div className="w-full mt-auto">
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-sm font-semibold text-gray-700">Progreso</span>
                           <span className="text-sm font-bold text-blue-600">{porcentaje.toFixed(1)}%</span>
@@ -107,11 +110,8 @@ function RifasPublic() {
                           <div className="bg-blue-500 h-full rounded-full" style={{ width: `${porcentaje}%` }}></div>
                         </div>
                       </div>
-                      <Link to={`/rifas/${rifa.id}`} className="mt-4 bg-gray-800 text-white font-bold py-2 px-4 rounded-lg hover:bg-black transition-colors text-center w-full sm:w-auto sm:self-end">
-                        Ver Detalles y Comprar
-                      </Link>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
