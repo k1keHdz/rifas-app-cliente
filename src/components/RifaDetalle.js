@@ -105,12 +105,13 @@ function RifaDetalle() {
         userId: currentUser ? currentUser.uid : null,
         rifaId: id,
         nombreRifa: rifa.nombre,
-        // ==================================================================
-        // INICIO DE CORRECCIÓN: Usamos rifa.imagenes[0] en lugar de rifa.imagen
-        // ==================================================================
         imagenRifa: (rifa.imagenes && rifa.imagenes[0]) || null,
         // ==================================================================
-        // FIN DE CORRECCIÓN
+        // INICIO DEL CAMBIO: Añadimos el precio del boleto al momento de la venta
+        // ==================================================================
+        precioBoleto: rifa.precio,
+        // ==================================================================
+        // FIN DEL CAMBIO
         // ==================================================================
       };
       
