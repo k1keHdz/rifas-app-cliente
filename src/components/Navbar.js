@@ -29,23 +29,29 @@ function Navbar() {
           Rifas públicas
         </Link>
 
+        {/* ================================================================== */}
+        {/* INICIO DEL CAMBIO: Añadimos el nuevo enlace a "Verificar Boleto" */}
+        {/* ================================================================== */}
+        <Link to="/verificador" className="hover:underline">
+          Verificar Boleto
+        </Link>
+        {/* ================================================================== */}
+        {/* FIN DEL CAMBIO */}
+        {/* ================================================================== */}
+
         {currentUser ? (
           // === VISTA PARA USUARIOS LOGUEADOS ===
           <>
-            {/* 'Mi Perfil' SÓLO se muestra si el rol NO es 'admin' */}
             {userData && userData.rol !== 'admin' && (
               <Link to="/perfil" className="hover:underline">
                 Mi Perfil
               </Link>
             )}
-
-            {/* El enlace a 'Admin' SÓLO se muestra si el rol es 'admin' */}
             {userData && userData.rol === 'admin' && (
               <Link to="/admin" className="font-semibold hover:underline">
                 Admin
               </Link>
             )}
-
             <button
               onClick={handleLogout}
               className="bg-red-500 hover:bg-red-600 text-white font-semibold px-3 py-1 rounded-md text-sm transition-colors"

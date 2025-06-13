@@ -20,6 +20,8 @@ import MiPerfil from "./components/MiPerfil";
 import SeleccionarRifaHistorial from "./components/SeleccionarRifaHistorial";
 import GestionarRifasPage from "./pages/admin/GestionarRifasPage";
 import Home from "./pages/Home";
+import VerificadorBoletosPage from "./pages/VerificadorBoletosPage";
+
 
 function App() {
   return (
@@ -30,17 +32,12 @@ function App() {
           <main>
             <Routes>
               {/* --- Rutas Públicas --- */}
-              {/* ================================================================== */}
-              {/* INICIO DE CORRECCIÓN: La ruta principal vuelve a apuntar a Home */}
-              {/* ================================================================== */}
               <Route path="/" element={<Home />} />
-              {/* ================================================================== */}
-              {/* FIN DE CORRECCIÓN */}
-              {/* ================================================================== */}
               <Route path="/rifas" element={<RifasPublic />} />
               <Route path="/rifas/:id" element={<RifaDetalle />} />
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Registro />} />
+              <Route path="/verificador" element={<VerificadorBoletosPage />} />
 
               {/* --- Rutas Protegidas --- */}
               <Route path="/admin" element={<RutaProtegida rolRequerido="admin"><AdminDashboard /></RutaProtegida>} />
