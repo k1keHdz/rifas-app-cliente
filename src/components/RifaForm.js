@@ -1,12 +1,13 @@
 // src/components/RifaForm.js
 
 import React, { useEffect, useState } from "react";
-import { addDoc, collection, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, doc, updateDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase/firebaseConfig";
 import Alerta from "./Alerta";
 import { useRifas } from "../context/RifasContext";
 
+// Íconos
 const InfoIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>;
 const ImageIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>;
 const RulesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 18a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-2Z"/><path d="m14 14-2.5 2.5L14 19"/><path d="M18 14l-2.5 2.5L18 19"/></svg>;
@@ -86,7 +87,7 @@ function RifaForm() {
     if (selectedImageIndex === null) {
       setSelectedImageIndex(index);
     } else {
-      if (selectedImageIndex === index) { // Si hace clic en la misma imagen, la deselecciona
+      if (selectedImageIndex === index) {
         setSelectedImageIndex(null);
         return;
       }
@@ -121,23 +122,38 @@ function RifaForm() {
     }
     setIsSubmitting(true);
     try {
-      const urlsFinales = await subirYOrdenarImagenes(rifaSeleccionada?.id || doc(collection(db, 'rifas')).id);
-      const datosRifa = {
-        ...formulario,
-        precio: Number(formulario.precio),
-        boletos: Number(formulario.boletos),
-        porcentajeVenta: formulario.tipoRifa === "porcentaje" ? Number(formulario.porcentajeVenta) : null,
-        fechaCierre: formulario.tipoRifa === "fecha" && formulario.fechaCierre ? new Date(formulario.fechaCierre) : null,
-        imagen: urlsFinales[0],
-        imagenes: urlsFinales,
-      };
       if (rifaSeleccionada) {
+        const urlsFinales = await subirYOrdenarImagenes(rifaSeleccionada.id);
+        const datosRifa = {
+          ...formulario,
+          precio: Number(formulario.precio),
+          boletos: Number(formulario.boletos),
+          porcentajeVenta: formulario.tipoRifa === "porcentaje" ? Number(formulario.porcentajeVenta) : null,
+          fechaCierre: formulario.tipoRifa === "fecha" && formulario.fechaCierre ? new Date(formulario.fechaCierre) : null,
+          imagen: urlsFinales[0],
+          imagenes: urlsFinales,
+        };
         const rifaRef = doc(db, "rifas", rifaSeleccionada.id);
         await updateDoc(rifaRef, datosRifa);
         showFeedback("Rifa actualizada correctamente", "exito");
       } else {
-        const nuevaRifa = { ...datosRifa, fechaCreacion: serverTimestamp(), boletosVendidos: 0 };
-        await addDoc(collection(db, "rifas"), nuevaRifa);
+        const nuevaRifaRef = doc(collection(db, "rifas"));
+        const urlsFinales = await subirYOrdenarImagenes(nuevaRifaRef.id);
+        const datosRifa = {
+          ...formulario,
+          precio: Number(formulario.precio),
+          boletos: Number(formulario.boletos),
+          porcentajeVenta: formulario.tipoRifa === "porcentaje" ? Number(formulario.porcentajeVenta) : null,
+          fechaCierre: formulario.tipoRifa === "fecha" && formulario.fechaCierre ? new Date(formulario.fechaCierre) : null,
+        };
+        const nuevaRifa = {
+            ...datosRifa,
+            imagen: urlsFinales[0],
+            imagenes: urlsFinales,
+            fechaCreacion: serverTimestamp(),
+            boletosVendidos: 0 
+        };
+        await setDoc(nuevaRifaRef, nuevaRifa);
         showFeedback("Rifa agregada exitosamente", "exito");
       }
       ocultarFormulario();

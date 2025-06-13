@@ -19,7 +19,7 @@ import AdminDashboard from "./components/AdminDashboard";
 import MiPerfil from "./components/MiPerfil";
 import SeleccionarRifaHistorial from "./components/SeleccionarRifaHistorial";
 import GestionarRifasPage from "./pages/admin/GestionarRifasPage";
-import Home from "./pages/Home"; // El componente Home sigue aquí
+import Home from "./pages/Home";
 
 function App() {
   return (
