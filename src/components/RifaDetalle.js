@@ -1,13 +1,11 @@
 // src/components/RifaDetalle.js
 
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { doc, getDoc, collection, addDoc, serverTimestamp, Timestamp, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { useAuth } from '../context/AuthContext';
 import { useBoletos } from "../hooks/useBoletos";
-
-// Componentes
 import ModalImagen from "./ModalImagen";
 import SelectorBoletos from "./SelectorBoletos";
 import ModalMaquinaSuerte from "./ModalMaquinaSuerte";
@@ -19,14 +17,12 @@ import ModalInvitacionRegistro from "./ModalInvitacionRegistro";
 function RifaDetalle() {
   const { id } = useParams();
   const { currentUser } = useAuth();
-  
   const [rifa, setRifa] = useState(null);
   const [cargandoRifa, setCargandoRifa] = useState(true);
   const [datosPerfil, setDatosPerfil] = useState({});
   const [filtroDisponibles, setFiltroDisponibles] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [boletosPorPagina] = useState(500);
-
   const [mostrarModalDatos, setMostrarModalDatos] = useState(false);
   const [mostrarModalSuerte, setMostrarModalSuerte] = useState(false);
   const [imagenIndex, setImagenIndex] = useState(0);
@@ -38,15 +34,23 @@ function RifaDetalle() {
     seleccionarBoleto, limpiarSeleccion, agregarMultiplesBoletos,
   } = useBoletos(id);
 
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.boletoSeleccionado) {
+        const numero = location.state.boletoSeleccionado;
+        if (!cargandoBoletos && !boletosOcupados.has(numero) && !boletosSeleccionados.includes(numero)) {
+            seleccionarBoleto(numero);
+        }
+    }
+  }, [location.state, cargandoBoletos, boletosOcupados, boletosSeleccionados, seleccionarBoleto]);
+
   useEffect(() => {
     setCargandoRifa(true);
     const docRef = doc(db, "rifas", id);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setRifa({ id: docSnap.id, ...docSnap.data() });
-      } else {
-        setRifa(null);
-      }
+      if (docSnap.exists()) { setRifa({ id: docSnap.id, ...docSnap.data() }); } 
+      else { setRifa(null); }
       setCargandoRifa(false);
     });
     return () => unsubscribe();
@@ -57,9 +61,7 @@ function RifaDetalle() {
       const fetchUserProfile = async () => {
         const userRef = doc(db, 'usuarios', currentUser.uid);
         const docSnap = await getDoc(userRef);
-        if (docSnap.exists()) {
-          setDatosPerfil(docSnap.data());
-        }
+        if (docSnap.exists()) { setDatosPerfil(docSnap.data()); }
       };
       fetchUserProfile();
     } else {
@@ -68,10 +70,7 @@ function RifaDetalle() {
   }, [currentUser]);
 
   const handleReservarPorWhatsapp = () => {
-    if (boletosSeleccionados.length === 0) {
-      alert("Selecciona boletos primero.");
-      return;
-    }
+    if (boletosSeleccionados.length === 0) { alert("Selecciona boletos primero."); return; }
     if (currentUser) {
       setMostrarModalDatos(true);
     } else {
@@ -91,10 +90,8 @@ function RifaDetalle() {
       window.location.reload();
       return;
     }
-
     try {
       const DOCE_HORAS_EN_MS = 12 * 60 * 60 * 1000;
-      
       const ventaData = {
         comprador: datosDelFormulario,
         numeros: boletosSeleccionados,
@@ -106,35 +103,23 @@ function RifaDetalle() {
         rifaId: id,
         nombreRifa: rifa.nombre,
         imagenRifa: (rifa.imagenes && rifa.imagenes[0]) || null,
-        // ==================================================================
-        // INICIO DEL CAMBIO: Añadimos el precio del boleto al momento de la venta
-        // ==================================================================
         precioBoleto: rifa.precio,
-        // ==================================================================
-        // FIN DEL CAMBIO
-        // ==================================================================
       };
-      
       await addDoc(collection(db, "rifas", id, "ventas"), ventaData);
       setMostrarModalDatos(false);
-      
       const tuNumeroDeWhatsApp = '527773367064';
       const nombreRifa = rifa.nombre;
       const boletosTexto = boletosSeleccionados.map(n => String(n).padStart(5, '0')).join(', ');
       const totalAPagar = rifa.precio * boletosSeleccionados.length;
       const nombreCliente = datosDelFormulario.nombre;
-
       let mensaje = `¡Hola! 👋 Quiero apartar mis boletos para la rifa "${nombreRifa}".\n\n`;
       mensaje += `Mis números seleccionados son: *${boletosTexto}*.\n`;
       mensaje += `Total a pagar: *$${totalAPagar.toLocaleString('es-MX')}*.\n`;
       mensaje += `Mi nombre es: ${nombreCliente}.\n\n`;
       mensaje += `Quedo a la espera de las instrucciones para realizar el pago. ¡Tengo 12 horas para completarlo! Gracias.`;
-
       const waUrl = `https://wa.me/${tuNumeroDeWhatsApp}?text=${encodeURIComponent(mensaje)}`;
-      
       window.open(waUrl, '_blank');
       limpiarSeleccion();
-      
     } catch (error) {
       console.error("Error al apartar boletos:", error);
       alert("Ocurrió un error al intentar apartar los boletos.");
@@ -154,7 +139,6 @@ function RifaDetalle() {
   const conditionText = getDrawConditionText(rifa);
   const imagenActual = rifa.imagenes?.[imagenIndex] || rifa.imagen;
   const paddingLength = 5;
-
   const totalPaginas = Math.ceil(rifa.boletos / boletosPorPagina);
   const rangoFin = currentPage * boletosPorPagina;
   const rangoInicio = rangoFin - boletosPorPagina;
@@ -180,7 +164,7 @@ function RifaDetalle() {
             </div>
             <div className="md:w-1/2 mt-4 md:mt-0">
               <h2 className="text-3xl font-bold mb-2">{rifa.nombre}</h2>
-              <p className="text-gray-700 mb-3">{rifa.descripcion}</p>
+              <p className="whitespace-pre-wrap text-gray-700 mb-3">{rifa.descripcion}</p>
               <p className="text-2xl font-bold mb-2 text-blue-600">${rifa.precio.toLocaleString('es-MX')}</p>
               <div className="my-3 flex items-center gap-2">
                 <strong className="text-md">Estado:</strong>
@@ -210,17 +194,12 @@ function RifaDetalle() {
                 <div className="text-center my-4 p-4 bg-gray-50 border rounded-lg w-full max-w-lg animate-fade-in"> 
                   <p className="font-bold mb-2 text-gray-800">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> 
                   <div className="flex justify-center flex-wrap gap-2 mb-2"> 
-                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-green-600 text-white rounded-md font-mono cursor-pointer hover:bg-red-600" title="Haz clic para quitar">{String(n).padStart(paddingLength, "0")}</span> ))} 
+                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-green-600 text-white rounded-md font-mono cursor-pointer hover:bg-red-600" title="Haz clic para quitar">{String(n).padStart(5, '0')}</span> ))} 
                   </div> 
                   <p className="text-xs text-gray-500 italic my-2">Para eliminar un boleto, solo haz clic sobre él.</p> 
                   <button onClick={limpiarSeleccion} className="mt-1 text-red-600 underline text-sm hover:text-red-800">Eliminar todos</button> 
                   <div className="mt-4 pt-4 border-t border-gray-200 flex justify-center">
-                    <button 
-                      onClick={handleReservarPorWhatsapp}
-                      className="w-full sm:w-auto bg-green-500 text-white font-bold px-8 py-3 rounded-lg hover:bg-green-600 transition-transform transform hover:scale-105 shadow-lg"
-                    >
-                      Apartar por WhatsApp
-                    </button>
+                    <button onClick={handleReservarPorWhatsapp} className="w-full sm:w-auto bg-green-500 text-white font-bold px-8 py-3 rounded-lg hover:bg-green-600 transition-transform transform hover:scale-105 shadow-lg">Apartar por WhatsApp</button>
                   </div> 
                 </div> 
               )}

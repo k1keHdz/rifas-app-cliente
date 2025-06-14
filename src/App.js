@@ -1,8 +1,6 @@
 // src/App.js
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
-// Contextos
 import { RifasProvider } from "./context/RifasContext";
 import { AuthProvider } from "./context/AuthContext";
 
@@ -21,6 +19,15 @@ import SeleccionarRifaHistorial from "./components/SeleccionarRifaHistorial";
 import GestionarRifasPage from "./pages/admin/GestionarRifasPage";
 import Home from "./pages/Home";
 import VerificadorBoletosPage from "./pages/VerificadorBoletosPage";
+import ComoParticiparPage from "./pages/ComoParticiparPage";
+import GestionarGanadoresPage from "./pages/admin/GestionarGanadoresPage";
+// ==================================================================
+// INICIO DE CAMBIOS: Importamos la nueva página de ganadores
+// ==================================================================
+import GanadoresPage from "./pages/GanadoresPage";
+// ==================================================================
+// FIN DE CAMBIOS
+// ==================================================================
 
 
 function App() {
@@ -38,12 +45,21 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Registro />} />
               <Route path="/verificador" element={<VerificadorBoletosPage />} />
+              <Route path="/como-participar" element={<ComoParticiparPage />} />
+              {/* ================================================================== */}
+              {/* INICIO DE CAMBIOS: Añadimos la nueva ruta pública */}
+              {/* ================================================================== */}
+              <Route path="/ganadores" element={<GanadoresPage />} />
+              {/* ================================================================== */}
+              {/* FIN DE CAMBIOS */}
+              {/* ================================================================== */}
 
               {/* --- Rutas Protegidas --- */}
               <Route path="/admin" element={<RutaProtegida rolRequerido="admin"><AdminDashboard /></RutaProtegida>} />
               <Route path="/admin/gestionar-rifas" element={<RutaProtegida rolRequerido="admin"><GestionarRifasPage /></RutaProtegida>} />
               <Route path="/admin/historial-ventas" element={<RutaProtegida rolRequerido="admin"><SeleccionarRifaHistorial /></RutaProtegida>} />
               <Route path="/admin/rifa/:id" element={<RutaProtegida rolRequerido="admin"><RifaDetalleAdmin /></RutaProtegida>} />
+              <Route path="/admin/ganadores" element={<RutaProtegida rolRequerido="admin"><GestionarGanadoresPage /></RutaProtegida>} />
               
               <Route path="/completar-perfil" element={<RutaProtegida><CompletarPerfil /></RutaProtegida>} />
               <Route path="/perfil" element={<RutaProtegida><MiPerfil /></RutaProtegida>} />
