@@ -6,6 +6,10 @@ import { doc, getDoc, collection, addDoc, serverTimestamp, Timestamp, onSnapshot
 import { db } from "../firebase/firebaseConfig";
 import { useAuth } from '../context/AuthContext';
 import { useBoletos } from "../hooks/useBoletos";
+// ==================================================================
+// 1. IMPORTACIÓN NECESARIA
+// ==================================================================
+import { nanoid } from 'nanoid';
 import ModalImagen from "./ModalImagen";
 import SelectorBoletos from "./SelectorBoletos";
 import ModalMaquinaSuerte from "./ModalMaquinaSuerte";
@@ -92,7 +96,14 @@ function RifaDetalle() {
     }
     try {
       const DOCE_HORAS_EN_MS = 12 * 60 * 60 * 1000;
+      
+      // ==================================================================
+      // 2. GENERACIÓN DEL ID ÚNICO
+      // ==================================================================
+      const idCompra = nanoid(8).toUpperCase();
+
       const ventaData = {
+        idCompra: idCompra, // <-- 3. CAMPO AÑADIDO AL OBJETO QUE SE GUARDA
         comprador: datosDelFormulario,
         numeros: boletosSeleccionados,
         cantidad: boletosSeleccionados.length,
@@ -105,18 +116,26 @@ function RifaDetalle() {
         imagenRifa: (rifa.imagenes && rifa.imagenes[0]) || null,
         precioBoleto: rifa.precio,
       };
+      
       await addDoc(collection(db, "rifas", id, "ventas"), ventaData);
       setMostrarModalDatos(false);
+      
       const tuNumeroDeWhatsApp = '527773367064';
       const nombreRifa = rifa.nombre;
       const boletosTexto = boletosSeleccionados.map(n => String(n).padStart(5, '0')).join(', ');
       const totalAPagar = rifa.precio * boletosSeleccionados.length;
       const nombreCliente = datosDelFormulario.nombre;
+
       let mensaje = `¡Hola! 👋 Quiero apartar mis boletos para la rifa "${nombreRifa}".\n\n`;
+      // ==================================================================
+      // 4. ID AÑADIDO AL MENSAJE DE WHATSAPP
+      // ==================================================================
+      mensaje += `*ID de Compra: ${idCompra}*\n\n`;
       mensaje += `Mis números seleccionados son: *${boletosTexto}*.\n`;
       mensaje += `Total a pagar: *$${totalAPagar.toLocaleString('es-MX')}*.\n`;
       mensaje += `Mi nombre es: ${nombreCliente}.\n\n`;
       mensaje += `Quedo a la espera de las instrucciones para realizar el pago. ¡Tengo 12 horas para completarlo! Gracias.`;
+      
       const waUrl = `https://wa.me/${tuNumeroDeWhatsApp}?text=${encodeURIComponent(mensaje)}`;
       window.open(waUrl, '_blank');
       limpiarSeleccion();

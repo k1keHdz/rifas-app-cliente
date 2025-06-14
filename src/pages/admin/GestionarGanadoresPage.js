@@ -2,15 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-// ==================================================================
-// INICIO DE CAMBIOS: Importaciones adicionales para guardar
-// ==================================================================
 import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from '../../firebase/firebaseConfig';
-// ==================================================================
-// FIN DE CAMBIOS
-// ==================================================================
 import { RIFAS_ESTADOS } from '../../constants/rifas';
 import Alerta from '../../components/Alerta';
 
@@ -26,6 +20,7 @@ function GestionarGanadoresPage() {
   const [testimonio, setTestimonio] = useState('');
   const [fotoFile, setFotoFile] = useState(null);
   const [fotoPreview, setFotoPreview] = useState('');
+  const [videoFile, setVideoFile] = useState(null);
   
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,6 +43,7 @@ function GestionarGanadoresPage() {
     setTestimonio('');
     setFotoFile(null);
     setFotoPreview('');
+    setVideoFile(null);
     const rifa = rifasFinalizadas.find(r => r.id === selectedRifaId);
     setSelectedRifaNombre(rifa ? rifa.nombre : '');
   }, [selectedRifaId, rifasFinalizadas]);
@@ -64,9 +60,11 @@ function GestionarGanadoresPage() {
       const numBoleto = parseInt(numeroGanador, 10);
       const ventasRef = collection(db, "rifas", selectedRifaId, "ventas");
       const q = query(ventasRef, where("numeros", "array-contains", numBoleto), where("estado", "==", "comprado"));
+      
       const querySnapshot = await getDocs(q);
+
       if (querySnapshot.empty) {
-        setError("No se encontró ningún comprador para este boleto, o el boleto no ha sido pagado.");
+        setError("No se encontró ningún comprador para este boleto, o el boleto no ha sido pagado. Por favor, verifica el número y el estado del pago en el historial de ventas.");
       } else {
         const ganadorData = querySnapshot.docs[0].data().comprador;
         setDatosGanador(ganadorData);
@@ -88,41 +86,49 @@ function GestionarGanadoresPage() {
       setFotoPreview(URL.createObjectURL(file));
     }
   };
+  
+  const handleVideoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setVideoFile(file);
+    }
+  };
 
-  // ==================================================================
-  // INICIO DE CAMBIOS: Implementación de la lógica para guardar el ganador
-  // ==================================================================
   const handleSubmitGanador = async (e) => {
     e.preventDefault();
     if (!datosGanador || !fotoFile) {
-      setError("Debes buscar un ganador y seleccionar una foto antes de guardar.");
+      setError("Debes buscar un ganador y seleccionar una foto (obligatoria) antes de guardar.");
       return;
     }
     setIsSubmitting(true);
     setError('');
 
     try {
-      // 1. Subir la foto a Storage
-      const fotoRef = ref(storage, `ganadores/${selectedRifaId}_${numeroGanador}_${Date.now()}`);
+      const fotoRef = ref(storage, `ganadores/fotos/${selectedRifaId}_${Date.now()}`);
       await uploadBytes(fotoRef, fotoFile);
       const fotoURL = await getDownloadURL(fotoRef);
 
-      // 2. Preparar los datos para Firestore
+      let videoURL = null;
+      if (videoFile) {
+        const videoRef = ref(storage, `ganadores/videos/${selectedRifaId}_${Date.now()}`);
+        await uploadBytes(videoRef, videoFile);
+        videoURL = await getDownloadURL(videoRef);
+      }
+
       const ganadorData = {
         rifaId: selectedRifaId,
         nombreRifa: selectedRifaNombre,
         numeroGanador: parseInt(numeroGanador, 10),
-        datosComprador: datosGanador, // Objeto con nombre, tel, email
+        datosComprador: datosGanador,
         testimonio: testimonio,
         fotoURL: fotoURL,
+        videoURL: videoURL,
         fechaRegistro: serverTimestamp(),
       };
-
-      // 3. Guardar en la nueva colección 'ganadores'
+      
       await addDoc(collection(db, "ganadores"), ganadorData);
-
       alert("¡Ganador registrado con éxito!");
-      setIsFormVisible(false); // Ocultamos el formulario
+      setIsFormVisible(false);
     
     } catch (err) {
       console.error("Error al guardar el ganador:", err);
@@ -131,25 +137,38 @@ function GestionarGanadoresPage() {
       setIsSubmitting(false);
     }
   };
-  // ==================================================================
-  // FIN DE CAMBIOS
-  // ==================================================================
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Gestor de Ganadores</h1>
+        {/* ================================================================== */}
+        {/* INICIO DE CORRECCIÓN: El botón ahora está fuera del 'isFormVisible' */}
+        {/* ================================================================== */}
         {!isFormVisible && (
-          <button onClick={() => setIsFormVisible(true)} className="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors shadow-md">
-            + Registrar Nuevo Ganador
-          </button>
+            <button 
+                onClick={() => setIsFormVisible(true)}
+                className="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors shadow-md"
+            >
+                + Registrar Nuevo Ganador
+            </button>
         )}
+        {/* ================================================================== */}
+        {/* FIN DE CORRECCIÓN */}
+        {/* ================================================================== */}
       </div>
 
       {isFormVisible && (
         <form onSubmit={handleSubmitGanador} className="bg-white rounded-xl shadow-lg p-6 mb-8 animate-fade-in">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Registrar Ganador</h2>
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Registrar Ganador</h2>
+            <button type="button" onClick={() => setIsFormVisible(false)} className="text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          
           {(error || mensaje) && <div className="mb-4"><Alerta mensaje={error || mensaje} tipo={error ? 'error' : 'exito'} onClose={() => { setError(''); setMensaje(''); }} /></div>}
+          
           <div className="space-y-4">
             <div>
               <label htmlFor="rifaSelect" className="block text-sm font-medium text-gray-700 mb-1">1. Selecciona la Rifa Finalizada</label>
@@ -158,6 +177,7 @@ function GestionarGanadoresPage() {
                 {rifasFinalizadas.map(rifa => (<option key={rifa.id} value={rifa.id}>{rifa.nombre}</option>))}
               </select>
             </div>
+
             {selectedRifaId && (
               <div className="animate-fade-in">
                 <label htmlFor="numeroGanador" className="block text-sm font-medium text-gray-700 mb-1">2. Introduce el Número de Boleto Ganador</label>
@@ -169,6 +189,7 @@ function GestionarGanadoresPage() {
                 </div>
               </div>
             )}
+            
             {datosGanador && (
               <div className="animate-fade-in border-t pt-6 mt-6 space-y-4">
                 <div className="bg-green-50 p-4 rounded-lg">
@@ -184,6 +205,11 @@ function GestionarGanadoresPage() {
                   <label htmlFor="fotoGanador" className="block text-sm font-medium text-gray-700 mb-1">4. Foto del Ganador (Obligatoria)</label>
                   <input id="fotoGanador" type="file" accept="image/*" onChange={handleFotoChange} required className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
                   {fotoPreview && <img src={fotoPreview} alt="Vista previa" className="mt-4 rounded-lg h-32 w-auto"/>}
+                </div>
+                <div>
+                  <label htmlFor="videoGanador" className="block text-sm font-medium text-gray-700 mb-1">5. Video del Ganador (Opcional)</label>
+                  <input id="videoGanador" type="file" accept="video/*" onChange={handleVideoChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                  {videoFile && <p className="text-xs text-gray-500 mt-1">Video seleccionado: <span className="font-medium">{videoFile.name}</span></p>}
                 </div>
               </div>
             )}

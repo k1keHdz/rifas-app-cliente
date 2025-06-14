@@ -29,6 +29,7 @@ function RifaDetalleAdmin() {
   const [filtroVentas, setFiltroVentas] = useState('todos');
 
   useEffect(() => {
+    setCargando(true);
     const docRef = doc(db, "rifas", rifaId);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -36,6 +37,7 @@ function RifaDetalleAdmin() {
       } else {
         setRifa(null);
       }
+      // No seteamos cargando a false aquí, esperamos a que las ventas también carguen
     });
     return () => unsubscribe();
   }, [rifaId]);
@@ -49,26 +51,40 @@ function RifaDetalleAdmin() {
     const q = query(ventasRef, orderBy("fechaApartado", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setVentas(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setCargando(false);
+      setCargando(false); // Seteamos cargando a false cuando tenemos las ventas
+    }, (error) => {
+        console.error("Error al cargar ventas: ", error);
+        setCargando(false);
     });
     return () => unsubscribe();
   }, [rifaId]);
   
-  const handleConfirmarPago = async (ventaId, cantidadBoletos) => {
-    if (!window.confirm(`¿Estás seguro de confirmar el pago para ${cantidadBoletos} boleto(s)? Esta acción no se puede deshacer.`)) {
+  const handleConfirmarPago = async (venta) => {
+    if (!window.confirm(`¿Estás seguro de confirmar el pago para la compra ID: ${venta.idCompra}?`)) {
       return;
     }
     try {
       const batch = writeBatch(db);
-      const ventaRef = doc(db, "rifas", rifaId, "ventas", ventaId);
+      const ventaRef = doc(db, "rifas", rifaId, "ventas", venta.id);
       batch.update(ventaRef, { estado: "comprado" });
       const rifaRef = doc(db, "rifas", rifaId);
-      batch.update(rifaRef, { boletosVendidos: increment(cantidadBoletos) });
+      batch.update(rifaRef, { boletosVendidos: increment(venta.cantidad) });
       await batch.commit();
-      alert("¡Pago confirmado con éxito!");
+      alert("¡Pago confirmado con éxito en el sistema!");
+
+      if (window.confirm("¿Deseas enviar la notificación de PAGO por WhatsApp?")) {
+          const boletosTexto = venta.numeros.map(n => String(n).padStart(5, '0')).join(', ');
+          let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para la rifa "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Mucha suerte!`;
+          const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensajeWhats)}`;
+          window.open(waUrl, '_blank');
+      }
+
+      if (venta.comprador.email && window.confirm(`¿Deseas enviar el comprobante por correo a ${venta.comprador.email}?`)) {
+          // Lógica de EmailJS aquí
+      }
     } catch (error) {
-      console.error("Error al confirmar el pago:", error);
-      alert("Hubo un error al confirmar el pago. Revisa la consola para más detalles.");
+      console.error("Error en el proceso de confirmación:", error);
+      alert("Hubo un error al confirmar el pago o al enviar las notificaciones.");
     }
   };
 
@@ -100,7 +116,6 @@ function RifaDetalleAdmin() {
 
   const ventasFiltradas = useMemo(() => {
     if (!ventas) return [];
-    
     let ventasPorFecha = ventas.filter(v => {
       const fechaVenta = v.fechaApartado?.toDate();
       if (!fechaVenta) return true;
@@ -112,7 +127,6 @@ function RifaDetalleAdmin() {
       }
       return true;
     });
-
     switch (filtroVentas) {
       case 'pagados':
         return ventasPorFecha.filter(v => v.estado === 'comprado');
@@ -120,7 +134,6 @@ function RifaDetalleAdmin() {
         return ventasPorFecha.filter(v => v.estado === 'apartado');
       case 'manual':
         return ventasPorFecha.filter(v => v.estado === 'comprado' && !v.userId);
-      case 'todos':
       default:
         return ventasPorFecha;
     }
@@ -151,7 +164,6 @@ function RifaDetalleAdmin() {
   return (
     <div className="p-4 max-w-7xl mx-auto">
       <Link to="/admin/historial-ventas" className="text-blue-600 hover:underline mb-4 inline-block">← Volver a la selección de rifas</Link>
-      
       <div className="bg-white shadow-lg rounded-xl p-6 mb-6">
         <h1 className="text-3xl font-bold mb-4 text-gray-800">{rifa.nombre}</h1>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
@@ -161,7 +173,6 @@ function RifaDetalleAdmin() {
           <div className="p-2 rounded-lg bg-blue-50"><p className="text-xs text-blue-700 uppercase font-semibold">Disponibles</p><p className="text-2xl font-bold text-blue-800">{estadisticas.disponiblesCount}</p></div>
         </div>
       </div>
-
       <div className="border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-2 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
           <button onClick={() => setActiveTab('ventas')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'ventas' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }`}><VentasIcon/> Historial de Ventas</button>
@@ -169,7 +180,6 @@ function RifaDetalleAdmin() {
           <button onClick={() => setActiveTab('acciones')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'acciones' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }`}><AccionesIcon/> Acciones</button>
         </nav>
       </div>
-
       <div className="animate-fade-in mt-6">
         {activeTab === 'ventas' && (
           <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
@@ -218,7 +228,6 @@ function RifaDetalleAdmin() {
           </div>
         )}
       </div>
-      
       {showModalVenta && (
         <ModalVentaManual rifa={rifa} onClose={() => setShowModalVenta(false)} />
       )}

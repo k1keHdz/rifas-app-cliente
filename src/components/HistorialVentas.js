@@ -1,3 +1,4 @@
+// src/components/HistorialVentas.js
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -8,12 +9,14 @@ function HistorialVentas({ ventasFiltradas = [], mostrarTotal, onConfirmarPago, 
 
   return (
     <div className="overflow-x-auto bg-white p-4 rounded-lg shadow mt-6 border">
+      <h2 className="text-xl font-bold mb-4 text-gray-800">Historial de Ventas y Apartados</h2>
       {ventasFiltradas.length === 0 ? (
         <p className="text-center text-gray-500 py-8">No hay ventas que coincidan con los filtros actuales.</p>
       ) : (
         <table className="min-w-full text-left border-collapse">
           <thead className="bg-gray-100">
             <tr className="bg-gray-100">
+              <th className="px-4 py-2 border font-semibold text-sm text-gray-600">ID Compra</th>
               <th className="px-4 py-2 border font-semibold text-sm text-gray-600">Fecha</th>
               <th className="px-4 py-2 border font-semibold text-sm text-gray-600">Comprador</th>
               <th className="px-4 py-2 border font-semibold text-sm text-gray-600">Números</th>
@@ -25,10 +28,13 @@ function HistorialVentas({ ventasFiltradas = [], mostrarTotal, onConfirmarPago, 
           <tbody>
             {ventasFiltradas.map((venta) => {
               const esApartado = venta.estado === 'apartado';
-              const haExpirado = esApartado && venta.fechaExpiracion.toDate() < new Date();
+              const haExpirado = esApartado && venta.fechaExpiracion && venta.fechaExpiracion.toDate() < new Date();
               
               return (
                 <tr key={venta.id} className="border-t hover:bg-gray-50 text-sm">
+                  <td className="px-4 py-2 border align-top font-mono text-xs font-bold text-purple-700">
+                    {venta.idCompra || '-'}
+                  </td>
                   <td className="px-4 py-2 border align-top whitespace-nowrap">
                     {venta.fechaApartado?.toDate?.().toLocaleString('es-MX') || "-"}
                   </td>
@@ -61,7 +67,7 @@ function HistorialVentas({ ventasFiltradas = [], mostrarTotal, onConfirmarPago, 
                     <div className="flex flex-col gap-2 items-start">
                       {esApartado && (
                         <button 
-                          onClick={() => onConfirmarPago(venta.id, venta.cantidad)}
+                          onClick={() => onConfirmarPago(venta)}
                           className="w-full bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700 transition-colors text-center"
                         >
                           Confirmar Pago
@@ -87,7 +93,7 @@ function HistorialVentas({ ventasFiltradas = [], mostrarTotal, onConfirmarPago, 
           {mostrarTotal && (
             <tfoot>
               <tr className="bg-gray-100 font-bold">
-                <td colSpan="3" className="px-4 py-2 border text-right">Total de Boletos (en esta vista)</td>
+                <td colSpan="4" className="px-4 py-2 border text-right">Total de Boletos (en esta vista)</td>
                 <td className="px-4 py-2 border text-center">{totalBoletos}</td>
                 <td colSpan="2" className="px-4 py-2 border"></td>
               </tr>
