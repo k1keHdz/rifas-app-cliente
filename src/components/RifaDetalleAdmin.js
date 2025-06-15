@@ -9,6 +9,8 @@ import GraficaVentas from "./GraficaVentas";
 import FiltroFechas from "./FiltroFechas";
 import ModalVentaManual from "./ModalVentaManual";
 import PanelDeExportacion from "./PanelDeExportacion";
+import emailjs from '@emailjs/browser';
+import EMAIL_CONFIG from '../emailjsConfig';
 
 // Íconos para las pestañas
 const VentasIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
@@ -29,70 +31,50 @@ function RifaDetalleAdmin() {
   const [filtroVentas, setFiltroVentas] = useState('todos');
 
   useEffect(() => {
-    setCargando(true);
     const docRef = doc(db, "rifas", rifaId);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setRifa({ id: docSnap.id, ...docSnap.data() });
-      } else {
-        setRifa(null);
-      }
-      // No seteamos cargando a false aquí, esperamos a que las ventas también carguen
+      if (docSnap.exists()) { setRifa({ id: docSnap.id, ...docSnap.data() }); } 
+      else { setRifa(null); }
     });
     return () => unsubscribe();
   }, [rifaId]);
 
   useEffect(() => {
-    if (!rifaId) {
-      setCargando(false);
-      return;
-    };
+    if (!rifaId) { setCargando(false); return; };
     const ventasRef = collection(db, "rifas", rifaId, "ventas");
     const q = query(ventasRef, orderBy("fechaApartado", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setVentas(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setCargando(false); // Seteamos cargando a false cuando tenemos las ventas
+      setCargando(false);
     }, (error) => {
-        console.error("Error al cargar ventas: ", error);
-        setCargando(false);
+      console.error("Error al cargar ventas: ", error);
+      setCargando(false);
     });
     return () => unsubscribe();
   }, [rifaId]);
   
   const handleConfirmarPago = async (venta) => {
-    if (!window.confirm(`¿Estás seguro de confirmar el pago para la compra ID: ${venta.idCompra}?`)) {
-      return;
-    }
+    if (!window.confirm(`¿Estás seguro de confirmar el pago para la compra ID: ${venta.idCompra || 'N/A'}?`)) return;
+    
     try {
       const batch = writeBatch(db);
       const ventaRef = doc(db, "rifas", rifaId, "ventas", venta.id);
       batch.update(ventaRef, { estado: "comprado" });
+      
       const rifaRef = doc(db, "rifas", rifaId);
       batch.update(rifaRef, { boletosVendidos: increment(venta.cantidad) });
+      
       await batch.commit();
-      alert("¡Pago confirmado con éxito en el sistema!");
-
-      if (window.confirm("¿Deseas enviar la notificación de PAGO por WhatsApp?")) {
-          const boletosTexto = venta.numeros.map(n => String(n).padStart(5, '0')).join(', ');
-          let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para la rifa "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Mucha suerte!`;
-          const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensajeWhats)}`;
-          window.open(waUrl, '_blank');
-      }
-
-      if (venta.comprador.email && window.confirm(`¿Deseas enviar el comprobante por correo a ${venta.comprador.email}?`)) {
-          // Lógica de EmailJS aquí
-      }
+      alert("¡Pago confirmado con éxito en el sistema! Ahora puedes notificar al cliente.");
     } catch (error) {
-      console.error("Error en el proceso de confirmación:", error);
-      alert("Hubo un error al confirmar el pago o al enviar las notificaciones.");
+      console.error("Error CRÍTICO al confirmar el pago en Firestore:", error);
+      alert("Hubo un error CRÍTICO al confirmar el pago. Por favor, inténtalo de nuevo.");
     }
   };
 
   const handleLiberarBoletos = async (ventaId, numeros) => {
     const numerosTexto = numeros.map(n => String(n).padStart(5, '0')).join(', ');
-    if (!window.confirm(`¿Estás seguro de liberar los boletos [${numerosTexto}]? Esta venta se eliminará permanentemente.`)) {
-      return;
-    }
+    if (!window.confirm(`¿Estás seguro de liberar los boletos [${numerosTexto}]? Esta venta se eliminará permanentemente.`)) { return; }
     try {
       const ventaRef = doc(db, "rifas", rifaId, "ventas", ventaId);
       await deleteDoc(ventaRef);
@@ -102,12 +84,42 @@ function RifaDetalleAdmin() {
       alert("Hubo un error al liberar los boletos.");
     }
   };
+  
+  const handleNotificarWhatsApp = (venta) => {
+    const boletosTexto = venta.numeros.map(n => String(n).padStart(5, '0')).join(', ');
+    let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para la rifa "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Te deseamos mucha suerte en el sorteo!`;
+    const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensajeWhats)}`;
+    window.open(waUrl, '_blank');
+  };
+
+  const handleNotificarEmail = async (venta) => {
+    const emailValido = venta.comprador.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(venta.comprador.email);
+    if (!emailValido) {
+      return alert(`El correo del cliente (${venta.comprador.email || 'No proporcionado'}) no es válido. No se puede enviar.`);
+    }
+    if (!window.confirm(`¿Enviar el comprobante por correo a ${venta.comprador.email}?`)) return;
+    try {
+      const boletosTexto = venta.numeros.map(n => String(n).padStart(5, '0')).join(', ');
+      const templateParams = {
+        to_email: venta.comprador.email,
+        to_name: `${venta.comprador.nombre} ${venta.comprador.apellidos || ''}`,
+        raffle_name: venta.nombreRifa,
+        ticket_numbers: boletosTexto,
+        id_compra: venta.idCompra
+      };
+      await emailjs.send(EMAIL_CONFIG.serviceID, EMAIL_CONFIG.templateID, templateParams, EMAIL_CONFIG.publicKey);
+      alert("Correo de confirmación enviado exitosamente.");
+    } catch (error) {
+      console.error("Fallo al enviar el correo (EmailJS):", error);
+      alert(`AVISO: No se pudo enviar el correo.\nError: ${error.text || 'Revisa la consola y tu configuración de EmailJS.'}`);
+    }
+  };
 
   const estadisticas = useMemo(() => {
     if (!rifa || !ventas) return { apartadosCount: 0, vendidosCount: 0, disponiblesCount: 0, apartadosDinero: 0, vendidosDinero: 0 };
     const vendidosCount = rifa.boletosVendidos || 0;
     const apartadosArr = ventas.filter(v => v.estado === 'apartado');
-    const apartadosCount = apartadosArr.reduce((sum, v) => sum + (v.cantidad || 0), 0);
+    const apartadosCount = apartadosArr.reduce((sum, v) => sum + v.cantidad, 0);
     const disponiblesCount = rifa.boletos - vendidosCount - apartadosCount;
     const vendidosDinero = vendidosCount * rifa.precio;
     const apartadosDinero = apartadosCount * rifa.precio;
@@ -128,14 +140,10 @@ function RifaDetalleAdmin() {
       return true;
     });
     switch (filtroVentas) {
-      case 'pagados':
-        return ventasPorFecha.filter(v => v.estado === 'comprado');
-      case 'apartados':
-        return ventasPorFecha.filter(v => v.estado === 'apartado');
-      case 'manual':
-        return ventasPorFecha.filter(v => v.estado === 'comprado' && !v.userId);
-      default:
-        return ventasPorFecha;
+      case 'pagados': return ventasPorFecha.filter(v => v.estado === 'comprado');
+      case 'apartados': return ventasPorFecha.filter(v => v.estado === 'apartado');
+      case 'manual': return ventasPorFecha.filter(v => v.estado === 'comprado' && !v.userId);
+      default: return ventasPorFecha;
     }
   }, [ventas, fechaInicio, fechaFin, filtroVentas]);
 
@@ -200,6 +208,8 @@ function RifaDetalleAdmin() {
               mostrarTotal={true} 
               onConfirmarPago={handleConfirmarPago}
               onLiberarBoletos={handleLiberarBoletos}
+              onNotificarWhatsApp={handleNotificarWhatsApp}
+              onNotificarEmail={handleNotificarEmail}
             />
           </div>
         )}

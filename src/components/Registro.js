@@ -7,7 +7,14 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 
 function Registro() {
+  // ==================================================================
+  // INICIO DE CAMBIOS: Dividimos el estado de nombre en dos
+  // ==================================================================
   const [nombre, setNombre] = useState('');
+  const [apellidos, setApellidos] = useState('');
+  // ==================================================================
+  // FIN DE CAMBIOS
+  // ==================================================================
   const [telefono, setTelefono] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,20 +37,24 @@ function Registro() {
 
     const auth = getAuth();
     try {
-      // 1. Crear el usuario en Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 2. Crear el documento del usuario en Firestore Database
       const userRef = doc(db, 'usuarios', user.uid);
+      // ==================================================================
+      // INICIO DE CAMBIOS: Guardamos el apellido en la base de datos
+      // ==================================================================
       await setDoc(userRef, {
         nombre: nombre,
+        apellidos: apellidos,
         telefono: telefono,
         email: email,
-        rol: 'cliente', // ¡Todos los nuevos registros son clientes por defecto!
+        rol: 'cliente',
       });
-
-      // 3. Redirigir al usuario a su nuevo perfil
+      // ==================================================================
+      // FIN DE CAMBIOS
+      // ==================================================================
+      
       navigate('/perfil');
 
     } catch (err) {
@@ -66,10 +77,22 @@ function Registro() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Nombre Completo</label>
-            <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+          {/* ================================================================== */}
+          {/* INICIO DE CAMBIOS: Dividimos el campo de nombre en dos */}
+          {/* ================================================================== */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Nombre(s)</label>
+              <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Apellido</label>
+              <input type="text" value={apellidos} onChange={(e) => setApellidos(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+            </div>
           </div>
+          {/* ================================================================== */}
+          {/* FIN DE CAMBIOS */}
+          {/* ================================================================== */}
           <div>
             <label className="block text-sm font-medium text-gray-700">Teléfono</label>
             <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>

@@ -1,14 +1,11 @@
 // src/components/RifaDetalle.js
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { doc, getDoc, collection, addDoc, serverTimestamp, Timestamp, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { useAuth } from '../context/AuthContext';
 import { useBoletos } from "../hooks/useBoletos";
-// ==================================================================
-// 1. IMPORTACIÓN NECESARIA
-// ==================================================================
 import { nanoid } from 'nanoid';
 import ModalImagen from "./ModalImagen";
 import SelectorBoletos from "./SelectorBoletos";
@@ -39,6 +36,18 @@ function RifaDetalle() {
   } = useBoletos(id);
 
   const location = useLocation();
+
+  // ==================================================================
+  // INICIO DE CAMBIOS: Lógica de formato dinámico
+  // ==================================================================
+  const paddingLength = useMemo(() => {
+    if (!rifa || !rifa.boletos) return 2; // Default a 2 dígitos (para 100 boletos)
+    // El número de dígitos es la longitud del número más alto (ej. 99 -> 2, 999 -> 3)
+    return String(rifa.boletos - 1).length;
+  }, [rifa]);
+  // ==================================================================
+  // FIN DE CAMBIOS
+  // ==================================================================
 
   useEffect(() => {
     if (location.state?.boletoSeleccionado) {
@@ -96,14 +105,10 @@ function RifaDetalle() {
     }
     try {
       const DOCE_HORAS_EN_MS = 12 * 60 * 60 * 1000;
-      
-      // ==================================================================
-      // 2. GENERACIÓN DEL ID ÚNICO
-      // ==================================================================
       const idCompra = nanoid(8).toUpperCase();
 
       const ventaData = {
-        idCompra: idCompra, // <-- 3. CAMPO AÑADIDO AL OBJETO QUE SE GUARDA
+        idCompra: idCompra,
         comprador: datosDelFormulario,
         numeros: boletosSeleccionados,
         cantidad: boletosSeleccionados.length,
@@ -122,14 +127,17 @@ function RifaDetalle() {
       
       const tuNumeroDeWhatsApp = '527773367064';
       const nombreRifa = rifa.nombre;
-      const boletosTexto = boletosSeleccionados.map(n => String(n).padStart(5, '0')).join(', ');
+      // ==================================================================
+      // INICIO DE CAMBIOS: Usamos el padding dinámico en el mensaje
+      // ==================================================================
+      const boletosTexto = boletosSeleccionados.map(n => String(n).padStart(paddingLength, '0')).join(', ');
+      // ==================================================================
+      // FIN DE CAMBIOS
+      // ==================================================================
       const totalAPagar = rifa.precio * boletosSeleccionados.length;
-      const nombreCliente = datosDelFormulario.nombre;
+      const nombreCliente = `${datosDelFormulario.nombre} ${datosDelFormulario.apellidos || ''}`;
 
       let mensaje = `¡Hola! 👋 Quiero apartar mis boletos para la rifa "${nombreRifa}".\n\n`;
-      // ==================================================================
-      // 4. ID AÑADIDO AL MENSAJE DE WHATSAPP
-      // ==================================================================
       mensaje += `*ID de Compra: ${idCompra}*\n\n`;
       mensaje += `Mis números seleccionados son: *${boletosTexto}*.\n`;
       mensaje += `Total a pagar: *$${totalAPagar.toLocaleString('es-MX')}*.\n`;
@@ -157,10 +165,10 @@ function RifaDetalle() {
   const porcentajeVendido = rifa.boletos > 0 ? (boletosVendidos / rifa.boletos) * 100 : 0;
   const conditionText = getDrawConditionText(rifa);
   const imagenActual = rifa.imagenes?.[imagenIndex] || rifa.imagen;
-  const paddingLength = 5;
+  
   const totalPaginas = Math.ceil(rifa.boletos / boletosPorPagina);
-  const rangoFin = currentPage * boletosPorPagina;
-  const rangoInicio = rangoFin - boletosPorPagina;
+  const rangoInicio = (currentPage - 1) * boletosPorPagina;
+  const rangoFin = Math.min(currentPage * boletosPorPagina, rifa.boletos);
 
   return (
     <>
@@ -208,12 +216,18 @@ function RifaDetalle() {
             <div className="flex items-center gap-1"><div className="w-4 h-4 bg-green-600 rounded-sm"></div> Seleccionado</div>
           </div>
           <div className="flex flex-col items-center">
-              <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={seleccionarBoleto} />
+              <BuscadorBoletos 
+                totalBoletos={rifa.boletos} 
+                boletosOcupados={boletosOcupados} 
+                boletosSeleccionados={boletosSeleccionados} 
+                onSelectBoleto={seleccionarBoleto} 
+                paddingLength={paddingLength}
+              />
               {boletosSeleccionados.length > 0 && ( 
                 <div className="text-center my-4 p-4 bg-gray-50 border rounded-lg w-full max-w-lg animate-fade-in"> 
                   <p className="font-bold mb-2 text-gray-800">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> 
                   <div className="flex justify-center flex-wrap gap-2 mb-2"> 
-                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-green-600 text-white rounded-md font-mono cursor-pointer hover:bg-red-600" title="Haz clic para quitar">{String(n).padStart(5, '0')}</span> ))} 
+                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-green-600 text-white rounded-md font-mono cursor-pointer hover:bg-red-600" title="Haz clic para quitar">{String(n).padStart(paddingLength, "0")}</span> ))} 
                   </div> 
                   <p className="text-xs text-gray-500 italic my-2">Para eliminar un boleto, solo haz clic sobre él.</p> 
                   <button onClick={limpiarSeleccion} className="mt-1 text-red-600 underline text-sm hover:text-red-800">Eliminar todos</button> 
@@ -224,7 +238,18 @@ function RifaDetalle() {
               )}
               <div className="w-full max-w-lg text-center my-2"> <button onClick={() => setFiltroDisponibles(!filtroDisponibles)} className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors"> {filtroDisponibles ? 'Mostrar Todos los Boletos' : 'Mostrar Solo Disponibles'} </button> </div>
               <div className="flex justify-center items-center gap-4 my-4 w-full"> <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"> Anterior </button> <span className="font-mono text-lg"> Página {currentPage} de {totalPaginas} </span> <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPaginas} className="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"> Siguiente </button> </div>
-              {cargandoBoletos ? <p className="text-center py-10">Cargando boletos...</p> : <SelectorBoletos boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onToggleBoleto={toggleBoleto} filtroActivo={filtroDisponibles} rangoInicio={rangoInicio} rangoFin={Math.min(rangoFin, rifa.boletos)} /> }
+              {cargandoBoletos ? <p className="text-center py-10">Cargando boletos...</p> : 
+                <SelectorBoletos 
+                    totalBoletos={rifa.boletos}
+                    boletosOcupados={boletosOcupados} 
+                    boletosSeleccionados={boletosSeleccionados} 
+                    onToggleBoleto={toggleBoleto} 
+                    filtroActivo={filtroDisponibles} 
+                    rangoInicio={rangoInicio} 
+                    rangoFin={rangoFin}
+                    paddingLength={paddingLength}
+                /> 
+              }
           </div>
         </div>
       </div>

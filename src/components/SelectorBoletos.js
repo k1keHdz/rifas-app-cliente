@@ -6,20 +6,28 @@ const SelectorBoletos = ({
   boletosSeleccionados,
   onToggleBoleto,
   filtroActivo,
-  // PAGINACIÓN: Recibimos el rango en lugar del total
   rangoInicio,
   rangoFin,
+  // ==================================================================
+  // INICIO DE CAMBIOS: Recibimos el padding dinámico como prop
+  // ==================================================================
+  paddingLength, 
+  numerosFiltrados // Para cuando se usa el buscador
+  // ==================================================================
+  // FIN DE CAMBIOS
+  // ==================================================================
 }) => {
-  const paddingLength = 5;
+  
+  // Eliminamos el paddingLength fijo de aquí
+
+  // Creamos la lista de números a mostrar, ya sea del rango o de la búsqueda
+  const numerosAMostrar = numerosFiltrados || Array.from({ length: rangoFin - rangoInicio }, (_, i) => rangoInicio + i);
 
   return (
     <div className="mt-2 w-full">
       <div className="overflow-auto max-h-[500px] p-2 bg-gray-50 rounded-lg border">
-        {/* RESPONSIVO: Cambiamos las columnas según el tamaño de pantalla */}
         <div className="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-10 gap-1 sm:gap-1.5 w-max mx-auto">
-          {/* PAGINACIÓN: El bucle ahora usa el rango */}
-          {Array.from({ length: rangoFin - rangoInicio }, (_, i) => {
-            const numeroBoleto = rangoInicio + i;
+          {numerosAMostrar.map(numeroBoleto => {
             const estaOcupado = boletosOcupados.has(numeroBoleto);
 
             if (filtroActivo && estaOcupado) {
@@ -44,11 +52,16 @@ const SelectorBoletos = ({
               <button
                 key={numeroBoleto}
                 onClick={() => onToggleBoleto(numeroBoleto)}
-                // RESPONSIVO: Ajustamos el tamaño del botón
                 className={`border w-14 h-10 sm:w-12 rounded text-xs sm:text-sm font-mono transition-transform transform hover:scale-110 ${color}`}
                 disabled={estaOcupado}
               >
-                {numeroBoleto.toString().padStart(paddingLength, '0')}
+                {/* ================================================================== */}
+                {/* INICIO DE CAMBIOS: Usamos el padding dinámico */}
+                {/* ================================================================== */}
+                {String(numeroBoleto).padStart(paddingLength, '0')}
+                {/* ================================================================== */}
+                {/* FIN DE CAMBIOS */}
+                {/* ================================================================== */}
               </button>
             );
           })}

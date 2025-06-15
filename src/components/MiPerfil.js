@@ -22,7 +22,8 @@ function MiPerfil() {
   const { currentUser, userData } = useAuth();
   
   const [activeTab, setActiveTab] = useState('historial');
-  const [nombre, setNombre] = useState(userData?.nombre || '');
+  const [nombre, setNombre] = useState('');
+  const [apellidos, setApellidos] = useState('');
   const [telefono, setTelefono] = useState(userData?.telefono || '');
   const [newEmail, setNewEmail] = useState('');
   const [currentPasswordForEmail, setCurrentPasswordForEmail] = useState('');
@@ -46,6 +47,13 @@ function MiPerfil() {
     mensaje += `Mi compra aún aparece como 'apartado' y me gustaría verificar el estado de mi pago. ¡Gracias!`;
     return encodeURIComponent(mensaje);
   };
+   useEffect(() => {
+    if (userData) {
+      setNombre(userData.nombre || '');
+      setApellidos(userData.apellidos || '');
+      setTelefono(userData.telefono || '');
+    }
+  }, [userData]);
 
   useEffect(() => {
     if (!currentUser || activeTab !== 'historial') {
@@ -77,17 +85,17 @@ function MiPerfil() {
 
   }, [currentUser, activeTab]);
 
-  const handleProfileUpdate = async (e) => {
+    const handleProfileUpdate = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
-    if (nombre === userData.nombre && telefono === userData.telefono) {
+    if (nombre === userData.nombre && apellidos === userData.apellidos && telefono === userData.telefono) {
       setMessage('No hay cambios para guardar.');
       return;
     }
     try {
       const userRef = doc(db, 'usuarios', currentUser.uid);
-      await updateDoc(userRef, { nombre, telefono });
+      await updateDoc(userRef, { nombre, apellidos, telefono });
       setMessage('¡Datos del perfil actualizados con éxito!');
     } catch (err) {
       console.error("Error al actualizar perfil:", err);
@@ -166,7 +174,7 @@ function MiPerfil() {
       <div className="max-w-4xl mx-auto p-4 sm:p-8">
         <div className="text-center mb-8">
             <img src={currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.nombre)}&background=random&color=fff`} alt="Avatar" className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-white shadow-lg"/>
-            <h1 className="text-4xl font-bold text-gray-800">Hola, {userData.nombre}</h1>
+            <h1 className="text-4xl font-bold text-gray-800">Hola, {`${userData.nombre} ${userData.apellidos || ''}`}</h1>
             <p className="text-lg text-gray-600">Bienvenido a tu panel personal</p>
         </div>
         
@@ -256,7 +264,16 @@ function MiPerfil() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Mis Datos</h2>
               <form onSubmit={handleProfileUpdate} className="space-y-4">
                 <div><label className="block text-sm font-medium text-gray-700">Correo Electrónico</label><input type="email" value={currentUser.email} disabled className="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm"/></div>
-                <div><label htmlFor="nombre" className="block text-sm font-medium text-gray-700">Nombre Completo</label><input id="nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">Nombre(s)</label>
+                        <input id="nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+                    </div>
+                    <div>
+                        <label htmlFor="apellidos" className="block text-sm font-medium text-gray-700">Apellidos</label>
+                        <input id="apellidos" type="text" value={apellidos} onChange={(e) => setApellidos(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+                    </div>
+                </div>
                 <div><label htmlFor="telefono" className="block text-sm font-medium text-gray-700">Teléfono</label><input id="telefono" type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
                 <button type="submit" className="w-full mt-4 px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Guardar Cambios</button>
               </form>
