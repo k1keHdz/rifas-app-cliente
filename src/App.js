@@ -1,11 +1,14 @@
 // src/App.js
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import NosotrosPage from "./pages/NosotrosPage";
+import TransparenciaPage from "./pages/TransparenciaPage";
 import { RifasProvider } from "./context/RifasContext";
 import { AuthProvider } from "./context/AuthContext";
 
 // Componentes y Páginas
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import Login from "./components/Login";
 import Registro from "./components/Registro";
 import RifasPublic from "./components/RifasPublic";
@@ -21,10 +24,11 @@ import Home from "./pages/Home";
 import VerificadorBoletosPage from "./pages/VerificadorBoletosPage";
 import ComoParticiparPage from "./pages/ComoParticiparPage";
 import GestionarGanadoresPage from "./pages/admin/GestionarGanadoresPage";
-// ==================================================================
-// INICIO DE CAMBIOS: Importamos la nueva página de ganadores
-// ==================================================================
 import GanadoresPage from "./pages/GanadoresPage";
+// ==================================================================
+// INICIO DE CAMBIOS: Importamos la nueva página de contacto
+// ==================================================================
+import ContactoPage from "./pages/ContactoPage";
 // ==================================================================
 // FIN DE CAMBIOS
 // ==================================================================
@@ -46,10 +50,11 @@ function App() {
               <Route path="/registro" element={<Registro />} />
               <Route path="/verificador" element={<VerificadorBoletosPage />} />
               <Route path="/como-participar" element={<ComoParticiparPage />} />
+              <Route path="/ganadores" element={<GanadoresPage />} />
               {/* ================================================================== */}
               {/* INICIO DE CAMBIOS: Añadimos la nueva ruta pública */}
               {/* ================================================================== */}
-              <Route path="/ganadores" element={<GanadoresPage />} />
+              <Route path="/contacto" element={<ContactoPage />} />
               {/* ================================================================== */}
               {/* FIN DE CAMBIOS */}
               {/* ================================================================== */}
@@ -60,11 +65,13 @@ function App() {
               <Route path="/admin/historial-ventas" element={<RutaProtegida rolRequerido="admin"><SeleccionarRifaHistorial /></RutaProtegida>} />
               <Route path="/admin/rifa/:id" element={<RutaProtegida rolRequerido="admin"><RifaDetalleAdmin /></RutaProtegida>} />
               <Route path="/admin/ganadores" element={<RutaProtegida rolRequerido="admin"><GestionarGanadoresPage /></RutaProtegida>} />
-              
               <Route path="/completar-perfil" element={<RutaProtegida><CompletarPerfil /></RutaProtegida>} />
               <Route path="/perfil" element={<RutaProtegida><MiPerfil /></RutaProtegida>} />
+              <Route path="/nosotros" element={<NosotrosPage />} />
+              <Route path="/transparencia" element={<TransparenciaPage />} />
             </Routes>
           </main>
+          <Footer />
         </Router>
       </RifasProvider>
     </AuthProvider>

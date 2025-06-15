@@ -12,6 +12,8 @@ import PanelDeExportacion from "./PanelDeExportacion";
 import emailjs from '@emailjs/browser';
 import EMAIL_CONFIG from '../emailjsConfig';
 
+
+// Íconos para las pestañas
 const VentasIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
 const StatsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M3 3v18h18"/><path d="m18 9-5 5-4-4-3 3"/></svg>;
 const AccionesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
@@ -28,26 +30,34 @@ function RifaDetalleAdmin() {
   const [modoGrafica, setModoGrafica] = useState("dia");
   const graficoRef = useRef(null);
   const [filtroVentas, setFiltroVentas] = useState('todos');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
+    setCargando(true);
     const docRef = doc(db, "rifas", rifaId);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) { setRifa({ id: docSnap.id, ...docSnap.data() }); } 
-      else { setRifa(null); }
+      if (docSnap.exists()) {
+        setRifa({ id: docSnap.id, ...docSnap.data() });
+      } else {
+        setRifa(null);
+      }
     });
     return () => unsubscribe();
   }, [rifaId]);
 
   useEffect(() => {
-    if (!rifaId) { setCargando(false); return; };
+    if (!rifaId) {
+      setCargando(false);
+      return;
+    };
     const ventasRef = collection(db, "rifas", rifaId, "ventas");
     const q = query(ventasRef, orderBy("fechaApartado", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setVentas(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setCargando(false);
     }, (error) => {
-      console.error("Error al cargar ventas: ", error);
-      setCargando(false);
+        console.error("Error al cargar ventas: ", error);
+        setCargando(false);
     });
     return () => unsubscribe();
   }, [rifaId]);
@@ -65,7 +75,6 @@ function RifaDetalleAdmin() {
     } catch (error) {
       console.error("Error CRÍTICO al confirmar el pago en Firestore:", error);
       alert("Hubo un error CRÍTICO al confirmar el pago.");
-      return;
     }
   };
 
@@ -81,7 +90,7 @@ function RifaDetalleAdmin() {
       alert("Hubo un error al liberar los boletos.");
     }
   };
-
+  
   const handleNotificarWhatsApp = (venta) => {
     const boletosTexto = venta.numeros.map(n => String(n).padStart(5, '0')).join(', ');
     let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para la rifa "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Te deseamos mucha suerte en el sorteo!`;
@@ -109,16 +118,13 @@ function RifaDetalleAdmin() {
       alert(`AVISO: No se pudo enviar el correo.\nError: ${error.text || 'Revisa la consola y tu configuración de EmailJS.'}`);
     }
   };
-  
+
   const handleEnviarRecordatorio = (venta) => {
     const tuNumeroDeWhatsApp = '527773367064';
     const nombreCliente = venta.comprador.nombre;
     const nombreRifa = venta.nombreRifa;
     const boletosTexto = venta.numeros.map(n => String(n).padStart(5, '0')).join(', ');
-
-    let mensaje = `¡Hola, ${nombreCliente}! 👋 Te escribimos de Rifas App.\n\n`;
-    mensaje += `Notamos que tu apartado para la rifa "${nombreRifa}" con los boletos *${boletosTexto}* ha expirado.\n\n`;
-    mensaje += `¡No te preocupes! Aún podrías tener la oportunidad de participar. Contáctanos por este medio para ver si tus boletos siguen disponibles y ayudarte a completar la compra. ¡No te quedes fuera!`;
+    let mensaje = `¡Hola, ${nombreCliente}! 👋 Te escribimos de Rifas App.\n\nNotamos que tu apartado para la rifa "${nombreRifa}" con los boletos *${boletosTexto}* ha expirado.\n\n¡No te preocupes! Aún podrías tener la oportunidad de participar. Contáctanos por este medio para ver si tus boletos siguen disponibles y ayudarte a completar la compra. ¡No te quedes fuera!`;
     const waUrl = `https://wa.me/${tuNumeroDeWhatsApp}?text=${encodeURIComponent(mensaje)}`;
     window.open(waUrl, '_blank');
   };
@@ -136,24 +142,42 @@ function RifaDetalleAdmin() {
 
   const ventasFiltradas = useMemo(() => {
     if (!ventas) return [];
-    let ventasPorFecha = ventas.filter(v => {
-      const fechaVenta = v.fechaApartado?.toDate();
-      if (!fechaVenta) return true;
-      if (fechaInicio && new Date(fechaVenta) < new Date(fechaInicio)) return false;
-      if (fechaFin) {
-        const fin = new Date(fechaFin);
-        fin.setHours(23, 59, 59, 999);
-        if (fechaVenta > fin) return false;
-      }
-      return true;
-    });
+    
+    const terminoBusqueda = searchTerm.trim().toLowerCase();
+
+    const ventasResult = ventas
+      .filter(venta => {
+        if (!terminoBusqueda) return true;
+        const esBusquedaNumerica = !isNaN(Number(terminoBusqueda)) && terminoBusqueda !== '';
+        if (esBusquedaNumerica) {
+          return venta.numeros && venta.numeros.includes(parseInt(terminoBusqueda, 10));
+        } else {
+          return venta.idCompra && venta.idCompra.toLowerCase().includes(terminoBusqueda);
+        }
+      })
+      .filter(v => {
+        const fechaVenta = v.fechaApartado?.toDate();
+        if (!fechaVenta) return true;
+        if (fechaInicio && new Date(fechaVenta) < new Date(fechaInicio)) return false;
+        if (fechaFin) {
+          const fin = new Date(fechaFin);
+          fin.setHours(23, 59, 59, 999);
+          if (fechaVenta > fin) return false;
+        }
+        return true;
+      });
+
     switch (filtroVentas) {
-      case 'pagados': return ventasPorFecha.filter(v => v.estado === 'comprado');
-      case 'apartados': return ventasPorFecha.filter(v => v.estado === 'apartado');
-      case 'manual': return ventasPorFecha.filter(v => v.estado === 'comprado' && !v.userId);
-      default: return ventasPorFecha;
+      case 'pagados':
+        return ventasResult.filter(v => v.estado === 'comprado');
+      case 'apartados':
+        return ventasResult.filter(v => v.estado === 'apartado');
+      case 'manual':
+        return ventasResult.filter(v => v.estado === 'comprado' && !v.userId);
+      default:
+        return ventasResult;
     }
-  }, [ventas, fechaInicio, fechaFin, filtroVentas]);
+  }, [ventas, fechaInicio, fechaFin, filtroVentas, searchTerm]);
 
   const datosGrafico = useMemo(() => {
     if (!ventasFiltradas) return [];
@@ -180,6 +204,7 @@ function RifaDetalleAdmin() {
   return (
     <div className="p-4 max-w-7xl mx-auto">
       <Link to="/admin/historial-ventas" className="text-blue-600 hover:underline mb-4 inline-block">← Volver a la selección de rifas</Link>
+      
       <div className="bg-white shadow-lg rounded-xl p-6 mb-6">
         <h1 className="text-3xl font-bold mb-4 text-gray-800">{rifa.nombre}</h1>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
@@ -189,6 +214,7 @@ function RifaDetalleAdmin() {
           <div className="p-2 rounded-lg bg-blue-50"><p className="text-xs text-blue-700 uppercase font-semibold">Disponibles</p><p className="text-2xl font-bold text-blue-800">{estadisticas.disponiblesCount}</p></div>
         </div>
       </div>
+
       <div className="border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-2 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
           <button onClick={() => setActiveTab('ventas')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'ventas' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }`}><VentasIcon/> Historial de Ventas</button>
@@ -196,12 +222,21 @@ function RifaDetalleAdmin() {
           <button onClick={() => setActiveTab('acciones')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'acciones' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }`}><AccionesIcon/> Acciones</button>
         </nav>
       </div>
+
       <div className="animate-fade-in mt-6">
         {activeTab === 'ventas' && (
           <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                <h2 className="text-xl font-bold text-gray-800">Historial de Ventas y Apartados</h2>
-                <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
+                <h2 className="text-xl font-bold text-gray-800">Filtros de Búsqueda</h2>
+                <div className="flex-grow sm:flex-grow-0 sm:w-72">
+                    <input 
+                        type="text"
+                        placeholder="Buscar por ID o No. Boleto..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full border-gray-300 rounded-md shadow-sm"
+                    />
+                </div>
             </div>
             <div className="border-b border-gray-200">
                 <nav className="-mb-px flex space-x-4 overflow-x-auto" aria-label="Filters">
@@ -225,13 +260,9 @@ function RifaDetalleAdmin() {
         {activeTab === 'stats' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white p-4 rounded-lg shadow-md border space-y-4">
-                <h3 className="text-lg font-bold">Exportar Reportes</h3>
-                <p className="text-sm text-gray-600">Genera un informe con los datos de la vista actual de la tabla de historial (se aplican los filtros de fecha y estado).</p>
-                <PanelDeExportacion
-                  rifa={rifa}
-                  ventasFiltradas={ventasFiltradas}
-                  graficoRef={graficoRef}
-                />
+                <h3 className="text-lg font-bold">Filtros de Reporte</h3>
+                <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
+                <PanelDeExportacion rifa={rifa} ventasFiltradas={ventasFiltradas} graficoRef={graficoRef} />
             </div>
             <GraficaVentas graficoRef={graficoRef} datosGrafico={datosGrafico} modo={modoGrafica} setModo={setModoGrafica} />
           </div>
@@ -247,6 +278,7 @@ function RifaDetalleAdmin() {
           </div>
         )}
       </div>
+      
       {showModalVenta && (
         <ModalVentaManual rifa={rifa} onClose={() => setShowModalVenta(false)} />
       )}

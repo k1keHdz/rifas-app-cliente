@@ -41,14 +41,18 @@ function Navbar() {
           <div className="hidden md:flex items-center space-x-4">
             <Link to="/rifas" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Rifas públicas</Link>
             <Link to="/como-participar" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Cómo participar</Link>
-            {/* ================================================================== */}
-            {/* INICIO DE CAMBIOS: Añadimos el nuevo enlace a Ganadores */}
-            {/* ================================================================== */}
             <Link to="/ganadores" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Ganadores</Link>
+            {/* ================================================================== */}
+            {/* INICIO DE CAMBIOS: Añadimos los nuevos enlaces */}
+            {/* ================================================================== */}
+            <Link to="/transparencia" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Transparencia</Link>
+            <Link to="/nosotros" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Nosotros</Link>
             {/* ================================================================== */}
             {/* FIN DE CAMBIOS */}
             {/* ================================================================== */}
             <Link to="/verificador" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Verificar Boleto</Link>
+            <Link to="/contacto" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Contacto</Link>
+            
             {currentUser && userData?.rol === 'admin' && (
               <Link to="/admin" className="px-3 py-2 rounded-md text-sm font-bold hover:bg-blue-700">Admin</Link>
             )}
@@ -82,14 +86,17 @@ function Navbar() {
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             <Link to="/rifas" onClick={handleLinkClick} className="text-gray-200 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Rifas públicas</Link>
             <Link to="/como-participar" onClick={handleLinkClick} className="text-gray-200 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Cómo participar</Link>
-            {/* ================================================================== */}
-            {/* INICIO DE CAMBIOS: Añadimos el enlace al menú móvil */}
-            {/* ================================================================== */}
             <Link to="/ganadores" onClick={handleLinkClick} className="text-gray-200 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Ganadores</Link>
+            <Link to="/verificador" onClick={handleLinkClick} className="text-gray-200 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Verificar Boleto</Link>
+            {/* ================================================================== */}
+            {/* INICIO DE CAMBIOS: Añadimos los enlaces al menú móvil */}
+            {/* ================================================================== */}
+            <Link to="/transparencia" onClick={handleLinkClick} className="text-gray-200 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Transparencia</Link>
+            <Link to="/nosotros" onClick={handleLinkClick} className="text-gray-200 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Nosotros</Link>
+            <Link to="/contacto" onClick={handleLinkClick} className="text-gray-200 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Contacto</Link>
             {/* ================================================================== */}
             {/* FIN DE CAMBIOS */}
             {/* ================================================================== */}
-            <Link to="/verificador" onClick={handleLinkClick} className="text-gray-200 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Verificar Boleto</Link>
             {currentUser && userData?.rol === 'admin' && (
               <Link to="/admin" onClick={handleLinkClick} className="text-gray-200 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Admin</Link>
             )}

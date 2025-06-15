@@ -1,19 +1,17 @@
 // src/components/ModalMaquinaSuerte.js
 import React, { useState } from 'react';
 
-const ModalMaquinaSuerte = ({ totalBoletos, boletosOcupados, onCerrar, onSeleccionar }) => {
+const ModalMaquinaSuerte = ({ totalBoletos, boletosOcupados, onCerrar, onSeleccionar, paddingLength = 2 }) => {
   const [cantidad, setCantidad] = useState(1);
   const [sugeridos, setSugeridos] = useState([]);
   const [error, setError] = useState('');
 
   const generarAleatorios = () => {
     setError('');
-    setSugeridos([]); // Limpiamos los sugeridos anteriores
+    setSugeridos([]);
     
-    // Este array es más eficiente que iterar todos los boletos si la rifa es grande
-    // y la mayoría de boletos están disponibles.
     const disponibles = [];
-    // Creamos un Set de los boletos ocupados para búsquedas rápidas
+    // Creamos un Set para búsquedas rápidas y eficientes
     const ocupadosSet = new Set(boletosOcupados.keys());
 
     for (let i = 0; i < totalBoletos; i++) {
@@ -28,22 +26,19 @@ const ModalMaquinaSuerte = ({ totalBoletos, boletosOcupados, onCerrar, onSelecci
     }
 
     // Algoritmo de Fisher-Yates para una selección aleatoria eficiente
-    let n = disponibles.length;
-    while (n > 0) {
-      const i = Math.floor(Math.random() * n--);
-      [disponibles[n], disponibles[i]] = [disponibles[i], disponibles[n]];
+    for (let i = disponibles.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [disponibles[i], disponibles[j]] = [disponibles[j], disponibles[i]];
     }
     
     setSugeridos(disponibles.slice(0, cantidad));
   };
 
-  // CAMBIO: Se actualiza la lista de opciones según lo solicitado.
-  const opcionesCantidad = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 35, 40, 45, 50];
-  const paddingLength = 5;
+  const opcionesCantidad = [1, 2, 3, 4, 5, 10, 15, 20, 25, 50];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 relative">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onCerrar}>
+      <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
         <button onClick={onCerrar} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
         <div className='text-center'>
             <span className='text-5xl'>🎰</span>
@@ -73,8 +68,7 @@ const ModalMaquinaSuerte = ({ totalBoletos, boletosOcupados, onCerrar, onSelecci
             <p className='text-center text-gray-700 mb-2 font-semibold'>¡Tus números de la suerte!</p>
             <div className="flex flex-wrap gap-2 justify-center my-4 p-3 bg-gray-100 rounded-lg">
               {sugeridos.map((n) => (
-                // CAMBIO: Formato de 5 dígitos
-                <span key={n} className="px-3 py-1 bg-green-600 text-white rounded-md font-mono shadow-sm">{n.toString().padStart(paddingLength, "0")}</span>
+                <span key={n} className="px-3 py-1 bg-green-600 text-white rounded-md font-mono shadow-sm">{String(n).padStart(paddingLength, "0")}</span>
               ))}
             </div>
             <button onClick={() => onSeleccionar(sugeridos)} className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg w-full font-bold text-lg transition-transform transform hover:scale-105">

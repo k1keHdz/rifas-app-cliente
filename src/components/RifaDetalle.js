@@ -1,6 +1,5 @@
 // src/components/RifaDetalle.js
-
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { doc, getDoc, collection, addDoc, serverTimestamp, Timestamp, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
@@ -31,30 +30,28 @@ function RifaDetalle() {
   const [showInvitationModal, setShowInvitationModal] = useState(false);
 
   const {
-    boletosOcupados, boletosSeleccionados, cargandoBoletos, toggleBoleto,
-    seleccionarBoleto, limpiarSeleccion, agregarMultiplesBoletos,
+    boletosOcupados,
+    boletosSeleccionados,
+    cargandoBoletos,
+    toggleBoleto,
+    seleccionarBoleto,
+    limpiarSeleccion,
+    agregarBoletosEspecificos, // Usamos la nueva función
   } = useBoletos(id);
 
   const location = useLocation();
 
-  // ==================================================================
-  // INICIO DE CAMBIOS: Lógica de formato dinámico
-  // ==================================================================
   const paddingLength = useMemo(() => {
-    if (!rifa || !rifa.boletos) return 2; // Default a 2 dígitos (para 100 boletos)
-    // El número de dígitos es la longitud del número más alto (ej. 99 -> 2, 999 -> 3)
+    if (!rifa || !rifa.boletos) return 2;
     return String(rifa.boletos - 1).length;
   }, [rifa]);
-  // ==================================================================
-  // FIN DE CAMBIOS
-  // ==================================================================
 
   useEffect(() => {
     if (location.state?.boletoSeleccionado) {
-        const numero = location.state.boletoSeleccionado;
-        if (!cargandoBoletos && !boletosOcupados.has(numero) && !boletosSeleccionados.includes(numero)) {
-            seleccionarBoleto(numero);
-        }
+      const numero = location.state.boletoSeleccionado;
+      if (!cargandoBoletos && !boletosOcupados.has(numero) && !boletosSeleccionados.includes(numero)) {
+        seleccionarBoleto(numero);
+      }
     }
   }, [location.state, cargandoBoletos, boletosOcupados, boletosSeleccionados, seleccionarBoleto]);
 
@@ -99,16 +96,15 @@ function RifaDetalle() {
   const confirmarApartado = async (datosDelFormulario) => {
     const boletosYaComprados = boletosSeleccionados.filter(b => boletosOcupados.has(b));
     if (boletosYaComprados.length > 0) {
-      alert(`¡Error! El/los boleto(s) ${boletosYaComprados.join(', ')} ya fue(ron) comprado(s) mientras decidías.`);
+      alert(`¡Error! El/los boleto(s) ${boletosYaComprados.join(', ')} ya fue(ron) comprado(s).`);
       window.location.reload();
       return;
     }
     try {
       const DOCE_HORAS_EN_MS = 12 * 60 * 60 * 1000;
       const idCompra = nanoid(8).toUpperCase();
-
       const ventaData = {
-        idCompra: idCompra,
+        idCompra,
         comprador: datosDelFormulario,
         numeros: boletosSeleccionados,
         cantidad: boletosSeleccionados.length,
@@ -121,29 +117,14 @@ function RifaDetalle() {
         imagenRifa: (rifa.imagenes && rifa.imagenes[0]) || null,
         precioBoleto: rifa.precio,
       };
-      
       await addDoc(collection(db, "rifas", id, "ventas"), ventaData);
       setMostrarModalDatos(false);
-      
       const tuNumeroDeWhatsApp = '527773367064';
       const nombreRifa = rifa.nombre;
-      // ==================================================================
-      // INICIO DE CAMBIOS: Usamos el padding dinámico en el mensaje
-      // ==================================================================
       const boletosTexto = boletosSeleccionados.map(n => String(n).padStart(paddingLength, '0')).join(', ');
-      // ==================================================================
-      // FIN DE CAMBIOS
-      // ==================================================================
       const totalAPagar = rifa.precio * boletosSeleccionados.length;
       const nombreCliente = `${datosDelFormulario.nombre} ${datosDelFormulario.apellidos || ''}`;
-
-      let mensaje = `¡Hola! 👋 Quiero apartar mis boletos para la rifa "${nombreRifa}".\n\n`;
-      mensaje += `*ID de Compra: ${idCompra}*\n\n`;
-      mensaje += `Mis números seleccionados son: *${boletosTexto}*.\n`;
-      mensaje += `Total a pagar: *$${totalAPagar.toLocaleString('es-MX')}*.\n`;
-      mensaje += `Mi nombre es: ${nombreCliente}.\n\n`;
-      mensaje += `Quedo a la espera de las instrucciones para realizar el pago. ¡Tengo 12 horas para completarlo! Gracias.`;
-      
+      let mensaje = `¡Hola! 👋 Quiero apartar mis boletos para la rifa "${nombreRifa}".\n\n*ID de Compra: ${idCompra}*\n\nMis números seleccionados son: *${boletosTexto}*.\nTotal a pagar: *$${totalAPagar.toLocaleString('es-MX')}*.\nMi nombre es: ${nombreCliente}.\n\nQuedo a la espera de las instrucciones para realizar el pago. ¡Tengo 12 horas para completarlo! Gracias.`;
       const waUrl = `https://wa.me/${tuNumeroDeWhatsApp}?text=${encodeURIComponent(mensaje)}`;
       window.open(waUrl, '_blank');
       limpiarSeleccion();
@@ -165,7 +146,6 @@ function RifaDetalle() {
   const porcentajeVendido = rifa.boletos > 0 ? (boletosVendidos / rifa.boletos) * 100 : 0;
   const conditionText = getDrawConditionText(rifa);
   const imagenActual = rifa.imagenes?.[imagenIndex] || rifa.imagen;
-  
   const totalPaginas = Math.ceil(rifa.boletos / boletosPorPagina);
   const rangoInicio = (currentPage - 1) * boletosPorPagina;
   const rangoFin = Math.min(currentPage * boletosPorPagina, rifa.boletos);
@@ -216,13 +196,7 @@ function RifaDetalle() {
             <div className="flex items-center gap-1"><div className="w-4 h-4 bg-green-600 rounded-sm"></div> Seleccionado</div>
           </div>
           <div className="flex flex-col items-center">
-              <BuscadorBoletos 
-                totalBoletos={rifa.boletos} 
-                boletosOcupados={boletosOcupados} 
-                boletosSeleccionados={boletosSeleccionados} 
-                onSelectBoleto={seleccionarBoleto} 
-                paddingLength={paddingLength}
-              />
+              <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={seleccionarBoleto} paddingLength={paddingLength} />
               {boletosSeleccionados.length > 0 && ( 
                 <div className="text-center my-4 p-4 bg-gray-50 border rounded-lg w-full max-w-lg animate-fade-in"> 
                   <p className="font-bold mb-2 text-gray-800">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> 
@@ -255,7 +229,18 @@ function RifaDetalle() {
       </div>
       
       {mostrarModalDatos && <ModalDatosComprador onCerrar={() => setMostrarModalDatos(false)} onConfirmar={confirmarApartado} datosIniciales={datosPerfil} />}
-      {mostrarModalSuerte && <ModalMaquinaSuerte totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} onCerrar={() => setMostrarModalSuerte(false)} onSeleccionar={(numeros) => { agregarMultiplesBoletos(numeros); setMostrarModalSuerte(false); }} />}
+      {mostrarModalSuerte && 
+        <ModalMaquinaSuerte 
+          totalBoletos={rifa.boletos} 
+          boletosOcupados={boletosOcupados} 
+          onCerrar={() => setMostrarModalSuerte(false)} 
+          onSeleccionar={(numeros) => { 
+            agregarBoletosEspecificos(numeros); 
+            setMostrarModalSuerte(false); 
+          }}
+          paddingLength={paddingLength}
+        />
+      }
       {imagenAmpliadaIndex !== null && <ModalImagen imagenes={rifa.imagenes} indexInicial={imagenAmpliadaIndex} onClose={() => setImagenAmpliadaIndex(null)} />}
       {showInvitationModal && (
         <ModalInvitacionRegistro
