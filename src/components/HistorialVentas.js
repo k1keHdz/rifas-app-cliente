@@ -6,12 +6,13 @@ function HistorialVentas({
   ventasFiltradas = [], 
   mostrarTotal, 
   onConfirmarPago, 
-  onLiberarBoletos,
+  onLiberarBoletos, 
+  onNotificarWhatsApp, 
+  onNotificarEmail,
   // ==================================================================
-  // INICIO DE CAMBIOS: Aceptamos las nuevas props para notificaciones
+  // INICIO DE CAMBIOS: Aceptamos la nueva prop para el recordatorio
   // ==================================================================
-  onNotificarWhatsApp,
-  onNotificarEmail
+  onEnviarRecordatorio
   // ==================================================================
   // FIN DE CAMBIOS
   // ==================================================================
@@ -78,26 +79,37 @@ function HistorialVentas({
                     )}
                   </td>
                   <td className="px-4 py-2 border align-top">
-                    {/* ================================================================== */}
-                    {/* INICIO DE CAMBIOS: Lógica de botones separada y robusta */}
-                    {/* ================================================================== */}
                     <div className="flex flex-col gap-2 items-start w-32">
-                      {esApartado && (
-                        <>
-                          <button 
-                            onClick={() => onConfirmarPago(venta)}
-                            className="w-full bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700 transition-colors text-center"
-                          >
-                            Confirmar Pago
-                          </button>
-                          <button 
-                            onClick={() => onLiberarBoletos(venta.id, venta.numeros)}
-                            className="w-full bg-gray-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-gray-600 transition-colors text-center"
-                          >
-                            Liberar Boletos
-                          </button>
-                        </>
+                      {esApartado && !haExpirado && (
+                        <button 
+                          onClick={() => onConfirmarPago(venta)}
+                          className="w-full bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700 transition-colors text-center"
+                        >
+                          Confirmar Pago
+                        </button>
                       )}
+                      {esApartado && (
+                        <button 
+                          onClick={() => onLiberarBoletos(venta.id, venta.numeros)}
+                          className="w-full bg-gray-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-gray-600 transition-colors text-center"
+                        >
+                          Liberar Boletos
+                        </button>
+                      )}
+                      {/* ================================================================== */}
+                      {/* INICIO DE CAMBIOS: Botón de recordatorio para boletos expirados */}
+                      {/* ================================================================== */}
+                      {esApartado && haExpirado && (
+                        <button
+                          onClick={() => onEnviarRecordatorio(venta)}
+                          className="w-full bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-600 transition-colors text-center"
+                        >
+                          Enviar Recordatorio
+                        </button>
+                      )}
+                      {/* ================================================================== */}
+                      {/* FIN DE CAMBIOS */}
+                      {/* ================================================================== */}
 
                       {esComprado && (
                         <>
@@ -106,9 +118,6 @@ function HistorialVentas({
                         </>
                       )}
                     </div>
-                    {/* ================================================================== */}
-                    {/* FIN DE CAMBIOS */}
-                    {/* ================================================================== */}
                   </td>
                 </tr>
               );
@@ -119,7 +128,7 @@ function HistorialVentas({
               <tr className="bg-gray-100 font-bold">
                 <td colSpan="5" className="px-4 py-2 border text-right">Total de Boletos (en esta vista)</td>
                 <td className="px-4 py-2 border text-center">{totalBoletos}</td>
-                <td className="px-4 py-2 border"></td>
+                <td colSpan="2" className="px-4 py-2 border"></td>
               </tr>
             </tfoot>
           )}
