@@ -16,7 +16,7 @@ function TransparenciaPage() {
                 Tu confianza es nuestra prioridad. Por eso, todos nuestros sorteos se basan en los resultados oficiales de la Lotería Nacional de México, una institución de confianza y reconocida públicamente.
               </p>
               <p className="mt-4 text-lg leading-6 text-blue-200">
-                <strong>¿Cómo funciona?</strong> El número ganador de nuestras rifas se determina por los últimos dígitos del premio mayor del sorteo de la Lotería Nacional especificado en la descripción de cada rifa. Esto asegura un proceso 100% imparcial y auditable por cualquier participante.
+                <strong>¿Cómo funciona?</strong> El número ganador de nuestros sorteos se determina por los últimos dígitos del premio mayor del sorteo de la Lotería Nacional especificado en la descripción de cada sorteo. Esto asegura un proceso 100% imparcial y auditable por cualquier participante.
               </p>
             </div>
           </div>

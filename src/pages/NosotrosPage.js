@@ -12,10 +12,10 @@ function NosotrosPage() {
               Nuestra Historia
             </h2>
             <p className="mt-3 max-w-3xl text-lg text-gray-500">
-              Bienvenido a Rifas App. Nacimos de la pasión por crear oportunidades emocionantes y transparentes para todos. Creemos que la suerte debe ser accesible y que cada participante merece una experiencia justa y clara.
+              Bienvenido a Sorteos App. Nacimos de la pasión por crear oportunidades emocionantes y transparentes para todos. Creemos que la suerte debe ser accesible y que cada participante merece una experiencia justa y clara.
             </p>
             <p className="mt-4 text-lg text-gray-500">
-              Nuestro compromiso es utilizar la tecnología para simplificar el proceso de participación en rifas, garantizando que cada sorteo se realice con la máxima integridad, basándonos en los resultados oficiales de la Lotería Nacional.
+              Nuestro compromiso es utilizar la tecnología para simplificar el proceso de participación en sorteos, garantizando que cada uno se realice con la máxima integridad, basándonos en los resultados oficiales de la Lotería Nacional.
             </p>
           </div>
           <div className="mt-8 grid grid-cols-2 gap-0.5 md:grid-cols-3 lg:mt-0 lg:grid-cols-2">

@@ -170,17 +170,17 @@ const ResultadosModal = ({ isOpen, onClose, data, isLoading }) => {
                         <div className="py-10">Cargando resultados...</div>
                     ) : data ? (
                         <>
-                           <span className="text-sm font-bold text-indigo-500 uppercase">Resultados del Sorteo</span>
-                           <h3 className="text-2xl font-bold text-gray-800 mt-2">{data.nombreRifa}</h3>
-                           <p className="text-sm text-gray-500 mt-1">Sorteo realizado el: {formatDate(data.fechaRegistro)}</p>
-                           
-                           <div className="mt-8 bg-slate-100 rounded-lg py-6">
-                              <p className="text-lg text-gray-600">Boleto Ganador:</p>
-                              <p className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 tracking-wider">
-                                {String(data.numeroGanador).padStart(5, '0')}
-                              </p>
-                           </div>
-                           <p className="text-xs text-gray-400 mt-6">¡Felicidades al afortunado ganador! Gracias a todos por participar.</p>
+                            <span className="text-sm font-bold text-indigo-500 uppercase">Resultados del Sorteo</span>
+                            <h3 className="text-2xl font-bold text-gray-800 mt-2">{data.nombreRifa}</h3>
+                            <p className="text-sm text-gray-500 mt-1">Sorteo realizado el: {formatDate(data.fechaRegistro)}</p>
+                            
+                            <div className="mt-8 bg-slate-100 rounded-lg py-6">
+                               <p className="text-lg text-gray-600">Boleto Ganador:</p>
+                               <p className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 tracking-wider">
+                                   {String(data.numeroGanador).padStart(5, '0')}
+                               </p>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-6">¡Felicidades al afortunado ganador! Gracias a todos por participar.</p>
                         </>
                     ) : (
                         <p className="py-10">No se encontraron resultados para este sorteo.</p>
@@ -220,7 +220,7 @@ function Home() {
                 setRifasFinalizadas(rifasFinalizadasData);
 
             } catch (error) {
-                console.error("Error al cargar las rifas: ", error);
+                console.error("Error al cargar los sorteos: ", error); // Texto actualizado
             } finally {
                 setCargando(false);
             }
@@ -281,12 +281,12 @@ function Home() {
             
             {rifasFinalizadas.length > 0 && (
                  <div className="bg-white pt-16 sm:pt-24 pb-4">
-                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                         <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-12">Sorteos Finalizados</h2>
-                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                             {rifasFinalizadas.map(rifa => <RifaCard key={rifa.id} rifa={rifa} isFinished={true} onShowResults={handleVerResultados} />)}
-                         </div>
-                     </div>
+                      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                          <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-12">Sorteos Finalizados</h2>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                               {rifasFinalizadas.map(rifa => <RifaCard key={rifa.id} rifa={rifa} isFinished={true} onShowResults={handleVerResultados} />)}
+                          </div>
+                      </div>
                  </div>
             )}
             

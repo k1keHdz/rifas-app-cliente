@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getAuth, signOut } from "firebase/auth";
-import Avatar from "./Avatar"; // Importamos el componente Avatar
+import Avatar from "./Avatar";
 
 // --- Iconos SVG para la UI ---
 const MenuIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>;
@@ -40,7 +40,7 @@ function Navbar() {
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
             <Link to="/" onClick={handleLinkClick} className="text-xl font-bold hover:text-blue-200 transition-colors">
-              Rifas App
+              Sorteos App
             </Link>
           </div>
 
@@ -61,7 +61,7 @@ function Navbar() {
             <div className="flex items-center space-x-4 ml-4">
               {currentUser ? (
                 <div className="flex items-center space-x-4">
-                   {/* 1. Avatar del Usuario */}
+                  {/* 1. Avatar del Usuario */}
                   {userData?.rol !== 'admin' && (
                     <Link to="/perfil" title="Mi Perfil">
                       <Avatar
@@ -71,7 +71,7 @@ function Navbar() {
                       />
                     </Link>
                   )}
-                   {/* 2. Botón de Cerrar Sesión (sutil) */}
+                  {/* 2. Botón de Cerrar Sesión (sutil) */}
                   <button 
                     onClick={handleLogout} 
                     className="flex items-center text-blue-200 hover:text-white hover:bg-blue-700 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"

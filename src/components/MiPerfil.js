@@ -6,7 +6,7 @@ import { getAuth, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, re
 import { doc, getDoc, updateDoc, collectionGroup, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { Link } from 'react-router-dom';
-import { formatTicketNumber } from '../utils/rifaHelper'; // Importamos la función
+import { formatTicketNumber } from '../utils/rifaHelper';
 import ContadorRegresivo from './ContadorRegresivo';
 import Avatar from './Avatar';
 
@@ -26,7 +26,6 @@ function MiPerfil() {
   const [nombre, setNombre] = useState('');
   const [apellidos, setApellidos] = useState('');
   const [telefono, setTelefono] = useState('');
-  // ... (otros estados sin cambios)
   const [misCompras, setMisCompras] = useState([]);
   const [cargandoCompras, setCargandoCompras] = useState(true);
   const [openAccordionId, setOpenAccordionId] = useState(null);
@@ -38,7 +37,6 @@ function MiPerfil() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Nuevo estado para almacenar los totales de boletos de cada sorteo
   const [totalesRifas, setTotalesRifas] = useState({});
 
   const tuNumeroDeWhatsApp = '527773367064';
@@ -49,12 +47,13 @@ function MiPerfil() {
   const photo = userData?.photoURL || currentUser?.photoURL;
 
   const generarMensajeSoporte = (compra) => {
-    // Usamos el mapa de totales para formatear el número correctamente
-    const totalBoletos = totalesRifas[compra.rifaId] || 100; // Fallback
+    const totalBoletos = totalesRifas[compra.rifaId] || 100;
     const boletosTexto = compra.numeros.map(n => formatTicketNumber(n, totalBoletos)).join(', ');
-    let mensaje = `¡Hola! 👋 Tengo una consulta sobre mi compra para la rifa "${compra.nombreRifa}".\n\n`;
+    
+    let mensaje = `¡Hola! 👋 Tengo una consulta sobre mi compra para el sorteo "${compra.nombreRifa}".\n\n`;
     mensaje += `Mis números son: *${boletosTexto}*.\n`;
     mensaje += `Mi compra aún aparece como 'apartado' y me gustaría verificar el estado de mi pago. ¡Gracias!`;
+    
     return encodeURIComponent(mensaje);
   };
 
@@ -66,7 +65,6 @@ function MiPerfil() {
     }
   }, [userData]);
 
-  // Primer useEffect: Carga las compras del usuario
   useEffect(() => {
     if (!currentUser || activeTab !== 'historial') return;
 
@@ -83,7 +81,6 @@ function MiPerfil() {
         id: ventaDoc.id,
       }));
       setMisCompras(comprasData);
-      // No dejamos de cargar aquí, esperamos a tener los totales
     }, (error) => {
       console.error("Error al obtener historial de compras:", error);
       setError("No se pudo cargar el historial de compras.");
@@ -93,7 +90,6 @@ function MiPerfil() {
     return () => unsubscribe();
   }, [currentUser, activeTab]);
 
-  // Segundo useEffect: Carga los datos de los sorteos correspondientes
   useEffect(() => {
     if (misCompras.length === 0) {
         setCargandoCompras(false);
@@ -105,7 +101,7 @@ function MiPerfil() {
         const nuevosTotales = {};
         
         for (const rifaId of rifaIds) {
-            if (!totalesRifas[rifaId]) { // Solo busca si no lo tenemos ya
+            if (!totalesRifas[rifaId]) {
                 try {
                     const rifaRef = doc(db, 'rifas', rifaId);
                     const rifaSnap = await getDoc(rifaRef);
@@ -113,7 +109,7 @@ function MiPerfil() {
                         nuevosTotales[rifaId] = rifaSnap.data().boletos;
                     }
                 } catch (error) {
-                    console.error(`Error al cargar datos de la rifa ${rifaId}:`, error);
+                    console.error(`Error al cargar datos del sorteo ${rifaId}:`, error);
                 }
             }
         }
@@ -121,13 +117,12 @@ function MiPerfil() {
         if (Object.keys(nuevosTotales).length > 0) {
             setTotalesRifas(prev => ({ ...prev, ...nuevosTotales }));
         }
-        setCargandoCompras(false); // Ahora sí, hemos terminado de cargar todo
+        setCargandoCompras(false);
     };
 
     fetchRifaData();
-  }, [misCompras]); // Se ejecuta cuando las compras cambian
+  }, [misCompras]);
 
-  // ... (resto de funciones de manejo sin cambios)
     const handleProfileUpdate = async (e) => {
     e.preventDefault();
     setError('');
@@ -239,10 +234,10 @@ function MiPerfil() {
           {activeTab === 'historial' && (
             <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Mi Historial de Boletos</h2>
-              {cargandoCompras ? <p className="text-center py-8">Cargando tu historial...</p> : misCompras.length === 0 ? <p className="text-gray-600 text-center py-8">Aún no has participado en ninguna rifa.</p> : (
+              {cargandoCompras ? <p className="text-center py-8">Cargando tu historial...</p> : misCompras.length === 0 ? <p className="text-gray-600 text-center py-8">Aún no has participado en ningún sorteo.</p> : (
                 <div className="space-y-3">
                   {misCompras.map(compra => {
-                    const totalBoletos = totalesRifas[compra.rifaId] || 100; // Fallback
+                    const totalBoletos = totalesRifas[compra.rifaId] || 100;
                     return (
                       <div key={compra.id} className="border border-gray-200 rounded-lg overflow-hidden">
                         <button 
@@ -265,7 +260,7 @@ function MiPerfil() {
                           <div className="border-t border-gray-200 p-4 bg-gray-50 animate-fade-in">
                             <div className="flex flex-col sm:flex-row gap-4">
                               <img 
-                                src={compra.imagenRifa || `https://placehold.co/400x400/e2e8f0/e2e8f0?text=R`}
+                                src={compra.imagenRifa || `https://placehold.co/400x400/e2e8f0/e2e8f0?text=S`}
                                 alt={compra.nombreRifa} 
                                 className="w-full sm:w-32 h-32 object-cover rounded-md"
                               />
@@ -314,9 +309,8 @@ function MiPerfil() {
               )}
             </div>
           )}
-
-          {/* ... (resto del JSX sin cambios) ... */}
         </div>
+        
       </div>
     </div>
   );

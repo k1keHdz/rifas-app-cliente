@@ -9,9 +9,6 @@ import { Link } from 'react-router-dom';
 const TrophyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M5.58 11.25a2.5 2.5 0 0 1-2.45-2.5 2.5 2.5 0 0 1 2.5-2.5c1.28 0 2.45.98 2.5 2.25a2.5 2.5 0 0 1-2.5 2.5z"/><path d="M18.42 11.25a2.5 2.5 0 0 1-2.45-2.5 2.5 2.5 0 0 1 2.5-2.5c1.28 0 2.45.98 2.5 2.25a2.5 2.5 0 0 1-2.5 2.5z"/></svg>;
 const VideoIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>;
 
-// ==================================================================
-// INICIO DE CAMBIOS: Nuevo componente para el Modal de Video
-// ==================================================================
 const VideoModal = ({ videoUrl, onClose }) => {
   return (
     <div 
@@ -33,21 +30,12 @@ const VideoModal = ({ videoUrl, onClose }) => {
     </div>
   );
 };
-// ==================================================================
-// FIN DE CAMBIOS
-// ==================================================================
 
 
 function GanadoresPage() {
   const [ganadores, setGanadores] = useState([]);
   const [cargando, setCargando] = useState(true);
-  // ==================================================================
-  // INICIO DE CAMBIOS: Nuevo estado para controlar el modal de video
-  // ==================================================================
   const [videoModalUrl, setVideoModalUrl] = useState(null);
-  // ==================================================================
-  // FIN DE CAMBIOS
-  // ==================================================================
 
   useEffect(() => {
     const q = query(collection(db, "ganadores"), orderBy("fechaRegistro", "desc"));
@@ -89,9 +77,9 @@ function GanadoresPage() {
                       <div className="flex-1">
                         <p className="text-sm font-medium text-blue-600 flex items-center">
                           <TrophyIcon />
-                          <span className="ml-1">Ganador de la Rifa</span>
+                          <span className="ml-1">Ganador del Sorteo</span>
                         </p>
-                        <Link to={`/rifas/${ganador.rifaId}`} className="block mt-2">
+                        <Link to={`/rifa/${ganador.rifaId}`} className="block mt-2">
                           <p className="text-xl font-semibold text-gray-900 hover:underline">{ganador.nombreRifa}</p>
                         </Link>
                         {ganador.testimonio && (
@@ -108,9 +96,6 @@ function GanadoresPage() {
                             </div>
                           </div>
                         </div>
-                        {/* ================================================================== */}
-                        {/* INICIO DE CAMBIOS: Botón condicional para ver el video */}
-                        {/* ================================================================== */}
                         {ganador.videoURL && (
                             <button 
                                 onClick={() => setVideoModalUrl(ganador.videoURL)}
@@ -120,9 +105,6 @@ function GanadoresPage() {
                                 Ver Video del Ganador
                             </button>
                         )}
-                        {/* ================================================================== */}
-                        {/* FIN DE CAMBIOS */}
-                        {/* ================================================================== */}
                       </div>
                     </div>
                   </div>
@@ -133,15 +115,9 @@ function GanadoresPage() {
         </div>
       </div>
 
-      {/* ================================================================== */}
-      {/* INICIO DE CAMBIOS: Renderizado del modal de video */}
-      {/* ================================================================== */}
       {videoModalUrl && (
         <VideoModal videoUrl={videoModalUrl} onClose={() => setVideoModalUrl(null)} />
       )}
-      {/* ================================================================== */}
-      {/* FIN DE CAMBIOS */}
-      {/* ================================================================== */}
     </>
   );
 }

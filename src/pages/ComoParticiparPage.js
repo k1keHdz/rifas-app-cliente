@@ -56,12 +56,12 @@ function ComoParticiparPage() {
 
                 <div className="mt-12">
                     <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-12">
-                        <Paso icono={<ElegirIcon/>} titulo="Paso 1: Elige tu Rifa">
-                            Navega por nuestra sección de <Link to="/rifas" className="text-blue-600 font-semibold hover:underline">Rifas Públicas</Link> y selecciona el premio por el que quieres competir. ¡Tenemos opciones para todos los gustos!
+                        <Paso icono={<ElegirIcon/>} titulo="Paso 1: Elige tu Sorteo">
+                            Navega por nuestra <Link to="/" className="text-blue-600 font-semibold hover:underline">página de inicio</Link> y selecciona el premio por el que quieres competir. ¡Tenemos opciones para todos los gustos!
                         </Paso>
 
                         <Paso icono={<SeleccionarIcon/>} titulo="Paso 2: Selecciona tus Boletos">
-                            Una vez dentro de la rifa, verás el tablero de boletos. Elige tus números de la suerte haciendo clic sobre ellos. Puedes seleccionar tantos como quieras. ¡No olvides usar nuestra "Máquina de la Suerte" si te sientes indeciso!
+                            Una vez dentro del sorteo, verás el tablero de boletos. Elige tus números de la suerte haciendo clic sobre ellos. Puedes seleccionar tantos como quieras. ¡No olvides usar nuestra "Máquina de la Suerte" si te sientes indeciso!
                         </Paso>
 
                         <Paso icono={<PagarIcon/>} titulo="Paso 3: Aparta y Paga">
@@ -75,8 +75,8 @@ function ComoParticiparPage() {
                 </div>
 
                 <div className="text-center mt-16">
-                    <Link to="/rifas" className="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-colors shadow-lg">
-                        Ver Rifas Disponibles Ahora
+                    <Link to="/" className="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-colors shadow-lg">
+                        Ver Sorteos Disponibles Ahora
                     </Link>
                 </div>
             </div>

@@ -32,7 +32,6 @@ function RifaDetalleAdmin() {
   const [filtroVentas, setFiltroVentas] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // ... (Toda la lógica de useEffects y handlers se queda igual que la que me pasaste)
   useEffect(() => {
     const docRef = doc(db, "rifas", rifaId);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -87,7 +86,7 @@ function RifaDetalleAdmin() {
   
   const handleNotificarWhatsApp = (venta) => {
     const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
-    let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para la rifa "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Te deseamos mucha suerte en el sorteo!`;
+    let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para el sorteo "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Te deseamos mucha suerte en el sorteo!`;
     const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensajeWhats)}`;
     window.open(waUrl, '_blank');
   };
@@ -116,8 +115,8 @@ function RifaDetalleAdmin() {
   const handleEnviarRecordatorio = (venta) => {
     const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
     const nombreCliente = venta.comprador.nombre;
-    const nombreRifa = venta.nombreRifa;
-    let mensaje = `¡Hola, ${nombreCliente}! 👋 Te escribimos de Rifas App.\n\nNotamos que tu apartado para la rifa "${nombreRifa}" con los boletos *${boletosTexto}* ha expirado.\n\n¡No te preocupes! Aún podrías tener la oportunidad de participar. Contáctanos por este medio para ver si tus boletos siguen disponibles y ayudarte a completar la compra. ¡No te quedes fuera!`;
+    const nombreSorteo = venta.nombreRifa;
+    let mensaje = `¡Hola, ${nombreCliente}! 👋 Te escribimos de Sorteos App.\n\nNotamos que tu apartado para el sorteo "${nombreSorteo}" con los boletos *${boletosTexto}* ha expirado.\n\n¡No te preocupes! Aún podrías tener la oportunidad de participar. Contáctanos por este medio para ver si tus boletos siguen disponibles y ayudarte a completar la compra. ¡No te quedes fuera!`;
     const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensaje)}`;
     window.open(waUrl, '_blank');
   };
@@ -187,12 +186,12 @@ function RifaDetalleAdmin() {
     return Object.entries(agrupadas).map(([fecha, total]) => ({ fecha, total })).reverse();
   }, [ventasFiltradas, modoGrafica]);
 
-  if (cargando) return <p className="text-center mt-10">Cargando detalles de la rifa...</p>;
-  if (!rifa) return <div className="text-center mt-10 text-red-600">No se encontró la rifa.</div>;
+  if (cargando) return <p className="text-center mt-10">Cargando detalles del sorteo...</p>;
+  if (!rifa) return <div className="text-center mt-10 text-red-600">No se encontró el sorteo.</div>;
   
   return (
     <div className="p-4 max-w-7xl mx-auto">
-      <Link to="/admin/historial-ventas" className="text-blue-600 hover:underline mb-4 inline-block">← Volver a la selección de rifas</Link>
+      <Link to="/admin/historial-ventas" className="text-blue-600 hover:underline mb-4 inline-block">← Volver a la selección de sorteos</Link>
       
       <div className="bg-white shadow-lg rounded-xl p-6 mb-6">
         <h1 className="text-3xl font-bold mb-4 text-gray-800">{rifa.nombre}</h1>
@@ -236,8 +235,6 @@ function RifaDetalleAdmin() {
                 </nav>
             </div>
             <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
-            
-            {/* --- INICIO DE LA CORRECCIÓN --- */}
             <HistorialVentas 
               ventasFiltradas={ventasFiltradas} 
               mostrarTotal={true} 
@@ -246,10 +243,8 @@ function RifaDetalleAdmin() {
               onNotificarWhatsApp={handleNotificarWhatsApp}
               onNotificarEmail={handleNotificarEmail}
               onEnviarRecordatorio={handleEnviarRecordatorio}
-              totalBoletos={rifa.boletos} // <-- PASAMOS EL PROP AQUÍ
+              totalBoletos={rifa.boletos}
             />
-            {/* --- FIN DE LA CORRECCIÓN --- */}
-
           </div>
         )}
         {activeTab === 'stats' && (
@@ -264,8 +259,8 @@ function RifaDetalleAdmin() {
         )}
         {activeTab === 'acciones' && (
           <div className="bg-white p-6 rounded-xl shadow-lg">
-             <h2 className="text-2xl font-bold text-gray-900 mb-4">Acciones de Rifa</h2>
-             <p className="text-gray-600 mb-6">Usa estas herramientas para gestionar tu rifa manualmente.</p>
+             <h2 className="text-2xl font-bold text-gray-900 mb-4">Acciones del Sorteo</h2>
+             <p className="text-gray-600 mb-6">Usa estas herramientas para gestionar tu sorteo manualmente.</p>
              <button onClick={() => setShowModalVenta(true)} className="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors shadow-md">
                + Registrar Venta Manual
              </button>

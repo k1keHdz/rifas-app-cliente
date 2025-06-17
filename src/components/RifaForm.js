@@ -41,7 +41,6 @@ function RifaForm() {
     setSelectedImageIndex(null);
   }, [rifaSeleccionada]);
 
-  // ... (el resto de los handlers como handleChange, handleImagenesChange, etc., no necesitan cambios)
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'boletos' && Number(value) > 100000) {
@@ -135,12 +134,9 @@ function RifaForm() {
         ...formulario,
         precio: Number(formulario.precio),
         boletos: Number(formulario.boletos),
-        // --- INICIO DE CORRECCIÓN: Lógica para guardar datos ---
         porcentajeVenta: (formulario.tipoRifa === "porcentaje" || formulario.tipoRifa === "fechaConCondicion") ? Number(formulario.porcentajeVenta) : null,
         fechaCierre: (formulario.tipoRifa === "fecha" || formulario.tipoRifa === "fechaConCondicion") && formulario.fechaCierre ? new Date(formulario.fechaCierre + 'T23:59:59') : null,
-        // Guardamos el tipo de regla explícitamente
         tipoRifa: formulario.tipoRifa,
-        // --- FIN DE CORRECCIÓN ---
         imagen: urlsFinales[0],
         imagenes: urlsFinales,
       };
@@ -189,7 +185,6 @@ function RifaForm() {
           </div>
         )}
         {activeTab === 'imagenes' && (
-          // ... (sección de imágenes sin cambios)
            <div>
              <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
                <label className="block">Añadir Nuevas Imágenes: <input type="file" accept="image/*" multiple onChange={handleImagenesChange} disabled={reorderMode} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"/></label>
@@ -239,17 +234,14 @@ function RifaForm() {
               </label>
               <label className="block">
                 Condición para realizar el Sorteo:
-                {/* --- INICIO DE CORRECCIÓN: Nuevo selector de tipo con textos claros --- */}
                 <select name="tipoRifa" value={formulario.tipoRifa} onChange={handleChange} className="w-full border rounded p-2 mt-1">
                     <option value="porcentaje">Solo por Porcentaje de Venta</option>
                     <option value="fecha">Solo por Fecha (incondicional)</option>
                     <option value="fechaConCondicion">Por Fecha (con condición de venta)</option>
                 </select>
-                {/* --- FIN DE CORRECCIÓN --- */}
               </label>
             </div>
             <div className="space-y-4 bg-gray-50 p-4 rounded-lg border">
-                {/* --- INICIO DE CORRECCIÓN: Renderizado condicional de inputs y textos de ayuda --- */}
                 {(formulario.tipoRifa === 'porcentaje' || formulario.tipoRifa === 'fechaConCondicion') && (
                     <label className="block">
                         Porcentaje de Venta (%):
@@ -272,7 +264,6 @@ function RifaForm() {
                         El sorteo se realizará en la fecha indicada sin importar el porcentaje de venta.
                     </p>
                  )}
-                {/* --- FIN DE CORRECCIÓN --- */}
             </div>
           </div>
         )}

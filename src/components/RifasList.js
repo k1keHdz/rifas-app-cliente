@@ -15,7 +15,7 @@ function RifasList({ onDeleteRifa }) {
         <table className="w-full text-sm text-left text-gray-500">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50">
             <tr>
-              <th scope="col" className="px-6 py-3">Nombre de la Rifa</th>
+              <th scope="col" className="px-6 py-3">Nombre del sorteo</th>
               <th scope="col" className="px-6 py-3">Estado</th>
               <th scope="col" className="px-6 py-3">Tipo</th>
               <th scope="col" className="px-6 py-3">Boletos Vendidos</th>

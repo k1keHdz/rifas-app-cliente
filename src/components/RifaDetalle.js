@@ -36,7 +36,7 @@ function RifaDetalle() {
     toggleBoleto,
     seleccionarBoleto,
     limpiarSeleccion,
-    agregarBoletosEspecificos, // Usamos la nueva función
+    agregarBoletosEspecificos,
   } = useBoletos(id);
 
   const location = useLocation();
@@ -80,7 +80,7 @@ function RifaDetalle() {
   }, [currentUser]);
 
   const handleReservarPorWhatsapp = () => {
-    if (boletosSeleccionados.length === 0) { alert("Selecciona boletos primero."); return; }
+    if (boletosSeleccionados.length === 0) { alert("Selecciona al menos un boleto."); return; }
     if (currentUser) {
       setMostrarModalDatos(true);
     } else {
@@ -96,7 +96,7 @@ function RifaDetalle() {
   const confirmarApartado = async (datosDelFormulario) => {
     const boletosYaComprados = boletosSeleccionados.filter(b => boletosOcupados.has(b));
     if (boletosYaComprados.length > 0) {
-      alert(`¡Error! El/los boleto(s) ${boletosYaComprados.join(', ')} ya fue(ron) comprado(s).`);
+      alert(`¡Error! El/los boleto(s) ${boletosYaComprados.join(', ')} ya fue(ron) comprado(s) mientras elegías. Por favor, selecciona otros.`);
       window.location.reload();
       return;
     }
@@ -120,11 +120,13 @@ function RifaDetalle() {
       await addDoc(collection(db, "rifas", id, "ventas"), ventaData);
       setMostrarModalDatos(false);
       const tuNumeroDeWhatsApp = '527773367064';
-      const nombreRifa = rifa.nombre;
+      const nombreSorteo = rifa.nombre;
       const boletosTexto = boletosSeleccionados.map(n => String(n).padStart(paddingLength, '0')).join(', ');
       const totalAPagar = rifa.precio * boletosSeleccionados.length;
       const nombreCliente = `${datosDelFormulario.nombre} ${datosDelFormulario.apellidos || ''}`;
-      let mensaje = `¡Hola! 👋 Quiero apartar mis boletos para la rifa "${nombreRifa}".\n\n*ID de Compra: ${idCompra}*\n\nMis números seleccionados son: *${boletosTexto}*.\nTotal a pagar: *$${totalAPagar.toLocaleString('es-MX')}*.\nMi nombre es: ${nombreCliente}.\n\nQuedo a la espera de las instrucciones para realizar el pago. ¡Tengo 12 horas para completarlo! Gracias.`;
+      
+      let mensaje = `¡Hola! 👋 Quiero apartar mis boletos para el sorteo "${nombreSorteo}".\n\n*ID de Compra: ${idCompra}*\n\nMis números seleccionados son: *${boletosTexto}*.\nTotal a pagar: *$${totalAPagar.toLocaleString('es-MX')}*.\nMi nombre es: ${nombreCliente}.\n\nQuedo a la espera de las instrucciones para realizar el pago. ¡Tengo 12 horas para completarlo! Gracias.`;
+      
       const waUrl = `https://wa.me/${tuNumeroDeWhatsApp}?text=${encodeURIComponent(mensaje)}`;
       window.open(waUrl, '_blank');
       limpiarSeleccion();
@@ -139,8 +141,8 @@ function RifaDetalle() {
     setImagenIndex((prev) => (prev + direccion + rifa.imagenes.length) % rifa.imagenes.length);
   };
 
-  if (cargandoRifa) return <p className="text-center mt-20">Cargando rifa...</p>;
-  if (!rifa) return <div className="p-4 text-center"><p>Rifa no encontrada.</p></div>;
+  if (cargandoRifa) return <p className="text-center mt-20">Cargando sorteo...</p>;
+  if (!rifa) return <div className="p-4 text-center"><p>Sorteo no encontrado.</p></div>;
   
   const boletosVendidos = rifa.boletosVendidos || 0;
   const porcentajeVendido = rifa.boletos > 0 ? (boletosVendidos / rifa.boletos) * 100 : 0;
@@ -191,7 +193,7 @@ function RifaDetalle() {
           <div className="flex justify-center flex-wrap gap-4 text-sm my-4 p-2 bg-gray-50 rounded-md">
             <div className="flex items-center gap-1"><div className="w-4 h-4 bg-white border border-gray-400 rounded-sm"></div> Disponible</div>
             <div className="flex items-center gap-1"><div className="w-4 h-4 bg-yellow-400 border border-gray-400 rounded-sm"></div> Apartado</div>
-            <div className="flex items-center gap-1"><div className="w-4 h-4 bg-red-600 rounded-sm"></div> Comprado</div>
+            <div className="flex items-center gap-1"><div className="w-4 h-4 bg-red-600 rounded-sm"></div> Pagado</div>
             <div className="flex items-center gap-1"><div className="w-4 h-4 bg-green-600 rounded-sm"></div> Seleccionado</div>
           </div>
           <div className="flex flex-col items-center">
@@ -209,7 +211,11 @@ function RifaDetalle() {
                   </div> 
                 </div> 
               )}
-              <div className="w-full max-w-lg text-center my-2"> <button onClick={() => setFiltroDisponibles(!filtroDisponibles)} className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors"> {filtroDisponibles ? 'Mostrar Todos los Boletos' : 'Mostrar Solo Disponibles'} </button> </div>
+              <div className="w-full max-w-lg text-center my-2">
+                <button onClick={() => setFiltroDisponibles(!filtroDisponibles)} className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors"> 
+                    {filtroDisponibles ? 'Mostrar Todos los Boletos' : 'Mostrar Solo Disponibles'} 
+                </button> 
+              </div>
               <div className="flex justify-center items-center gap-4 my-4 w-full"> <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"> Anterior </button> <span className="font-mono text-lg"> Página {currentPage} de {totalPaginas} </span> <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPaginas} className="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"> Siguiente </button> </div>
               {cargandoBoletos ? <p className="text-center py-10">Cargando boletos...</p> : 
                 <SelectorBoletos 
