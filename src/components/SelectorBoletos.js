@@ -1,5 +1,6 @@
 // src/components/SelectorBoletos.js
 import React from 'react';
+import { formatTicketNumber } from '../utils/rifaHelper'; // Importamos la nueva función
 
 const SelectorBoletos = ({
   boletosOcupados,
@@ -8,18 +9,10 @@ const SelectorBoletos = ({
   filtroActivo,
   rangoInicio,
   rangoFin,
-  // ==================================================================
-  // INICIO DE CAMBIOS: Recibimos el padding dinámico como prop
-  // ==================================================================
-  paddingLength, 
-  numerosFiltrados // Para cuando se usa el buscador
-  // ==================================================================
-  // FIN DE CAMBIOS
-  // ==================================================================
+  totalBoletos, // Recibimos el total de boletos
+  numerosFiltrados 
 }) => {
   
-  // Eliminamos el paddingLength fijo de aquí
-
   // Creamos la lista de números a mostrar, ya sea del rango o de la búsqueda
   const numerosAMostrar = numerosFiltrados || Array.from({ length: rangoFin - rangoInicio }, (_, i) => rangoInicio + i);
 
@@ -55,13 +48,8 @@ const SelectorBoletos = ({
                 className={`border w-14 h-10 sm:w-12 rounded text-xs sm:text-sm font-mono transition-transform transform hover:scale-110 ${color}`}
                 disabled={estaOcupado}
               >
-                {/* ================================================================== */}
-                {/* INICIO DE CAMBIOS: Usamos el padding dinámico */}
-                {/* ================================================================== */}
-                {String(numeroBoleto).padStart(paddingLength, '0')}
-                {/* ================================================================== */}
-                {/* FIN DE CAMBIOS */}
-                {/* ================================================================== */}
+                {/* Usamos la nueva función de formato centralizada */}
+                {formatTicketNumber(numeroBoleto, totalBoletos)}
               </button>
             );
           })}
@@ -71,4 +59,5 @@ const SelectorBoletos = ({
   );
 };
 
+// React.memo sigue siendo útil para evitar re-renderizados innecesarios.
 export default React.memo(SelectorBoletos);

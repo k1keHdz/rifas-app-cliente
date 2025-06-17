@@ -153,7 +153,6 @@ function RifaDetalle() {
   return (
     <>
       <div className="p-4 max-w-5xl mx-auto">
-        <Link to="/rifas" className="text-blue-600 underline block mb-4">← Volver a rifas</Link>
         <div className="bg-white rounded shadow-lg p-6">
           <div className="md:flex md:gap-8 items-start">
             <div className="md:w-1/2">

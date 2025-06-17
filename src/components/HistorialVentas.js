@@ -1,6 +1,7 @@
 // src/components/HistorialVentas.js
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { formatTicketNumber } from '../utils/rifaHelper'; // Importamos la función
 
 function HistorialVentas({ 
   ventasFiltradas = [], 
@@ -9,17 +10,13 @@ function HistorialVentas({
   onLiberarBoletos, 
   onNotificarWhatsApp, 
   onNotificarEmail,
-  // ==================================================================
-  // INICIO DE CAMBIOS: Aceptamos la nueva prop para el recordatorio
-  // ==================================================================
-  onEnviarRecordatorio
-  // ==================================================================
-  // FIN DE CAMBIOS
-  // ==================================================================
+  onEnviarRecordatorio,
+  totalBoletos // <-- AÑADIMOS ESTE PROP
 }) {
 
-  const totalBoletos = ventasFiltradas.reduce((sum, v) => sum + (v.cantidad || 0), 0);
-  const paddingLength = 5;
+  const totalBoletosSum = ventasFiltradas.reduce((sum, v) => sum + (v.cantidad || 0), 0);
+  
+  // Eliminamos el paddingLength fijo que causaba el error.
 
   return (
     <div className="overflow-x-auto bg-white p-4 rounded-lg shadow mt-6 border">
@@ -60,7 +57,10 @@ function HistorialVentas({
                   </td>
                   <td className="px-4 py-2 border align-top font-mono">
                     <div className="max-w-xs break-words">
-                      {venta.numeros?.map(n => String(n).padStart(paddingLength, '0')).join(', ')}
+                      {/* --- INICIO DE LA CORRECCIÓN --- */}
+                      {/* Usamos la nueva función con el total de boletos recibido */}
+                      {venta.numeros?.map(n => formatTicketNumber(n, totalBoletos)).join(', ')}
+                      {/* --- FIN DE LA CORRECCIÓN --- */}
                     </div>
                   </td>
                   <td className="px-4 py-2 border align-top text-center font-bold">
@@ -96,9 +96,6 @@ function HistorialVentas({
                           Liberar Boletos
                         </button>
                       )}
-                      {/* ================================================================== */}
-                      {/* INICIO DE CAMBIOS: Botón de recordatorio para boletos expirados */}
-                      {/* ================================================================== */}
                       {esApartado && haExpirado && (
                         <button
                           onClick={() => onEnviarRecordatorio(venta)}
@@ -107,9 +104,6 @@ function HistorialVentas({
                           Enviar Recordatorio
                         </button>
                       )}
-                      {/* ================================================================== */}
-                      {/* FIN DE CAMBIOS */}
-                      {/* ================================================================== */}
 
                       {esComprado && (
                         <>
@@ -127,7 +121,7 @@ function HistorialVentas({
             <tfoot>
               <tr className="bg-gray-100 font-bold">
                 <td colSpan="5" className="px-4 py-2 border text-right">Total de Boletos (en esta vista)</td>
-                <td className="px-4 py-2 border text-center">{totalBoletos}</td>
+                <td className="px-4 py-2 border text-center">{totalBoletosSum}</td>
                 <td colSpan="2" className="px-4 py-2 border"></td>
               </tr>
             </tfoot>

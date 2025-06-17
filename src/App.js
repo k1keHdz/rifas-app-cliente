@@ -11,7 +11,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Login from "./components/Login";
 import Registro from "./components/Registro";
-import RifasPublic from "./components/RifasPublic";
+// import RifasPublic from "./components/RifasPublic"; <-- Eliminado
 import RifaDetalle from "./components/RifaDetalle";
 import RifaDetalleAdmin from "./components/RifaDetalleAdmin";
 import RutaProtegida from "./components/RutaProtegida";
@@ -25,13 +25,7 @@ import VerificadorBoletosPage from "./pages/VerificadorBoletosPage";
 import ComoParticiparPage from "./pages/ComoParticiparPage";
 import GestionarGanadoresPage from "./pages/admin/GestionarGanadoresPage";
 import GanadoresPage from "./pages/GanadoresPage";
-// ==================================================================
-// INICIO DE CAMBIOS: Importamos la nueva página de contacto
-// ==================================================================
 import ContactoPage from "./pages/ContactoPage";
-// ==================================================================
-// FIN DE CAMBIOS
-// ==================================================================
 
 
 function App() {
@@ -44,20 +38,14 @@ function App() {
             <Routes>
               {/* --- Rutas Públicas --- */}
               <Route path="/" element={<Home />} />
-              <Route path="/rifas" element={<RifasPublic />} />
-              <Route path="/rifas/:id" element={<RifaDetalle />} />
+              {/* <Route path="/rifas" element={<RifasPublic />} /> <-- RUTA ELIMINADA */}
+              <Route path="/rifa/:id" element={<RifaDetalle />} />
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Registro />} />
               <Route path="/verificador" element={<VerificadorBoletosPage />} />
               <Route path="/como-participar" element={<ComoParticiparPage />} />
               <Route path="/ganadores" element={<GanadoresPage />} />
-              {/* ================================================================== */}
-              {/* INICIO DE CAMBIOS: Añadimos la nueva ruta pública */}
-              {/* ================================================================== */}
               <Route path="/contacto" element={<ContactoPage />} />
-              {/* ================================================================== */}
-              {/* FIN DE CAMBIOS */}
-              {/* ================================================================== */}
 
               {/* --- Rutas Protegidas --- */}
               <Route path="/admin" element={<RutaProtegida rolRequerido="admin"><AdminDashboard /></RutaProtegida>} />

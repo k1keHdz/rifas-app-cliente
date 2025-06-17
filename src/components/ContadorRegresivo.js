@@ -11,18 +11,17 @@ const RelojIcon = () => (
 );
 
 function ContadorRegresivo({ fechaExpiracion }) {
-  const [tiempoRestante, setTiempoRestante] = useState({
-    dias: 0,
-    horas: 0,
-    minutos: 0,
-    segundos: 0,
-  });
+  const [tiempoRestante, setTiempoRestante] = useState(null);
   const [expirado, setExpirado] = useState(false);
 
   useEffect(() => {
     if (!fechaExpiracion) return;
 
-    // Función para calcular el tiempo restante
+    // ==================================================================
+    // INICIO DE CORRECCIÓN: Declaramos 'intervalo' aquí
+    // ==================================================================
+    let intervalo;
+
     const calcularTiempo = () => {
       const ahora = new Date().getTime();
       const fechaLimite = fechaExpiracion.toDate().getTime();
@@ -30,10 +29,13 @@ function ContadorRegresivo({ fechaExpiracion }) {
 
       if (diferencia <= 0) {
         setExpirado(true);
-        clearInterval(intervalo); // Detenemos el intervalo cuando llega a cero
+        setTiempoRestante(null);
+        // Ahora 'intervalo' sí existe en este scope y podemos limpiarlo
+        if (intervalo) clearInterval(intervalo); 
         return;
       }
 
+      setExpirado(false);
       setTiempoRestante({
         dias: Math.floor(diferencia / (1000 * 60 * 60 * 24)),
         horas: Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
@@ -42,14 +44,17 @@ function ContadorRegresivo({ fechaExpiracion }) {
       });
     };
 
-    // Calculamos el tiempo una vez al inicio
+    // Calculamos el tiempo una vez al inicio para que no haya un parpadeo
     calcularTiempo();
 
-    // Actualizamos el contador cada segundo
-    const intervalo = setInterval(calcularTiempo, 1000);
+    // Asignamos el setInterval a nuestra variable ya declarada
+    intervalo = setInterval(calcularTiempo, 1000);
 
-    // Limpiamos el intervalo cuando el componente se desmonta para evitar fugas de memoria
+    // La función de limpieza se ejecuta cuando el componente se desmonta
     return () => clearInterval(intervalo);
+    // ==================================================================
+    // FIN DE CORRECCIÓN
+    // ==================================================================
   }, [fechaExpiracion]);
 
   if (expirado) {
@@ -58,6 +63,16 @@ function ContadorRegresivo({ fechaExpiracion }) {
         <RelojIcon />
         Tiempo Expirado
       </div>
+    );
+  }
+
+  // Mostramos un 'cargando' sutil mientras se calcula el primer valor
+  if (!tiempoRestante) {
+    return (
+        <div className="flex items-center text-sm font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            <RelojIcon />
+            Calculando...
+        </div>
     );
   }
 

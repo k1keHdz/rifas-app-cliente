@@ -1,110 +1,103 @@
 // src/components/CompletarPerfil.js
-
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { doc, setDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
+import Alerta from './Alerta';
 
 function CompletarPerfil() {
-  const { currentUser } = useAuth();
+  const { currentUser, userData } = useAuth();
   const navigate = useNavigate();
-
-  // Estados para los campos del formulario
+  
   const [nombre, setNombre] = useState('');
+  const [apellidos, setApellidos] = useState('');
   const [telefono, setTelefono] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Efecto para pre-rellenar los datos que ya tenemos de Google/Firebase
   useEffect(() => {
-    if (currentUser) {
-      setNombre(currentUser.displayName || '');
+    // Si los datos del usuario ya están cargados y tiene teléfono, lo redirigimos.
+    if (userData) {
+      if (userData.telefono) {
+        navigate('/perfil');
+      }
+      // Pre-llenamos el formulario con los datos existentes (ej. nombre de Google).
+      setNombre(userData.nombre || currentUser?.displayName || '');
+      setApellidos(userData.apellidos || '');
     }
-  }, [currentUser]);
+  }, [userData, currentUser, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
-    if (!nombre || !telefono) {
-      setError('El nombre y el teléfono son obligatorios.');
+    if (!telefono || !nombre) { // Apellidos puede ser opcional si lo decides
+      setError("El nombre y el teléfono son obligatorios.");
       return;
     }
+    if (!/^\d{10}$/.test(telefono)) {
+      setError("El número de teléfono debe tener 10 dígitos.");
+      return;
+    }
+    setLoading(true);
+    setError('');
 
     try {
-      // Creamos la referencia al documento del usuario con su ID único
       const userRef = doc(db, 'usuarios', currentUser.uid);
-      
-      // Guardamos los datos en Firestore
-      await setDoc(userRef, {
-        nombre: nombre,
-        telefono: telefono,
-        email: currentUser.email, // El email lo tomamos del objeto de autenticación
-      }, { merge: true }); // Usamos merge por si el documento ya existía
 
-      // Redirigimos a la página principal una vez completado el perfil
-      navigate('/');
+      // --- INICIO DE LA CORRECCIÓN ---
+      // Creamos un objeto con todos los datos a actualizar.
+      // Esto previene que se borren campos existentes como photoURL o rol.
+      const updatedData = {
+        nombre,
+        apellidos,
+        telefono,
+        // ¡Clave! Nos aseguramos de conservar la photoURL si existe.
+        photoURL: currentUser.photoURL || userData.photoURL || ''
+      };
+
+      // Actualizamos el documento con el objeto completo.
+      await updateDoc(userRef, updatedData);
+      // --- FIN DE LA CORRECCIÓN ---
+
+      // El listener de AuthContext se encargará de actualizar el estado global.
+      navigate('/perfil'); 
 
     } catch (err) {
-      console.error("Error al guardar el perfil:", err);
-      setError('No se pudo guardar el perfil. Inténtalo de nuevo.');
+      console.error("Error al completar el perfil:", err);
+      setError("No se pudo guardar la información. Inténtalo de nuevo.");
+      setLoading(false);
     }
   };
-  
-  // Si por alguna razón no hay un usuario, no mostramos nada o un mensaje
-  if (!currentUser) {
-    return <p>Verificando usuario...</p>;
-  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-800">Completa tu Perfil</h2>
-        <p className="text-center text-sm text-gray-600">
-          Necesitamos estos datos para contactarte si ganas y para tus futuras compras.
-        </p>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-2xl">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-gray-900">¡Bienvenido! Un último paso...</h2>
+          <p className="mt-2 text-gray-600">Confirma tus datos y añade tu teléfono para poder participar en las rifas.</p>
+        </div>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Nombre Completo</label>
-            <input
-              type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              required
-              className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
-            <input
-              type="email"
-              value={currentUser.email || ''}
-              disabled // El email no se puede cambiar aquí
-              className="block w-full px-3 py-2 mt-1 bg-gray-100 border border-gray-300 rounded-md shadow-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Número de Teléfono</label>
-            <input
-              type="tel"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-              required
-              className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Nombre(s)</label>
+                    <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required className="block w-full px-3 py-2 mt-1 border rounded-md"/>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Apellidos</label>
+                    <input type="text" value={apellidos} onChange={(e) => setApellidos(e.target.value)} required className="block w-full px-3 py-2 mt-1 border rounded-md"/>
+                </div>
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Teléfono (10 dígitos)</label>
+                <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} required placeholder="Ej. 5512345678" className="block w-full px-3 py-2 mt-1 border rounded-md"/>
+            </div>
           
-          {error && <p className="text-sm text-center text-red-600">{error}</p>}
+            {error && <Alerta tipo="error" mensaje={error} />}
 
-          <div>
-            <button
-              type="submit"
-              className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700"
-            >
-              Guardar Perfil y Continuar
+            <button type="submit" disabled={loading} className="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400">
+                {loading ? "Guardando..." : "Guardar y Continuar"}
             </button>
-          </div>
         </form>
       </div>
     </div>

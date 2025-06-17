@@ -1,61 +1,80 @@
 // src/context/AuthContext.js
-
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-// AÑADIMOS las herramientas de Firestore para leer el perfil del usuario
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'; // Importamos setDoc y serverTimestamp
 import { db } from '../firebase/firebaseConfig';
 
-const AuthContext = createContext();
+const AuthContext = React.createContext();
 
-export const useAuth = () => {
+export function useAuth() {
   return useContext(AuthContext);
-};
+}
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const [cargandoAuth, setCargandoAuth] = useState(true);
-  
-  // NUEVO: Estado para guardar los datos del perfil del usuario desde Firestore (incluyendo el rol)
   const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    // onAuthStateChanged se dispara al iniciar sesión o cerrar sesión.
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
 
       if (user) {
-        // Si hay un usuario logueado, vamos a Firestore a buscar su perfil
+        // Si hay un usuario, escuchamos su documento en Firestore.
         const userRef = doc(db, 'usuarios', user.uid);
-        const docSnap = await getDoc(userRef);
-        if (docSnap.exists()) {
-          // Si encontramos el documento, lo guardamos en nuestro nuevo estado
-          setUserData({ id: docSnap.id, ...docSnap.data() });
-        } else {
-          // Esto puede pasar si un usuario se registra pero aún no ha completado su perfil
-          setUserData(null);
-        }
+        const unsubscribeFirestore = onSnapshot(userRef, async (docSnap) => {
+          if (docSnap.exists()) {
+            // Si el documento ya existe, simplemente lo cargamos en el estado.
+            setUserData({ uid: user.uid, ...docSnap.data() });
+          } else {
+            // ¡NUEVO! Si el documento NO existe, es un usuario nuevo (ej. primer login con Google).
+            // Lo creamos en Firestore con la información del proveedor de autenticación.
+            console.log("Nuevo usuario detectado, creando perfil en Firestore...");
+            const newUserData = {
+              uid: user.uid,
+              email: user.email,
+              nombre: user.displayName || '', // Tomado de Google o vacío
+              apellidos: '', // Google no proporciona apellidos por defecto
+              telefono: user.phoneNumber || '',
+              photoURL: user.photoURL || '', // Tomado de Google o vacío
+              rol: 'cliente',
+              fechaCreacion: serverTimestamp(), // Fecha de creación en el servidor
+            };
+
+            try {
+              // Usamos setDoc para crear el documento de forma segura.
+              await setDoc(userRef, newUserData);
+              // Actualizamos el estado local para una respuesta inmediata.
+              setUserData(newUserData);
+            } catch (error) {
+              console.error("Error al crear documento de usuario:", error);
+            }
+          }
+          setLoading(false);
+        }, (error) => {
+          console.error("Error con el listener de Firestore:", error);
+          setLoading(false);
+        });
+
+        return () => unsubscribeFirestore(); // Limpiamos el listener de Firestore al salir.
+
       } else {
-        // Si el usuario cierra sesión, limpiamos ambos estados
+        // No hay usuario, limpiamos todo.
         setUserData(null);
+        setLoading(false);
       }
-      
-      setCargandoAuth(false);
     });
 
-    return unsubscribe;
+    return () => unsubscribeAuth(); // Limpiamos el listener de Auth al desmontar.
   }, []);
 
-  // La información que compartiremos con toda la app
-  const value = {
-    currentUser,
-    userData, // AÑADIMOS los datos del perfil al contexto
-    cargandoAuth,
-  };
-
+  const value = { currentUser, userData, loading };
+  
   return (
     <AuthContext.Provider value={value}>
-      {!cargandoAuth && children}
+      {!loading && children}
     </AuthContext.Provider>
   );
-};
+}

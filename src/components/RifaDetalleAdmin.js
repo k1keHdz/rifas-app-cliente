@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { doc, collection, onSnapshot, query, orderBy, writeBatch, increment, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
+import { formatTicketNumber } from "../utils/rifaHelper";
 import HistorialVentas from "./HistorialVentas";
 import GraficaVentas from "./GraficaVentas";
 import FiltroFechas from "./FiltroFechas";
@@ -12,11 +13,10 @@ import PanelDeExportacion from "./PanelDeExportacion";
 import emailjs from '@emailjs/browser';
 import EMAIL_CONFIG from '../emailjsConfig';
 
-
-// Íconos para las pestañas
 const VentasIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
 const StatsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M3 3v18h18"/><path d="m18 9-5 5-4-4-3 3"/></svg>;
 const AccionesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+
 
 function RifaDetalleAdmin() {
   const { id: rifaId } = useParams();
@@ -32,32 +32,26 @@ function RifaDetalleAdmin() {
   const [filtroVentas, setFiltroVentas] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // ... (Toda la lógica de useEffects y handlers se queda igual que la que me pasaste)
   useEffect(() => {
-    setCargando(true);
     const docRef = doc(db, "rifas", rifaId);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setRifa({ id: docSnap.id, ...docSnap.data() });
-      } else {
-        setRifa(null);
-      }
+      if (docSnap.exists()) { setRifa({ id: docSnap.id, ...docSnap.data() }); } 
+      else { setRifa(null); }
     });
     return () => unsubscribe();
   }, [rifaId]);
 
   useEffect(() => {
-    if (!rifaId) {
-      setCargando(false);
-      return;
-    };
+    if (!rifaId) { setCargando(false); return; };
     const ventasRef = collection(db, "rifas", rifaId, "ventas");
     const q = query(ventasRef, orderBy("fechaApartado", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setVentas(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setCargando(false);
     }, (error) => {
-        console.error("Error al cargar ventas: ", error);
-        setCargando(false);
+      console.error("Error al cargar ventas: ", error);
+      setCargando(false);
     });
     return () => unsubscribe();
   }, [rifaId]);
@@ -79,8 +73,8 @@ function RifaDetalleAdmin() {
   };
 
   const handleLiberarBoletos = async (ventaId, numeros) => {
-    const numerosTexto = numeros.map(n => String(n).padStart(5, '0')).join(', ');
-    if (!window.confirm(`¿Estás seguro de liberar los boletos [${numerosTexto}]? Esta venta se eliminará permanentemente.`)) { return; }
+    const boletosTexto = numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
+    if (!window.confirm(`¿Estás seguro de liberar los boletos [${boletosTexto}]? Esta venta se eliminará permanentemente.`)) { return; }
     try {
       const ventaRef = doc(db, "rifas", rifaId, "ventas", ventaId);
       await deleteDoc(ventaRef);
@@ -92,7 +86,7 @@ function RifaDetalleAdmin() {
   };
   
   const handleNotificarWhatsApp = (venta) => {
-    const boletosTexto = venta.numeros.map(n => String(n).padStart(5, '0')).join(', ');
+    const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
     let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para la rifa "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Te deseamos mucha suerte en el sorteo!`;
     const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensajeWhats)}`;
     window.open(waUrl, '_blank');
@@ -103,7 +97,7 @@ function RifaDetalleAdmin() {
     if (!emailValido) { return alert(`El correo del cliente (${venta.comprador.email || 'No proporcionado'}) no es válido.`); }
     if (!window.confirm(`¿Enviar el comprobante por correo a ${venta.comprador.email}?`)) return;
     try {
-      const boletosTexto = venta.numeros.map(n => String(n).padStart(5, '0')).join(', ');
+      const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
       const templateParams = {
         to_email: venta.comprador.email,
         to_name: `${venta.comprador.nombre} ${venta.comprador.apellidos || ''}`,
@@ -118,14 +112,13 @@ function RifaDetalleAdmin() {
       alert(`AVISO: No se pudo enviar el correo.\nError: ${error.text || 'Revisa la consola y tu configuración de EmailJS.'}`);
     }
   };
-
+  
   const handleEnviarRecordatorio = (venta) => {
-    const tuNumeroDeWhatsApp = '527773367064';
+    const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
     const nombreCliente = venta.comprador.nombre;
     const nombreRifa = venta.nombreRifa;
-    const boletosTexto = venta.numeros.map(n => String(n).padStart(5, '0')).join(', ');
     let mensaje = `¡Hola, ${nombreCliente}! 👋 Te escribimos de Rifas App.\n\nNotamos que tu apartado para la rifa "${nombreRifa}" con los boletos *${boletosTexto}* ha expirado.\n\n¡No te preocupes! Aún podrías tener la oportunidad de participar. Contáctanos por este medio para ver si tus boletos siguen disponibles y ayudarte a completar la compra. ¡No te quedes fuera!`;
-    const waUrl = `https://wa.me/${tuNumeroDeWhatsApp}?text=${encodeURIComponent(mensaje)}`;
+    const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensaje)}`;
     window.open(waUrl, '_blank');
   };
 
@@ -145,7 +138,7 @@ function RifaDetalleAdmin() {
     
     const terminoBusqueda = searchTerm.trim().toLowerCase();
 
-    const ventasResult = ventas
+    return ventas
       .filter(venta => {
         if (!terminoBusqueda) return true;
         const esBusquedaNumerica = !isNaN(Number(terminoBusqueda)) && terminoBusqueda !== '';
@@ -165,18 +158,14 @@ function RifaDetalleAdmin() {
           if (fechaVenta > fin) return false;
         }
         return true;
+      })
+      .filter(v => {
+        if (filtroVentas === 'todos') return true;
+        if (filtroVentas === 'pagados') return v.estado === 'comprado';
+        if (filtroVentas === 'apartados') return v.estado === 'apartado';
+        if (filtroVentas === 'manual') return v.estado === 'comprado' && !v.userId;
+        return true;
       });
-
-    switch (filtroVentas) {
-      case 'pagados':
-        return ventasResult.filter(v => v.estado === 'comprado');
-      case 'apartados':
-        return ventasResult.filter(v => v.estado === 'apartado');
-      case 'manual':
-        return ventasResult.filter(v => v.estado === 'comprado' && !v.userId);
-      default:
-        return ventasResult;
-    }
   }, [ventas, fechaInicio, fechaFin, filtroVentas, searchTerm]);
 
   const datosGrafico = useMemo(() => {
@@ -246,6 +235,9 @@ function RifaDetalleAdmin() {
                     <button onClick={() => setFiltroVentas('manual')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'manual' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Venta Manual</button>
                 </nav>
             </div>
+            <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
+            
+            {/* --- INICIO DE LA CORRECCIÓN --- */}
             <HistorialVentas 
               ventasFiltradas={ventasFiltradas} 
               mostrarTotal={true} 
@@ -254,7 +246,10 @@ function RifaDetalleAdmin() {
               onNotificarWhatsApp={handleNotificarWhatsApp}
               onNotificarEmail={handleNotificarEmail}
               onEnviarRecordatorio={handleEnviarRecordatorio}
+              totalBoletos={rifa.boletos} // <-- PASAMOS EL PROP AQUÍ
             />
+            {/* --- FIN DE LA CORRECCIÓN --- */}
+
           </div>
         )}
         {activeTab === 'stats' && (
@@ -272,13 +267,12 @@ function RifaDetalleAdmin() {
              <h2 className="text-2xl font-bold text-gray-900 mb-4">Acciones de Rifa</h2>
              <p className="text-gray-600 mb-6">Usa estas herramientas para gestionar tu rifa manualmente.</p>
              <button onClick={() => setShowModalVenta(true)} className="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors shadow-md">
-                + Registrar Venta Manual
-              </button>
-              <p className="text-xs text-gray-500 mt-2">Para registrar ventas en efectivo o por otros medios.</p>
+               + Registrar Venta Manual
+             </button>
+             <p className="text-xs text-gray-500 mt-2">Para registrar ventas en efectivo o por otros medios.</p>
           </div>
         )}
       </div>
-      
       {showModalVenta && (
         <ModalVentaManual rifa={rifa} onClose={() => setShowModalVenta(false)} />
       )}
