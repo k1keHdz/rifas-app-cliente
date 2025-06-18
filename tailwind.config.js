@@ -15,8 +15,14 @@ module.exports = {
         'text-light': 'rgb(var(--text-light) / <alpha-value>)',
         'text-dark': 'rgb(var(--text-dark) / <alpha-value>)',
         'text-subtle': 'rgb(var(--text-subtle) / <alpha-value>)',
+        'white': 'rgb(var(--color-white) / <alpha-value>)',
+        
+        /* --- El Traductor Universal en Acción --- */
+        'accent-start': 'rgb(var(--color-accent-start) / <alpha-value>)',
+        'accent-end': 'rgb(var(--color-accent-end) / <alpha-value>)',
         'accent-primary': 'rgb(var(--color-accent-primary) / <alpha-value>)',
         'accent-secondary': 'rgb(var(--color-accent-secondary) / <alpha-value>)',
+
         'success': 'rgb(var(--color-success) / <alpha-value>)',
         'danger': 'rgb(var(--color-danger) / <alpha-value>)',
         'warning': 'rgb(var(--color-warning) / <alpha-value>)',
