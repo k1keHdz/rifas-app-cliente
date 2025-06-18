@@ -11,13 +11,13 @@ const EsperarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" hei
 const Paso = ({ icono, titulo, children }) => (
     <div className="flex">
         <div className="flex-shrink-0">
-            <div className="flex items-center justify-center h-16 w-16 rounded-full bg-blue-600 text-white">
+            <div className="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-r from-accent-start to-accent-end text-white">
                 {icono}
             </div>
         </div>
         <div className="ml-4">
-            <h3 className="text-lg leading-6 font-bold text-gray-900">{titulo}</h3>
-            <p className="mt-2 text-base text-gray-600">{children}</p>
+            <h3 className="text-lg leading-6 font-bold text-text-light">{titulo}</h3>
+            <p className="mt-2 text-base text-text-subtle">{children}</p>
         </div>
     </div>
 );
@@ -25,24 +25,24 @@ const Paso = ({ icono, titulo, children }) => (
 
 function ComoParticiparPage() {
     return (
-        <div className="bg-gray-50 py-12 sm:py-16">
+        <div className="bg-background-dark py-12 sm:py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center">
-                    <h2 className="text-base font-semibold text-blue-600 tracking-wide uppercase">Participar es muy fácil</h2>
-                    <p className="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">
+                    <h2 className="text-base font-semibold text-accent-start tracking-wide uppercase">Participar es muy fácil</h2>
+                    <p className="mt-2 text-3xl font-extrabold text-text-light tracking-tight sm:text-4xl">
                         Aprende a Ganar con Nuestro Video Tutorial
                     </p>
-                    <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
+                    <p className="mt-4 max-w-2xl mx-auto text-xl text-text-subtle">
                         Hemos preparado un video corto para que veas lo simple que es participar.
                     </p>
                 </div>
 
                 <div className="mt-12 max-w-4xl mx-auto">
-                    <div className="relative rounded-xl shadow-2xl overflow-hidden" style={{ paddingTop: '56.25%' /* Proporción 16:9 */ }}>
+                    <div className="relative rounded-xl shadow-2xl overflow-hidden border border-border-color" style={{ paddingTop: '56.25%' /* Proporción 16:9 */ }}>
                         <iframe 
                             className="absolute top-0 left-0 w-full h-full"
                             src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
-                            title="YouTube video player" 
+                            title="Video Tutorial de Cómo Participar" 
                             frameBorder="0" 
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                             allowFullScreen>
@@ -51,13 +51,13 @@ function ComoParticiparPage() {
                 </div>
 
                 <div className="mt-20 text-center">
-                    <h3 className="text-2xl font-bold text-gray-900">O Sigue los Pasos Escritos</h3>
+                    <h3 className="text-2xl font-bold text-text-light">O Sigue los Pasos Escritos</h3>
                 </div>
 
                 <div className="mt-12">
                     <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-12">
                         <Paso icono={<ElegirIcon/>} titulo="Paso 1: Elige tu Sorteo">
-                            Navega por nuestra <Link to="/" className="text-blue-600 font-semibold hover:underline">página de inicio</Link> y selecciona el premio por el que quieres competir. ¡Tenemos opciones para todos los gustos!
+                            Navega por nuestra <Link to="/" className="text-accent-start font-semibold hover:underline">página de inicio</Link> y selecciona el premio por el que quieres competir. ¡Tenemos opciones para todos los gustos!
                         </Paso>
 
                         <Paso icono={<SeleccionarIcon/>} titulo="Paso 2: Selecciona tus Boletos">
@@ -69,13 +69,13 @@ function ComoParticiparPage() {
                         </Paso>
 
                         <Paso icono={<EsperarIcon/>} titulo="Paso 4: ¡Verifica y Espera!">
-                            Una vez confirmado tu pago, tu boleto cambiará a estado "Pagado". Puedes verificarlo en cualquier momento en nuestra página de <Link to="/verificador" className="text-blue-600 font-semibold hover:underline">Verificador de Boletos</Link>. Ahora solo queda esperar la fecha del sorteo. ¡Anunciamos a los ganadores en nuestras redes sociales!
+                            Una vez confirmado tu pago, tu boleto cambiará a estado "Pagado". Puedes verificarlo en cualquier momento en nuestra página de <Link to="/verificador" className="text-accent-start font-semibold hover:underline">Verificador de Boletos</Link>. Ahora solo queda esperar la fecha del sorteo. ¡Anunciamos a los ganadores en nuestras redes sociales!
                         </Paso>
                     </div>
                 </div>
 
                 <div className="text-center mt-16">
-                    <Link to="/" className="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-colors shadow-lg">
+                    <Link to="/" className="inline-block bg-gradient-to-r from-accent-start to-accent-end text-white font-bold py-3 px-8 rounded-lg text-lg hover:shadow-lg hover:shadow-accent-start/20 transition-all transform hover:scale-105">
                         Ver Sorteos Disponibles Ahora
                     </Link>
                 </div>

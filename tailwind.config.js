@@ -1,21 +1,36 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
     extend: {
-      animation: {
-        "fade-in": "fadeIn 0.5s ease-out",
+      fontFamily: {
+        sans: ['var(--font-sans)', 'sans-serif'],
+        display: ['var(--font-display)', 'sans-serif'],
       },
-      keyframes: {
-        fadeIn: {
-          "0%": { opacity: 0, transform: "translateY(-5px)" },
-          "100%": { opacity: 1, transform: "translateY(0)" },
-        },
+      colors: {
+        'background-dark': 'rgb(var(--background-dark) / <alpha-value>)',
+        'background-light': 'rgb(var(--background-light) / <alpha-value>)',
+        'text-light': 'rgb(var(--text-light) / <alpha-value>)',
+        'text-dark': 'rgb(var(--text-dark) / <alpha-value>)',
+        'text-subtle': 'rgb(var(--text-subtle) / <alpha-value>)',
+        'accent-primary': 'rgb(var(--color-accent-primary) / <alpha-value>)',
+        'accent-secondary': 'rgb(var(--color-accent-secondary) / <alpha-value>)',
+        'success': 'rgb(var(--color-success) / <alpha-value>)',
+        'danger': 'rgb(var(--color-danger) / <alpha-value>)',
+        'warning': 'rgb(var(--color-warning) / <alpha-value>)',
+        'border-color': 'rgb(var(--border-color) / <alpha-value>)',
+      },
+      boxShadow: {
+        'glow-md': 'var(--shadow-glow-md)',
+        'glow-lg': 'var(--shadow-glow-lg)',
+      },
+      borderRadius: {
+        'app': 'var(--border-radius-base)',
+        'app-lg': 'var(--border-radius-lg)',
       },
     },
   },
   plugins: [],
-};
+}

@@ -17,12 +17,10 @@ function CompletarPerfil() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Si los datos del usuario ya están cargados y tiene teléfono, lo redirigimos.
     if (userData) {
       if (userData.telefono) {
         navigate('/perfil');
       }
-      // Pre-llenamos el formulario con los datos existentes (ej. nombre de Google).
       setNombre(userData.nombre || currentUser?.displayName || '');
       setApellidos(userData.apellidos || '');
     }
@@ -30,7 +28,7 @@ function CompletarPerfil() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!telefono || !nombre) { // Apellidos puede ser opcional si lo decides
+    if (!telefono || !nombre) {
       setError("El nombre y el teléfono son obligatorios.");
       return;
     }
@@ -43,25 +41,14 @@ function CompletarPerfil() {
 
     try {
       const userRef = doc(db, 'usuarios', currentUser.uid);
-
-      // --- INICIO DE LA CORRECCIÓN ---
-      // Creamos un objeto con todos los datos a actualizar.
-      // Esto previene que se borren campos existentes como photoURL o rol.
       const updatedData = {
         nombre,
         apellidos,
         telefono,
-        // ¡Clave! Nos aseguramos de conservar la photoURL si existe.
         photoURL: currentUser.photoURL || userData.photoURL || ''
       };
-
-      // Actualizamos el documento con el objeto completo.
       await updateDoc(userRef, updatedData);
-      // --- FIN DE LA CORRECCIÓN ---
-
-      // El listener de AuthContext se encargará de actualizar el estado global.
       navigate('/perfil'); 
-
     } catch (err) {
       console.error("Error al completar el perfil:", err);
       setError("No se pudo guardar la información. Inténtalo de nuevo.");
@@ -70,32 +57,32 @@ function CompletarPerfil() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-2xl">
+    <div className="flex items-center justify-center min-h-screen bg-background-dark p-4">
+      <div className="w-full max-w-md p-8 space-y-6 bg-background-light text-text-light border border-border-color rounded-xl shadow-2xl">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">¡Bienvenido! Un último paso...</h2>
-          <p className="mt-2 text-gray-600">Confirma tus datos y añade tu teléfono para poder participar en las rifas.</p>
+          <h2 className="text-3xl font-bold">¡Bienvenido! Un último paso...</h2>
+          <p className="mt-2 text-text-subtle">Confirma tus datos y añade tu teléfono para poder participar en los sorteos.</p>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Nombre(s)</label>
-                    <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required className="block w-full px-3 py-2 mt-1 border rounded-md"/>
+                    <label className="block text-sm font-medium text-text-light">Nombre(s)</label>
+                    <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required className="block w-full px-3 py-2 mt-1 bg-background-dark text-text-light border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-accent-start focus:border-accent-start"/>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Apellidos</label>
-                    <input type="text" value={apellidos} onChange={(e) => setApellidos(e.target.value)} required className="block w-full px-3 py-2 mt-1 border rounded-md"/>
+                    <label className="block text-sm font-medium text-text-light">Apellidos</label>
+                    <input type="text" value={apellidos} onChange={(e) => setApellidos(e.target.value)} required className="block w-full px-3 py-2 mt-1 bg-background-dark text-text-light border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-accent-start focus:border-accent-start"/>
                 </div>
             </div>
             <div>
-                <label className="block text-sm font-medium text-gray-700">Teléfono (10 dígitos)</label>
-                <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} required placeholder="Ej. 5512345678" className="block w-full px-3 py-2 mt-1 border rounded-md"/>
+                <label className="block text-sm font-medium text-text-light">Teléfono (10 dígitos)</label>
+                <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} required placeholder="Ej. 5512345678" className="block w-full px-3 py-2 mt-1 bg-background-dark text-text-light border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-accent-start focus:border-accent-start"/>
             </div>
           
             {error && <Alerta tipo="error" mensaje={error} />}
 
-            <button type="submit" disabled={loading} className="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400">
+            <button type="submit" disabled={loading} className="w-full px-4 py-2 font-bold text-white bg-gradient-to-r from-accent-start to-accent-end rounded-lg hover:opacity-90 disabled:opacity-50">
                 {loading ? "Guardando..." : "Guardar y Continuar"}
             </button>
         </form>

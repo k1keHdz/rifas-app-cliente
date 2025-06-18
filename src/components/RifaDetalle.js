@@ -141,8 +141,8 @@ function RifaDetalle() {
     setImagenIndex((prev) => (prev + direccion + rifa.imagenes.length) % rifa.imagenes.length);
   };
 
-  if (cargandoRifa) return <p className="text-center mt-20">Cargando sorteo...</p>;
-  if (!rifa) return <div className="p-4 text-center"><p>Sorteo no encontrado.</p></div>;
+  if (cargandoRifa) return <div className="bg-background-dark text-center py-40 text-text-light">Cargando sorteo...</div>;
+  if (!rifa) return <div className="bg-background-dark p-4 text-center text-text-light"><p>Sorteo no encontrado.</p></div>;
   
   const boletosVendidos = rifa.boletosVendidos || 0;
   const porcentajeVendido = rifa.boletos > 0 ? (boletosVendidos / rifa.boletos) * 100 : 0;
@@ -153,71 +153,80 @@ function RifaDetalle() {
   const rangoFin = Math.min(currentPage * boletosPorPagina, rifa.boletos);
 
   return (
-    <>
+    <div className="bg-background-dark text-text-light">
       <div className="p-4 max-w-5xl mx-auto">
-        <div className="bg-white rounded shadow-lg p-6">
+        <div className="bg-background-light border border-border-color rounded-lg shadow-lg p-6">
           <div className="md:flex md:gap-8 items-start">
             <div className="md:w-1/2">
               {imagenActual && (
-                <div className="mb-4 relative">
-                  <img src={imagenActual} alt={rifa.nombre} className="w-full h-auto max-h-[450px] object-contain rounded-lg cursor-zoom-in mx-auto" onClick={() => setImagenAmpliadaIndex(imagenIndex)} />
+                <div className="mb-4 relative group">
+                  <img src={imagenActual} alt={rifa.nombre} className="w-full h-auto max-h-[450px] object-contain rounded-lg cursor-zoom-in mx-auto border border-border-color" onClick={() => setImagenAmpliadaIndex(imagenIndex)} />
                   {rifa.imagenes?.length > 1 && (
                     <>
-                      <button onClick={() => cambiarImagen(-1)} className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-gray-800 bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition">←</button>
-                      <button onClick={() => cambiarImagen(1)} className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-gray-800 bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition">→</button>
+                      <button onClick={() => cambiarImagen(-1)} className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-background-dark/50 text-white p-2 rounded-full hover:bg-background-dark/80 transition opacity-0 group-hover:opacity-100">←</button>
+                      <button onClick={() => cambiarImagen(1)} className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-background-dark/50 text-white p-2 rounded-full hover:bg-background-dark/80 transition opacity-0 group-hover:opacity-100">→</button>
                     </>
                   )}
                 </div>
               )}
             </div>
             <div className="md:w-1/2 mt-4 md:mt-0">
-              <h2 className="text-3xl font-bold mb-2">{rifa.nombre}</h2>
-              <p className="whitespace-pre-wrap text-gray-700 mb-3">{rifa.descripcion}</p>
-              <p className="text-2xl font-bold mb-2 text-blue-600">${rifa.precio.toLocaleString('es-MX')}</p>
-              <div className="my-3 flex items-center gap-2">
-                <strong className="text-md">Estado:</strong>
-                <span className={`px-3 py-1 rounded-full text-white text-sm font-semibold capitalize ${rifa.estado === "activa" ? "bg-green-500" : "bg-red-500"}`}>{rifa.estado}</span>
+              <h2 className="text-3xl font-bold mb-2 text-background-white">{rifa.nombre}</h2>
+              <p className="whitespace-pre-wrap text-text-subtle mb-3">{rifa.descripcion}</p>
+              
+              <div className="flex items-baseline mb-2">
+                <p className="text-3xl font-bold text-accent-start">${rifa.precio.toLocaleString('es-MX')}</p>
+                <span className="ml-2 text-base text-text-subtle">por boleto</span>
               </div>
-              <p className="text-sm text-gray-600 mb-4 italic">{conditionText}</p>
+              
+              <div className="my-3 flex items-center gap-2">
+                <strong className="text-md text-text-light">Estado:</strong>
+                <span className={`px-3 py-1 rounded-full text-white text-sm font-semibold capitalize ${rifa.estado === "activa" ? "bg-success" : "bg-danger"}`}>{rifa.estado}</span>
+              </div>
+              <p className="text-sm text-text-subtle mb-4 italic">{conditionText}</p>
               {rifa.boletos > 0 && (
                 <div className="mb-6 w-full">
-                  <p className="text-sm font-medium mb-1 text-gray-700">{porcentajeVendido.toFixed(1)}% Vendido</p>
-                  <div className="w-full h-4 bg-gray-200 rounded-full"><div className="h-full bg-green-500 rounded-full" style={{ width: `${porcentajeVendido}%` }}></div></div>
+                  <p className="text-sm font-medium mb-1 text-text-light">{porcentajeVendido.toFixed(1)}% Vendido</p>
+                  <div className="w-full h-4 bg-background-dark border border-border-color rounded-full"><div className="bg-gradient-to-r from-accent-start to-accent-end h-full rounded-full" style={{ width: `${porcentajeVendido}%` }}></div></div>
                 </div>
               )}
             </div>
           </div>
-          <div className="text-center my-6 border-t pt-6">
-            <button onClick={() => setMostrarModalSuerte(true)} className="bg-blue-800 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-blue-900 transition shadow-md">★ MÁQUINA DE LA SUERTE ★</button>
+          <div className="text-center my-6 border-t border-border-color pt-6">
+            <button onClick={() => setMostrarModalSuerte(true)} className="bg-gradient-to-r from-accent-start to-accent-end text-white px-8 py-3 rounded-lg font-bold text-lg hover:shadow-lg hover:shadow-accent-start/20 transition transform hover:scale-105">★ MÁQUINA DE LA SUERTE ★</button>
           </div>
-          <div className="flex justify-center flex-wrap gap-4 text-sm my-4 p-2 bg-gray-50 rounded-md">
-            <div className="flex items-center gap-1"><div className="w-4 h-4 bg-white border border-gray-400 rounded-sm"></div> Disponible</div>
-            <div className="flex items-center gap-1"><div className="w-4 h-4 bg-yellow-400 border border-gray-400 rounded-sm"></div> Apartado</div>
-            <div className="flex items-center gap-1"><div className="w-4 h-4 bg-red-600 rounded-sm"></div> Pagado</div>
-            <div className="flex items-center gap-1"><div className="w-4 h-4 bg-green-600 rounded-sm"></div> Seleccionado</div>
+          <div className="flex justify-center flex-wrap gap-4 text-sm my-4 p-2 bg-background-dark rounded-md border border-border-color">
+            <div className="flex items-center gap-2"><div className="w-4 h-4 bg-background-white border border-gray-400 rounded-sm"></div> <span className="text-text-subtle">Disponible</span></div>
+            <div className="flex items-center gap-2"><div className="w-4 h-4 bg-warning/80 border border-yellow-400 rounded-sm"></div> <span className="text-text-subtle">Apartado</span></div>
+            <div className="flex items-center gap-2"><div className="w-4 h-4 bg-danger/80 border border-red-400 rounded-sm"></div> <span className="text-text-subtle">Pagado</span></div>
+            <div className="flex items-center gap-2"><div className="w-4 h-4 bg-success/80 border border-green-400 rounded-sm"></div> <span className="text-text-subtle">Seleccionado</span></div>
           </div>
           <div className="flex flex-col items-center">
               <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={seleccionarBoleto} paddingLength={paddingLength} />
               {boletosSeleccionados.length > 0 && ( 
-                <div className="text-center my-4 p-4 bg-gray-50 border rounded-lg w-full max-w-lg animate-fade-in"> 
-                  <p className="font-bold mb-2 text-gray-800">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> 
+                <div className="text-center my-4 p-4 bg-background-dark border border-border-color rounded-lg w-full max-w-lg animate-fade-in"> 
+                  <p className="font-bold mb-2 text-text-light">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> 
                   <div className="flex justify-center flex-wrap gap-2 mb-2"> 
-                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-green-600 text-white rounded-md font-mono cursor-pointer hover:bg-red-600" title="Haz clic para quitar">{String(n).padStart(paddingLength, "0")}</span> ))} 
+                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-success text-white rounded-md font-mono cursor-pointer hover:bg-danger" title="Haz clic para quitar">{String(n).padStart(paddingLength, "0")}</span> ))} 
                   </div> 
-                  <p className="text-xs text-gray-500 italic my-2">Para eliminar un boleto, solo haz clic sobre él.</p> 
-                  <button onClick={limpiarSeleccion} className="mt-1 text-red-600 underline text-sm hover:text-red-800">Eliminar todos</button> 
-                  <div className="mt-4 pt-4 border-t border-gray-200 flex justify-center">
-                    <button onClick={handleReservarPorWhatsapp} className="w-full sm:w-auto bg-green-500 text-white font-bold px-8 py-3 rounded-lg hover:bg-green-600 transition-transform transform hover:scale-105 shadow-lg">Apartar por WhatsApp</button>
+                  <p className="text-xs text-text-subtle italic my-2">Para eliminar un boleto, solo haz clic sobre él.</p> 
+                  <button onClick={limpiarSeleccion} className="mt-1 text-danger underline text-sm hover:text-red-400">Eliminar todos</button> 
+                  <div className="mt-4 pt-4 border-t border-border-color flex justify-center">
+                    <button onClick={handleReservarPorWhatsapp} className="w-full sm:w-auto bg-success text-white font-bold px-8 py-3 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 shadow-lg">Apartar por WhatsApp</button>
                   </div> 
                 </div> 
               )}
               <div className="w-full max-w-lg text-center my-2">
-                <button onClick={() => setFiltroDisponibles(!filtroDisponibles)} className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors"> 
+                <button onClick={() => setFiltroDisponibles(!filtroDisponibles)} className="text-sm bg-background-light border border-border-color hover:bg-border-color text-text-light font-semibold py-2 px-4 rounded-lg transition-colors"> 
                     {filtroDisponibles ? 'Mostrar Todos los Boletos' : 'Mostrar Solo Disponibles'} 
                 </button> 
               </div>
-              <div className="flex justify-center items-center gap-4 my-4 w-full"> <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"> Anterior </button> <span className="font-mono text-lg"> Página {currentPage} de {totalPaginas} </span> <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPaginas} className="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"> Siguiente </button> </div>
-              {cargandoBoletos ? <p className="text-center py-10">Cargando boletos...</p> : 
+              <div className="flex justify-center items-center gap-4 my-4 w-full">
+                <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="px-4 py-2 bg-background-light border border-border-color text-text-light font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"> Anterior </button>
+                <span className="font-mono text-lg text-text-subtle"> Página {currentPage} de {totalPaginas} </span>
+                <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPaginas} className="px-4 py-2 bg-background-light border border-border-color text-text-light font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"> Siguiente </button>
+              </div>
+              {cargandoBoletos ? <p className="text-center py-10 text-text-light">Cargando boletos...</p> : 
                 <SelectorBoletos 
                     totalBoletos={rifa.boletos}
                     boletosOcupados={boletosOcupados} 
@@ -253,7 +262,7 @@ function RifaDetalle() {
           onContinueAsGuest={handleContinueAsGuest}
         />
       )}
-    </>
+    </div>
   );
 }
 

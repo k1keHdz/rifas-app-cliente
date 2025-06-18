@@ -1,0 +1,62 @@
+/* src/theme.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =============================================================
+   SISTEMA DE DISEÑO "APOLLO" - EL PANEL DE CONTROL CENTRAL
+   =============================================================
+   Edita estas variables para cambiar el aspecto de TODA la aplicación.
+*/
+:root {
+  /* --- 1. Tipografía --- */
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Exo 2', sans-serif;
+
+  /* --- 2. Paleta de Colores --- */
+  --background-dark: 17 24 39;      /* Azul noche casi negro */
+  --background-light: 31 41 55;     /* Azul oscuro para tarjetas */
+  --text-light: 229 231 235;        /* Blanco-grisáceo */
+  --text-dark: 17 24 39;           /* Texto oscuro */
+  --text-subtle: 107 114 128;      /* Gris para textos secundarios */
+  --color-accent-primary: 34 211 238; /* Cyan vibrante */
+  --color-accent-secondary: 217 70 239;/* Fucsia/Magenta */
+  --color-success: 34 197 94;      /* Verde */
+  --color-danger: 239 68 68;       /* Rojo */
+  --color-warning: 234 179 8;      /* Amarillo */
+  --border-color: 55 65 81;        /* Gris oscuro para bordes */
+
+  /* --- 3. Layout y Espaciado --- */
+  --border-radius-base: 0.75rem; /* 12px */
+  --border-radius-lg: 1rem;    /* 16px */
+  --spacing-unit: 4; /* Unidad base para paddings y margins (múltiplos de 4px) */
+
+  /* --- 4. Sombras y Efectos --- */
+  --shadow-glow-md: 0 4px 15px -3px rgba(var(--color-accent-primary), 0.15), 0 2px 8px -2px rgba(var(--color-accent-secondary), 0.1);
+  --shadow-glow-lg: 0 10px 25px -5px rgba(var(--color-accent-primary), 0.2), 0 8px 10px -6px rgba(var(--color-accent-secondary), 0.2);
+}
+
+/* --- 5. Estilos de Componentes Reutilizables (@apply) --- */
+@layer components {
+  /* Estilo base para todos los botones */
+  .btn {
+    @apply px-6 py-2 font-bold rounded-app transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background-dark;
+  }
+  /* Botón primario con gradiente */
+  .btn-primary {
+    @apply btn bg-gradient-to-r from-accent-primary to-accent-secondary text-white hover:opacity-90 transform hover:scale-105;
+  }
+  /* Botón secundario/sutil */
+  .btn-secondary {
+    @apply btn bg-background-light border border-border-color text-text-light hover:bg-border-color hover:text-white;
+  }
+  /* Tarjeta por defecto */
+  .card {
+    @apply bg-background-light border border-border-color rounded-app-lg shadow-lg;
+  }
+  /* Campo de formulario por defecto */
+  .input-field {
+    @apply block w-full px-3 py-2 mt-1 bg-background-dark text-text-light border border-border-color rounded-app shadow-sm focus:outline-none focus:ring-accent-primary focus:border-accent-primary;
+  }
+}

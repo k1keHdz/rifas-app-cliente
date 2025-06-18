@@ -186,52 +186,52 @@ function RifaDetalleAdmin() {
     return Object.entries(agrupadas).map(([fecha, total]) => ({ fecha, total })).reverse();
   }, [ventasFiltradas, modoGrafica]);
 
-  if (cargando) return <p className="text-center mt-10">Cargando detalles del sorteo...</p>;
-  if (!rifa) return <div className="text-center mt-10 text-red-600">No se encontró el sorteo.</div>;
+  if (cargando) return <div className="bg-background-dark text-text-light text-center p-10">Cargando detalles del sorteo...</div>;
+  if (!rifa) return <div className="bg-background-dark text-danger text-center p-10">No se encontró el sorteo.</div>;
   
   return (
-    <div className="p-4 max-w-7xl mx-auto">
-      <Link to="/admin/historial-ventas" className="text-blue-600 hover:underline mb-4 inline-block">← Volver a la selección de sorteos</Link>
+    <div className="p-4 max-w-7xl mx-auto bg-background-dark text-text-light min-h-screen">
+      <Link to="/admin/historial-ventas" className="text-accent-start hover:underline mb-4 inline-block">← Volver a la selección de sorteos</Link>
       
-      <div className="bg-white shadow-lg rounded-xl p-6 mb-6">
-        <h1 className="text-3xl font-bold mb-4 text-gray-800">{rifa.nombre}</h1>
+      <div className="bg-background-light border border-border-color shadow-lg rounded-xl p-6 mb-6">
+        <h1 className="text-3xl font-bold mb-4">{rifa.nombre}</h1>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div className="p-2 rounded-lg bg-gray-100"><p className="text-xs text-gray-500 uppercase font-semibold">Boletos Totales</p><p className="text-2xl font-bold text-gray-800">{rifa.boletos}</p></div>
-          <div className="p-2 rounded-lg bg-green-50"><p className="text-xs text-green-700 uppercase font-semibold">Vendidos</p><p className="text-xl font-bold text-green-800">{estadisticas.vendidosCount} <span className="text-sm font-normal">(${estadisticas.vendidosDinero.toLocaleString()})</span></p></div>
-          <div className="p-2 rounded-lg bg-yellow-50"><p className="text-xs text-yellow-700 uppercase font-semibold">Apartados</p><p className="text-xl font-bold text-yellow-800">{estadisticas.apartadosCount} <span className="text-sm font-normal">(${estadisticas.apartadosDinero.toLocaleString()})</span></p></div>
-          <div className="p-2 rounded-lg bg-blue-50"><p className="text-xs text-blue-700 uppercase font-semibold">Disponibles</p><p className="text-2xl font-bold text-blue-800">{estadisticas.disponiblesCount}</p></div>
+          <div className="p-2 rounded-lg bg-background-dark"><p className="text-xs text-text-subtle uppercase font-semibold">Boletos Totales</p><p className="text-2xl font-bold">{rifa.boletos}</p></div>
+          <div className="p-2 rounded-lg bg-success/10"><p className="text-xs text-green-300 uppercase font-semibold">Vendidos</p><p className="text-xl font-bold text-green-300">{estadisticas.vendidosCount} <span className="text-sm font-normal">(${estadisticas.vendidosDinero.toLocaleString()})</span></p></div>
+          <div className="p-2 rounded-lg bg-warning/10"><p className="text-xs text-yellow-300 uppercase font-semibold">Apartados</p><p className="text-xl font-bold text-yellow-300">{estadisticas.apartadosCount} <span className="text-sm font-normal">(${estadisticas.apartadosDinero.toLocaleString()})</span></p></div>
+          <div className="p-2 rounded-lg bg-accent-start/10"><p className="text-xs text-accent-start/80 uppercase font-semibold">Disponibles</p><p className="text-2xl font-bold text-accent-start">{estadisticas.disponiblesCount}</p></div>
         </div>
       </div>
 
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b border-border-color mb-6">
         <nav className="-mb-px flex space-x-2 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
-          <button onClick={() => setActiveTab('ventas')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'ventas' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }`}><VentasIcon/> Historial de Ventas</button>
-          <button onClick={() => setActiveTab('stats')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'stats' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }`}><StatsIcon/> Estadísticas</button>
-          <button onClick={() => setActiveTab('acciones')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'acciones' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }`}><AccionesIcon/> Acciones</button>
+          <button onClick={() => setActiveTab('ventas')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'ventas' ? 'border-accent-start text-accent-start' : 'border-transparent text-text-subtle hover:text-text-light hover:border-border-color' }`}><VentasIcon/> Historial de Ventas</button>
+          <button onClick={() => setActiveTab('stats')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'stats' ? 'border-accent-start text-accent-start' : 'border-transparent text-text-subtle hover:text-text-light hover:border-border-color' }`}><StatsIcon/> Estadísticas</button>
+          <button onClick={() => setActiveTab('acciones')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'acciones' ? 'border-accent-start text-accent-start' : 'border-transparent text-text-subtle hover:text-text-light hover:border-border-color' }`}><AccionesIcon/> Acciones</button>
         </nav>
       </div>
 
       <div className="animate-fade-in mt-6">
         {activeTab === 'ventas' && (
-          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+          <div className="bg-background-light p-4 sm:p-6 rounded-xl shadow-lg border border-border-color">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                <h2 className="text-xl font-bold text-gray-800">Filtros de Búsqueda</h2>
+                <h2 className="text-xl font-bold">Filtros de Búsqueda</h2>
                 <div className="flex-grow sm:flex-grow-0 sm:w-72">
                     <input 
                         type="text"
                         placeholder="Buscar por ID o No. Boleto..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full border-gray-300 rounded-md shadow-sm"
+                        className="w-full bg-background-dark text-text-light border-border-color rounded-md shadow-sm focus:ring-accent-start focus:border-accent-start"
                     />
                 </div>
             </div>
-            <div className="border-b border-gray-200">
+            <div className="border-b border-border-color">
                 <nav className="-mb-px flex space-x-4 overflow-x-auto" aria-label="Filters">
-                    <button onClick={() => setFiltroVentas('todos')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'todos' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Todos</button>
-                    <button onClick={() => setFiltroVentas('pagados')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'pagados' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Pagados</button>
-                    <button onClick={() => setFiltroVentas('apartados')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'apartados' ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Apartados</button>
-                    <button onClick={() => setFiltroVentas('manual')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'manual' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Venta Manual</button>
+                    <button onClick={() => setFiltroVentas('todos')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'todos' ? 'border-accent-start text-accent-start' : 'border-transparent text-text-subtle hover:text-text-light'}`}>Todos</button>
+                    <button onClick={() => setFiltroVentas('pagados')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'pagados' ? 'border-green-400 text-green-400' : 'border-transparent text-text-subtle hover:text-text-light'}`}>Pagados</button>
+                    <button onClick={() => setFiltroVentas('apartados')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'apartados' ? 'border-yellow-400 text-yellow-400' : 'border-transparent text-text-subtle hover:text-text-light'}`}>Apartados</button>
+                    <button onClick={() => setFiltroVentas('manual')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'manual' ? 'border-purple-400 text-purple-400' : 'border-transparent text-text-subtle hover:text-text-light'}`}>Venta Manual</button>
                 </nav>
             </div>
             <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
@@ -249,7 +249,7 @@ function RifaDetalleAdmin() {
         )}
         {activeTab === 'stats' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white p-4 rounded-lg shadow-md border space-y-4">
+            <div className="bg-background-light p-4 rounded-lg shadow-md border border-border-color space-y-4">
                 <h3 className="text-lg font-bold">Filtros de Reporte</h3>
                 <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
                 <PanelDeExportacion rifa={rifa} ventasFiltradas={ventasFiltradas} graficoRef={graficoRef} />
@@ -258,13 +258,13 @@ function RifaDetalleAdmin() {
           </div>
         )}
         {activeTab === 'acciones' && (
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-             <h2 className="text-2xl font-bold text-gray-900 mb-4">Acciones del Sorteo</h2>
-             <p className="text-gray-600 mb-6">Usa estas herramientas para gestionar tu sorteo manualmente.</p>
-             <button onClick={() => setShowModalVenta(true)} className="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors shadow-md">
+          <div className="bg-background-light p-6 rounded-xl shadow-lg border border-border-color">
+             <h2 className="text-2xl font-bold mb-4">Acciones del Sorteo</h2>
+             <p className="text-text-subtle mb-6">Usa estas herramientas para gestionar tu sorteo manualmente.</p>
+             <button onClick={() => setShowModalVenta(true)} className="bg-success text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors shadow-md">
                + Registrar Venta Manual
              </button>
-             <p className="text-xs text-gray-500 mt-2">Para registrar ventas en efectivo o por otros medios.</p>
+             <p className="text-xs text-text-subtle mt-2">Para registrar ventas en efectivo o por otros medios.</p>
           </div>
         )}
       </div>

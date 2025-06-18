@@ -1,6 +1,6 @@
 // src/components/SelectorBoletos.js
 import React from 'react';
-import { formatTicketNumber } from '../utils/rifaHelper'; // Importamos la nueva función
+import { formatTicketNumber } from '../utils/rifaHelper';
 
 const SelectorBoletos = ({
   boletosOcupados,
@@ -9,16 +9,15 @@ const SelectorBoletos = ({
   filtroActivo,
   rangoInicio,
   rangoFin,
-  totalBoletos, // Recibimos el total de boletos
+  totalBoletos,
   numerosFiltrados 
 }) => {
   
-  // Creamos la lista de números a mostrar, ya sea del rango o de la búsqueda
   const numerosAMostrar = numerosFiltrados || Array.from({ length: rangoFin - rangoInicio }, (_, i) => rangoInicio + i);
 
   return (
     <div className="mt-2 w-full">
-      <div className="overflow-auto max-h-[500px] p-2 bg-gray-50 rounded-lg border">
+      <div className="overflow-auto max-h-[500px] p-2 bg-background-dark rounded-lg border border-border-color">
         <div className="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-10 gap-1 sm:gap-1.5 w-max mx-auto">
           {numerosAMostrar.map(numeroBoleto => {
             const estaOcupado = boletosOcupados.has(numeroBoleto);
@@ -28,16 +27,16 @@ const SelectorBoletos = ({
             }
 
             const estaSeleccionado = boletosSeleccionados.includes(numeroBoleto);
-            let color = 'bg-white text-gray-800 border-gray-300 hover:bg-gray-200';
+            let colorClasses = 'bg-background-light text-text-subtle border-border-color hover:bg-border-color/50';
 
             if (estaSeleccionado) {
-              color = 'bg-green-600 text-white border-green-700';
+              colorClasses = 'bg-success text-white border-green-400 scale-110 shadow-lg';
             } else if (estaOcupado) {
               const estado = boletosOcupados.get(numeroBoleto);
               if (estado === 'apartado') {
-                color = 'bg-yellow-400 text-black border-yellow-500 cursor-not-allowed';
+                colorClasses = 'bg-warning/80 text-yellow-100 border-yellow-400 cursor-not-allowed opacity-70';
               } else {
-                color = 'bg-red-600 text-white border-red-700 cursor-not-allowed';
+                colorClasses = 'bg-danger/80 text-red-100 border-red-400 cursor-not-allowed opacity-70';
               }
             }
             
@@ -45,10 +44,9 @@ const SelectorBoletos = ({
               <button
                 key={numeroBoleto}
                 onClick={() => onToggleBoleto(numeroBoleto)}
-                className={`border w-14 h-10 sm:w-12 rounded text-xs sm:text-sm font-mono transition-transform transform hover:scale-110 ${color}`}
+                className={`border w-14 h-10 sm:w-12 rounded text-xs sm:text-sm font-mono transition-transform transform ${colorClasses}`}
                 disabled={estaOcupado}
               >
-                {/* Usamos la nueva función de formato centralizada */}
                 {formatTicketNumber(numeroBoleto, totalBoletos)}
               </button>
             );
@@ -59,5 +57,4 @@ const SelectorBoletos = ({
   );
 };
 
-// React.memo sigue siendo útil para evitar re-renderizados innecesarios.
 export default React.memo(SelectorBoletos);

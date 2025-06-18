@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'; // Importamos serverTimestamp
 import { db } from '../firebase/firebaseConfig';
+import Alerta from './Alerta';
 
 const GoogleLogo = () => ( <svg className="w-6 h-6 mr-3" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><path fill="none" d="M0 0h48v48H0z"></path></svg>);
 
@@ -30,20 +31,16 @@ function Login() {
         navigate('/admin');
       } else if (docSnap.exists() && !docSnap.data().telefono) {
         navigate('/completar-perfil');
-      }
-      else {
+      } else {
         navigate('/perfil');
       }
     } catch (err) {
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
-        setError('El correo o la contraseña son incorrectos.');
-      } else {
-        setError('Ocurrió un error inesperado al iniciar sesión.');
-      }
+      setError('El correo o la contraseña son incorrectos.');
       console.error("Error de login:", err.code);
     }
   };
 
+  // --- INICIO DE LA CORRECCIÓN: Lógica completa restaurada ---
   const handleGoogleLogin = async () => {
     setError('');
     setMessage('');
@@ -61,11 +58,11 @@ function Login() {
           navigate('/perfil');
         }
       } else {
+        // Esta lógica es manejada por AuthContext ahora, pero la dejamos como fallback
+        // para asegurar que el perfil se cree si AuthContext falla por alguna razón.
+        console.log("Creando perfil para nuevo usuario de Google desde Login.js");
         const nameParts = user.displayName ? user.displayName.split(' ') : ['Usuario'];
         const nombre = nameParts[0] || '';
-        // ==================================================================
-        // INICIO DE LA CORRECCIÓN: Usamos 'apellidos' en lugar de 'apellido'
-        // ==================================================================
         const apellidos = nameParts.slice(1).join(' ');
         
         await setDoc(userRef, {
@@ -73,11 +70,10 @@ function Login() {
           apellidos: apellidos,
           email: user.email,
           telefono: '',
-          rol: 'cliente'
+          photoURL: user.photoURL || '',
+          rol: 'cliente',
+          fechaCreacion: serverTimestamp(),
         });
-        // ==================================================================
-        // FIN DE LA CORRECCIÓN
-        // ==================================================================
         navigate('/completar-perfil');
       }
     } catch (error) {
@@ -85,6 +81,7 @@ function Login() {
       setError("No se pudo iniciar sesión con Google. Por favor, intenta de nuevo.");
     }
   };
+  // --- FIN DE LA CORRECCIÓN ---
   
   const handlePasswordReset = async () => {
     if (!email) {
@@ -97,43 +94,48 @@ function Login() {
       await sendPasswordResetEmail(auth, email);
       setMessage("¡Hecho! Se ha enviado un enlace para restablecer tu contraseña a tu correo.");
     } catch (error) {
-      console.error("Error al enviar correo de reseteo:", error.code);
       setError("No se pudo enviar el correo. Verifica que la dirección sea correcta.");
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-2xl">
+    <div className="flex items-center justify-center min-h-screen bg-background-dark p-4">
+      <div className="w-full max-w-md p-8 space-y-6 bg-background-light text-text-light border border-border-color rounded-xl shadow-2xl">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">Accede a tu Cuenta</h2>
-          <p className="mt-2 text-gray-600">Para ver tus boletos y participar en nuevas rifas.</p>
+          <h2 className="text-3xl font-bold">Accede a tu Cuenta</h2>
+          <p className="mt-2 text-text-subtle">Para ver tus boletos y participar en nuevos sorteos.</p>
         </div>
+        
         <div className="space-y-4">
-          <button onClick={handleGoogleLogin} className="w-full flex items-center justify-center px-4 py-3 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+          <button onClick={handleGoogleLogin} className="w-full flex items-center justify-center px-4 py-3 font-medium text-text-dark bg-background-white border border-border-color rounded-lg shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background-light focus:ring-accent-start transition-all duration-200">
             <GoogleLogo />
             Continuar con Google
           </button>
         </div>
+
         <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-300"></span></div>
-          <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-500">o inicia con tu correo</span></div>
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border-color"></span></div>
+          <div className="relative flex justify-center text-xs uppercase"><span className="bg-background-light px-2 text-text-subtle">o inicia con tu correo</span></div>
         </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div><input placeholder="Correo Electrónico" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div>
-          <div><input placeholder="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div>
-          <button type="submit" className="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">Iniciar Sesión</button>
+          <div><input placeholder="Correo Electrónico" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="block w-full px-3 py-2 mt-1 bg-background-dark text-text-light border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-accent-start focus:border-accent-start sm:text-sm"/></div>
+          <div><input placeholder="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="block w-full px-3 py-2 mt-1 bg-background-dark text-text-light border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-accent-start focus:border-accent-start sm:text-sm"/></div>
+          <button type="submit" className="w-full px-4 py-2 font-bold text-white bg-gradient-to-r from-accent-start to-accent-end rounded-lg hover:opacity-90 transition-opacity">Iniciar Sesión</button>
         </form>
+
         <div className="text-center text-sm">
-          <button onClick={handlePasswordReset} className="font-medium text-gray-500 hover:text-blue-600 hover:underline">
+          <button onClick={handlePasswordReset} className="font-medium text-text-subtle hover:text-accent-start hover:underline">
             ¿Olvidaste tu contraseña?
           </button>
         </div>
+        
         <div className="text-center">
-            <p className="text-sm">¿No tienes una cuenta? <Link to="/registro" className="font-medium text-blue-600 hover:underline">Regístrate aquí</Link></p>
+            <p className="text-sm text-text-subtle">¿No tienes una cuenta? <Link to="/registro" className="font-medium text-accent-start hover:underline">Regístrate aquí</Link></p>
         </div>
-        {error && <p className="text-sm text-center text-red-600 pt-2">{error}</p>}
-        {message && <p className="text-sm text-center text-green-600 pt-2">{message}</p>}
+
+        {error && <Alerta mensaje={error} tipo="error" onClose={() => setError('')} />}
+        {message && <Alerta mensaje={message} tipo="exito" onClose={() => setMessage('')} />}
       </div>
     </div>
   );

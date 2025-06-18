@@ -4,7 +4,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
-import { formatTicketNumber } from '../utils/rifaHelper'; // <-- IMPORTAMOS LA FUNCIÓN
+import { formatTicketNumber } from '../utils/rifaHelper';
 
 const PDFIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12v-1a2 2 0 0 1 2-2h1"/><path d="M13 11v6"/><path d="M10 18h2.5a1.5 1.5 0 0 0 0-3H10v-1"/></svg>;
 const ExcelIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M16 13h-3v10h-2V13H8v-2h8v2z"></path><path d="M4 12h4v2H4z"></path></svg>;
@@ -21,14 +21,14 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
   };
 
   const generarPDF = async () => {
-    if (!rifa) return alert("No hay datos de la rifa para generar el informe.");
+    if (!rifa) return alert("No hay datos del sorteo para generar el informe.");
     
     const doc = new jsPDF('p', 'mm', 'a4');
     const hoy = new Date().toLocaleDateString('es-MX');
     const stats = calcularEstadisticas();
 
     doc.setFontSize(22);
-    doc.text(`Informe de Rifa: ${rifa.nombre}`, 15, 20);
+    doc.text(`Informe de Sorteo: ${rifa.nombre}`, 15, 20);
     doc.setFontSize(12);
     doc.text(`Reporte generado el: ${hoy}`, 15, 28);
 
@@ -36,7 +36,7 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
       startY: 40,
       head: [['Estadística', 'Boletos', 'Monto (MXN)']],
       body: [
-        ['Total de la Rifa', `${rifa.boletos}`, `$${(rifa.boletos * rifa.precio).toLocaleString()}`],
+        ['Total del Sorteo', `${rifa.boletos}`, `$${(rifa.boletos * rifa.precio).toLocaleString()}`],
         ['Pagados', `${stats.vendidosCount}`, `$${stats.vendidosDinero.toLocaleString()}`],
         ['Apartados', `${stats.apartadosCount}`, `$${stats.apartadosDinero.toLocaleString()}`],
         ['Disponibles', `${stats.disponiblesCount}`, ''],
@@ -49,7 +49,7 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
       doc.setFontSize(16);
       doc.text("Gráfica de Ventas", 15, 20);
       try {
-        const canvas = await html2canvas(graficoRef.current, { backgroundColor: '#ffffff' });
+        const canvas = await html2canvas(graficoRef.current, { backgroundColor: 'rgb(var(--background-light))' });
         const imgData = canvas.toDataURL('image/png');
         const imgWidth = 180;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -73,9 +73,7 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
                 v.comprador.nombre,
                 v.comprador.telefono,
                 v.comprador.email || 'N/A',
-                // --- INICIO DE LA CORRECCIÓN ---
                 v.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', '),
-                // --- FIN DE LA CORRECCIÓN ---
                 v.cantidad,
                 `$${v.precioBoleto || rifa.precio}`,
                 `$${(v.cantidad || 0) * (v.precioBoleto || rifa.precio)}`,
@@ -84,15 +82,15 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
         }),
         theme: 'grid',
         didDrawCell: (data) => {
-            if (data.section === 'body' && data.column.index === 7) { // Columna de Estado (índice 7)
+            if (data.section === 'body' && data.column.index === 7) {
             const texto = data.cell.text[0];
             if (texto === 'Pagado') {
-                doc.setFillColor(34, 197, 94); // green-500
+                doc.setFillColor(34, 197, 94); // success
             } else if (texto === 'Apartado') {
-                doc.setFillColor(234, 179, 8); // yellow-500
+                doc.setFillColor(234, 179, 8); // warning
             }
             doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
-            doc.setTextColor(255, 255, 255); // Texto blanco para contraste
+            doc.setTextColor(255, 255, 255);
             doc.text(texto, data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2, {
                 align: 'center',
                 baseline: 'middle'
@@ -106,15 +104,15 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
   };
 
   const generarExcel = () => {
-    if (!rifa) return alert("No hay datos de la rifa para generar el informe.");
+    if (!rifa) return alert("No hay datos del sorteo para generar el informe.");
 
     const stats = calcularEstadisticas();
     const resumenData = [
-      ["Informe de Rifa", rifa.nombre],
+      ["Informe de Sorteo", rifa.nombre],
       ["Fecha de Reporte", new Date().toLocaleDateString('es-MX')],
       [],
       ["Estadística", "Cantidad de Boletos", "Monto (MXN)"],
-      ['Total de la Rifa', rifa.boletos, rifa.boletos * rifa.precio],
+      ['Total del Sorteo', rifa.boletos, rifa.boletos * rifa.precio],
       ['Pagados', stats.vendidosCount, stats.vendidosDinero],
       ['Apartados', stats.apartadosCount, stats.apartadosDinero],
       ['Disponibles', stats.disponiblesCount, ''],
@@ -125,9 +123,7 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
       'Nombre': v.comprador.nombre,
       'Teléfono': v.comprador.telefono,
       'Email': v.comprador.email || 'N/A',
-      // --- INICIO DE LA CORRECCIÓN ---
       'Números': v.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', '),
-      // --- FIN DE LA CORRECCIÓN ---
       'Cantidad': v.cantidad,
       'Precio Boleto': v.precioBoleto || rifa.precio,
       'Total Pagado': (v.cantidad || 0) * (v.precioBoleto || rifa.precio),
@@ -143,14 +139,14 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
   };
 
   return (
-    <div className="bg-gray-50 p-4 rounded-lg mt-6 border">
-      <h3 className="text-lg font-bold mb-4">Exportar Informes</h3>
+    <div className="bg-background-dark p-4 rounded-lg mt-6 border border-border-color">
+      <h3 className="text-lg font-bold mb-4 text-text-light">Exportar Informes</h3>
       <div className="flex flex-col sm:flex-row gap-4">
-        <button onClick={generarPDF} className="flex-1 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center">
+        <button onClick={generarPDF} className="flex-1 bg-danger/80 text-white font-bold py-2 px-4 rounded-lg hover:bg-danger transition-colors flex items-center justify-center">
           <PDFIcon />
           Exportar a PDF
         </button>
-        <button onClick={generarExcel} className="flex-1 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+        <button onClick={generarExcel} className="flex-1 bg-success/80 text-white font-bold py-2 px-4 rounded-lg hover:bg-success transition-colors flex items-center justify-center">
           <ExcelIcon />
           Exportar a Excel
         </button>

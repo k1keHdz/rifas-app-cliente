@@ -6,53 +6,53 @@ import { collection, query, where, orderBy, limit, getDocs } from 'firebase/fire
 import { db } from '../firebase/firebaseConfig';
 import { RIFAS_ESTADOS } from '../constants/rifas';
 
-// --- Sub-componente para la sección "Cómo participar" ---
+// --- Sub-componente "Cómo participar" con el nuevo tema ---
 const PasosSection = () => (
-    <div className="bg-white py-16 sm:py-24">
+    <div className="bg-background-dark py-16 sm:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-                <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Participar es Muy Fácil</h2>
-                <p className="mt-4 text-lg text-gray-500">Sigue estos simples pasos y podrías ser nuestro próximo ganador.</p>
+                <h2 className="text-3xl font-extrabold text-text-light sm:text-4xl">Participar es Muy Fácil</h2>
+                <p className="mt-4 text-lg text-text-subtle">Sigue estos simples pasos y podrías ser nuestro próximo ganador.</p>
             </div>
             <div className="mt-12 grid gap-10 md:grid-cols-2 lg:grid-cols-4">
                 <div className="text-center">
-                    <div className="flex items-center justify-center h-12 w-12 mx-auto bg-indigo-600 text-white rounded-full text-xl font-bold">1</div>
-                    <h3 className="mt-5 text-lg font-medium text-gray-900">Elige tu Sorteo</h3>
-                    <p className="mt-2 text-base text-gray-500">Explora nuestros sorteos activos y selecciona el premio que más te guste.</p>
+                    <div className="flex items-center justify-center h-12 w-12 mx-auto bg-gradient-to-r from-accent-start to-accent-end text-white rounded-full text-xl font-bold">1</div>
+                    <h3 className="mt-5 text-lg font-medium text-text-light">Elige tu Sorteo</h3>
+                    <p className="mt-2 text-base text-text-subtle">Explora nuestros sorteos activos y selecciona el premio que más te guste.</p>
                 </div>
                 <div className="text-center">
-                    <div className="flex items-center justify-center h-12 w-12 mx-auto bg-indigo-600 text-white rounded-full text-xl font-bold">2</div>
-                    <h3 className="mt-5 text-lg font-medium text-gray-900">Selecciona Boletos</h3>
-                    <p className="mt-2 text-base text-gray-500">Usa el tablero interactivo para escoger tus números de la suerte.</p>
+                    <div className="flex items-center justify-center h-12 w-12 mx-auto bg-gradient-to-r from-accent-start to-accent-end text-white rounded-full text-xl font-bold">2</div>
+                    <h3 className="mt-5 text-lg font-medium text-text-light">Selecciona Boletos</h3>
+                    <p className="mt-2 text-base text-text-subtle">Usa el tablero interactivo para escoger tus números de la suerte.</p>
                 </div>
                 <div className="text-center">
-                    <div className="flex items-center justify-center h-12 w-12 mx-auto bg-indigo-600 text-white rounded-full text-xl font-bold">3</div>
-                    <h3 className="mt-5 text-lg font-medium text-gray-900">Aparta y Paga</h3>
-                    <p className="mt-2 text-base text-gray-500">Contáctanos por WhatsApp para apartar tus boletos y recibir los datos de pago.</p>
+                    <div className="flex items-center justify-center h-12 w-12 mx-auto bg-gradient-to-r from-accent-start to-accent-end text-white rounded-full text-xl font-bold">3</div>
+                    <h3 className="mt-5 text-lg font-medium text-text-light">Aparta y Paga</h3>
+                    <p className="mt-2 text-base text-text-subtle">Contáctanos por WhatsApp para apartar tus boletos y recibir los datos de pago.</p>
                 </div>
                 <div className="text-center">
-                    <div className="flex items-center justify-center h-12 w-12 mx-auto bg-indigo-600 text-white rounded-full text-xl font-bold">4</div>
-                    <h3 className="mt-5 text-lg font-medium text-gray-900">¡Espera y Gana!</h3>
-                    <p className="mt-2 text-base text-gray-500">Verifica tu boleto y espera el día del sorteo. ¡Mucha suerte!</p>
+                    <div className="flex items-center justify-center h-12 w-12 mx-auto bg-gradient-to-r from-accent-start to-accent-end text-white rounded-full text-xl font-bold">4</div>
+                    <h3 className="mt-5 text-lg font-medium text-text-light">¡Espera y Gana!</h3>
+                    <p className="mt-2 text-base text-text-subtle">Verifica tu boleto y espera el día del sorteo. ¡Mucha suerte!</p>
                 </div>
             </div>
         </div>
     </div>
 );
 
-// --- Componente para la nueva sección Héroe ---
+// --- Componente para la sección Héroe con el nuevo tema ---
 const RifaHero = ({ rifa }) => {
     const porcentajeVendido = rifa.boletos > 0 ? ((rifa.boletosVendidos || 0) / rifa.boletos) * 100 : 0;
     
     return (
-        <div className="bg-slate-900 text-white">
+        <div className="bg-background-dark text-text-light">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
                 <div className="lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center">
-                    <div className="relative group rounded-xl overflow-hidden shadow-2xl">
+                    <div className="relative group rounded-xl overflow-hidden shadow-2xl border-2 border-border-color/50">
                          <Link to={`/rifa/${rifa.id}`} className="block">
                             <div className="aspect-w-16 aspect-h-9">
                                 <img 
-                                    src={rifa.imagenes?.[0] || `https://placehold.co/800x450/1e293b/ffffff?text=Sorteo+Estelar`}
+                                    src={rifa.imagenes?.[0] || `https://placehold.co/800x450/111827/e5e7eb?text=Sorteo+Estelar`}
                                     alt={rifa.nombre}
                                     className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-105"
                                 />
@@ -60,23 +60,23 @@ const RifaHero = ({ rifa }) => {
                          </Link>
                     </div>
                     <div className="mt-12 lg:mt-0">
-                        <span className="text-indigo-400 font-semibold tracking-wide uppercase">Sorteo Principal</span>
-                        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mt-2">{rifa.nombre}</h1>
-                        <p className="mt-4 text-lg text-slate-300 line-clamp-3">{rifa.descripcion}</p>
+                        <span className="text-accent-start font-semibold tracking-wide uppercase">Sorteo Principal</span>
+                        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mt-2 text-background-white">{rifa.nombre}</h1>
+                        <p className="mt-4 text-lg text-text-subtle line-clamp-3">{rifa.descripcion}</p>
                         <div className="mt-8">
-                           <p className="text-slate-400 text-sm">Precio del boleto</p>
-                           <p className="text-4xl font-bold text-indigo-500">${rifa.precio.toLocaleString('es-MX')}</p>
+                           <p className="text-text-subtle text-sm">Precio del boleto</p>
+                           <p className="text-4xl font-bold text-accent-start">${rifa.precio.toLocaleString('es-MX')}</p>
                         </div>
                         <div className="mt-6">
                            <div className="flex justify-between items-center mb-1">
-                               <span className="text-sm font-semibold text-slate-300">Progreso</span>
-                               <span className="text-sm font-bold text-indigo-400">{porcentajeVendido.toFixed(1)}%</span>
+                               <span className="text-sm font-semibold text-text-light">Progreso</span>
+                               <span className="text-sm font-bold text-accent-start">{porcentajeVendido.toFixed(1)}%</span>
                            </div>
-                           <div className="bg-slate-700 h-4 rounded-full overflow-hidden">
-                               <div className="bg-gradient-to-r from-purple-500 to-indigo-500 h-full rounded-full" style={{ width: `${porcentajeVendido}%` }}></div>
+                           <div className="bg-background-light h-4 rounded-full overflow-hidden border border-border-color">
+                               <div className="bg-gradient-to-r from-accent-start to-accent-end h-full rounded-full" style={{ width: `${porcentajeVendido}%` }}></div>
                            </div>
                         </div>
-                        <Link to={`/rifa/${rifa.id}`} className="mt-10 inline-block bg-indigo-600 text-white font-bold text-lg py-4 px-10 rounded-lg hover:bg-indigo-700 transition-all transform hover:scale-105 w-full sm:w-auto text-center shadow-lg">
+                        <Link to={`/rifa/${rifa.id}`} className="mt-10 inline-block bg-gradient-to-r from-accent-start to-accent-end text-white font-bold text-lg py-4 px-10 rounded-lg hover:shadow-2xl hover:scale-105 transition-all transform w-full sm:w-auto text-center shadow-lg">
                             ¡Participar ahora!
                         </Link>
                     </div>
@@ -86,7 +86,7 @@ const RifaHero = ({ rifa }) => {
     );
 }
 
-// --- Componente para las tarjetas de sorteos ---
+// --- Componente para las tarjetas de sorteos con el nuevo tema ---
 const RifaCard = ({ rifa, isFinished = false, onShowResults }) => {
     const porcentajeVendido = rifa.boletos > 0 ? ((rifa.boletosVendidos || 0) / rifa.boletos) * 100 : 0;
     
@@ -102,7 +102,7 @@ const RifaCard = ({ rifa, isFinished = false, onShowResults }) => {
             return (
                 <button
                     onClick={() => onShowResults(rifa.id)}
-                    className="w-full text-center block font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-105 text-white bg-gray-500 hover:bg-gray-600"
+                    className="w-full text-center block font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-105 text-text-light bg-background-light hover:bg-border-color"
                 >
                     Ver Resultados
                 </button>
@@ -111,7 +111,7 @@ const RifaCard = ({ rifa, isFinished = false, onShowResults }) => {
         return (
             <Link 
                 to={`/rifa/${rifa.id}`} 
-                className="w-full text-center block font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-105 text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                className="w-full text-center block font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-105 text-white bg-gradient-to-r from-accent-start to-accent-end hover:shadow-lg hover:shadow-accent-start/20"
             >
                 Participar
             </Link>
@@ -119,25 +119,25 @@ const RifaCard = ({ rifa, isFinished = false, onShowResults }) => {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group flex flex-col">
+        <div className="bg-background-light border border-border-color rounded-xl shadow-lg hover:shadow-2xl hover:border-accent-end/50 transition-all duration-300 overflow-hidden group flex flex-col">
             <ImageContainer>
                 <img
-                    src={rifa.imagenes?.[0] || `https://placehold.co/600x400/e2e8f0/4a5568?text=Sin+Imagen`}
+                    src={rifa.imagenes?.[0] || `https://placehold.co/600x400/1f2937/9ca3af?text=Sin+Imagen`}
                     alt={rifa.nombre}
                     className={`w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-105 ${isFinished ? 'filter grayscale' : ''}`}
                 />
             </ImageContainer>
-            <div className="p-5 flex flex-col flex-grow">
-                <h3 className="text-lg font-bold text-gray-900 truncate">{rifa.nombre}</h3>
-                <p className="text-2xl font-extrabold text-indigo-600 my-2">${rifa.precio.toLocaleString('es-MX')}</p>
+            <div className="p-5 flex flex-col flex-grow text-left">
+                <h3 className="text-lg font-bold text-text-light truncate">{rifa.nombre}</h3>
+                <p className="text-2xl font-extrabold text-accent-start my-2">${rifa.precio.toLocaleString('es-MX')}</p>
                 <div className="w-full mt-2">
                     <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs font-semibold text-gray-500 uppercase">Progreso</span>
-                        <span className="text-sm font-bold text-indigo-600">{porcentajeVendido.toFixed(1)}%</span>
+                        <span className="text-xs font-semibold text-text-subtle uppercase">Progreso</span>
+                        <span className="text-sm font-bold text-accent-start">{porcentajeVendido.toFixed(1)}%</span>
                     </div>
-                    <div className="bg-gray-200 h-2.5 rounded-full overflow-hidden">
+                    <div className="bg-background-dark h-2.5 rounded-full overflow-hidden border border-border-color">
                         <div 
-                           className={`h-full rounded-full ${isFinished ? 'bg-gray-400' : 'bg-gradient-to-r from-purple-500 to-indigo-500'}`} 
+                           className={`h-full rounded-full ${isFinished ? 'bg-gray-400' : 'bg-gradient-to-r from-accent-start to-accent-end'}`} 
                            style={{ width: `${porcentajeVendido}%` }}>
                         </div>
                     </div>
@@ -150,7 +150,7 @@ const RifaCard = ({ rifa, isFinished = false, onShowResults }) => {
     )
 }
 
-// --- NUEVO Componente para el Modal de Resultados ---
+// --- Componente para el Modal de Resultados con el nuevo tema ---
 const ResultadosModal = ({ isOpen, onClose, data, isLoading }) => {
     if (!isOpen) return null;
 
@@ -163,24 +163,24 @@ const ResultadosModal = ({ isOpen, onClose, data, isLoading }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 animate-fade-in-fast" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-background-light text-text-light border border-border-color rounded-2xl shadow-2xl w-full max-w-md transform transition-all" onClick={(e) => e.stopPropagation()}>
                 <div className="p-6 text-center relative">
-                    <button onClick={onClose} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 p-2 rounded-full text-2xl leading-none">&times;</button>
+                    <button onClick={onClose} className="absolute top-2 right-2 text-text-subtle hover:text-text-light p-2 rounded-full text-2xl leading-none">&times;</button>
                     {isLoading ? (
                         <div className="py-10">Cargando resultados...</div>
                     ) : data ? (
                         <>
-                            <span className="text-sm font-bold text-indigo-500 uppercase">Resultados del Sorteo</span>
-                            <h3 className="text-2xl font-bold text-gray-800 mt-2">{data.nombreRifa}</h3>
-                            <p className="text-sm text-gray-500 mt-1">Sorteo realizado el: {formatDate(data.fechaRegistro)}</p>
+                            <span className="text-sm font-bold text-accent-start uppercase">Resultados del Sorteo</span>
+                            <h3 className="text-2xl font-bold text-text-light mt-2">{data.nombreRifa}</h3>
+                            <p className="text-sm text-text-subtle mt-1">Sorteo realizado el: {formatDate(data.fechaRegistro)}</p>
                             
-                            <div className="mt-8 bg-slate-100 rounded-lg py-6">
-                               <p className="text-lg text-gray-600">Boleto Ganador:</p>
-                               <p className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 tracking-wider">
+                            <div className="mt-8 bg-background-dark rounded-lg py-6">
+                               <p className="text-lg text-text-subtle">Boleto Ganador:</p>
+                               <p className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-accent-start to-accent-end tracking-wider">
                                    {String(data.numeroGanador).padStart(5, '0')}
                                </p>
                             </div>
-                            <p className="text-xs text-gray-400 mt-6">¡Felicidades al afortunado ganador! Gracias a todos por participar.</p>
+                            <p className="text-xs text-text-subtle mt-6">¡Felicidades al afortunado ganador! Gracias a todos por participar.</p>
                         </>
                     ) : (
                         <p className="py-10">No se encontraron resultados para este sorteo.</p>
@@ -220,7 +220,7 @@ function Home() {
                 setRifasFinalizadas(rifasFinalizadasData);
 
             } catch (error) {
-                console.error("Error al cargar los sorteos: ", error); // Texto actualizado
+                console.error("Error al cargar los sorteos: ", error);
             } finally {
                 setCargando(false);
             }
@@ -249,7 +249,7 @@ function Home() {
     };
 
     return (
-        <div className="bg-slate-100">
+        <div className="bg-background-dark">
             <ResultadosModal 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -257,14 +257,14 @@ function Home() {
                 isLoading={isLoadingModal}
             />
             {cargando ? (
-                <div className="text-center py-40">Cargando...</div>
+                <div className="text-center py-40 text-text-light">Cargando...</div>
             ) : rifaDestacada ? (
                 <>
                     <RifaHero rifa={rifaDestacada} />
                     {(otrasRifas.length > 0) && (
-                        <div className="py-16 sm:py-24">
+                        <div className="py-16 sm:py-24 bg-background-dark">
                             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                                <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-12">Más Oportunidades Para Ganar</h2>
+                                <h2 className="text-3xl font-extrabold text-text-light text-center mb-12">Más Oportunidades Para Ganar</h2>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                                     {otrasRifas.map(rifa => <RifaCard key={rifa.id} rifa={rifa} onShowResults={handleVerResultados} />)}
                                 </div>
@@ -273,16 +273,16 @@ function Home() {
                     )}
                 </>
             ) : (
-                <div className="bg-white text-center py-40">
-                    <h2 className="text-3xl font-bold text-gray-700">No hay sorteos disponibles</h2>
-                    <p className="text-gray-500 mt-2">¡Vuelve pronto para más oportunidades de ganar!</p>
+                <div className="bg-background-dark text-center py-40">
+                    <h2 className="text-3xl font-bold text-text-light">No hay sorteos disponibles</h2>
+                    <p className="text-text-subtle mt-2">¡Vuelve pronto para más oportunidades de ganar!</p>
                 </div>
             )}
             
             {rifasFinalizadas.length > 0 && (
-                 <div className="bg-white pt-16 sm:pt-24 pb-4">
+                 <div className="bg-background-light pt-16 sm:pt-24 pb-4 border-t-2 border-border-color">
                       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                          <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-12">Sorteos Finalizados</h2>
+                          <h2 className="text-3xl font-extrabold text-text-light text-center mb-12">Sorteos Finalizados</h2>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                                {rifasFinalizadas.map(rifa => <RifaCard key={rifa.id} rifa={rifa} isFinished={true} onShowResults={handleVerResultados} />)}
                           </div>

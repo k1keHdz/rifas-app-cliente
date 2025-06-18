@@ -1,18 +1,13 @@
 // src/components/BuscadorBoletos.js
 import { useState } from 'react';
+import { formatTicketNumber } from '../utils/rifaHelper';
 
 const BuscadorBoletos = ({
   totalBoletos,
   boletosOcupados,
   boletosSeleccionados,
   onSelectBoleto,
-  // ==================================================================
-  // INICIO DE CAMBIOS: Recibimos el padding dinámico como prop
-  // ==================================================================
-  paddingLength = 2 // Damos un valor por defecto seguro
-  // ==================================================================
-  // FIN DE CAMBIOS
-  // ==================================================================
+  paddingLength = 2
 }) => {
   const [numero, setNumero] = useState('');
   const [estado, setEstado] = useState(null);
@@ -23,7 +18,6 @@ const BuscadorBoletos = ({
       return;
     }
     const num = parseInt(valor, 10);
-    // La lógica de la Lotería Nacional va de 0 a total-1
     if (isNaN(num) || num < 0 || num >= totalBoletos) {
       setEstado('no_existe');
     } else if (boletosOcupados.has(num)) {
@@ -48,34 +42,28 @@ const BuscadorBoletos = ({
   };
 
   const renderEstado = () => {
-    if (estado === 'comprado') return <span className="text-red-600 font-bold">OCUPADO</span>;
-    if (estado === 'disponible') return <span className="text-green-600 font-bold">DISPONIBLE</span>;
-    if (estado === 'no_existe') return <span className="text-gray-500 font-semibold">No existe</span>;
+    if (estado === 'comprado') return <span className="text-danger/90 font-bold">NO DISPONIBLE</span>;
+    if (estado === 'disponible') return <span className="text-success/90 font-bold">DISPONIBLE</span>;
+    if (estado === 'no_existe') return <span className="text-text-subtle font-semibold">No existe</span>;
     return null;
   };
 
   return (
     <div className="text-center mb-4 w-full max-w-xs">
-      <h3 className="font-bold text-lg mb-2 text-center">Busca un Boleto Específico</h3>
+      <h3 className="font-bold text-lg mb-2 text-center text-text-light">Busca un Boleto Específico</h3>
       <input
         type="number"
         value={numero}
         onChange={handleInput}
-        className="border px-3 py-2 rounded w-full text-center text-lg"
-        placeholder={`Ej: ${String(Math.floor(Math.random() * totalBoletos)).padStart(paddingLength, '0')}`}
+        className="w-full text-center text-lg bg-background-dark text-text-light border border-border-color rounded-md shadow-sm p-2 focus:ring-accent-start focus:border-accent-start"
+        placeholder={`Ej: ${formatTicketNumber(Math.floor(Math.random() * totalBoletos), totalBoletos)}`}
       />
-      <div className="text-sm mt-1 h-5">Estado: {renderEstado()}</div>
+      <div className="text-sm mt-1 h-5 text-text-subtle">Estado: {renderEstado()}</div>
 
       {estado === 'disponible' && !boletosSeleccionados.includes(parseInt(numero, 10)) && (
         <div className="mt-2 animate-fade-in">
-          <button onClick={seleccionar} className="bg-green-600 hover:bg-green-700 text-white font-mono text-sm px-4 py-2 rounded-lg">
-            {/* ================================================================== */}
-            {/* INICIO DE CAMBIOS: Usamos el padding dinámico en el botón */}
-            {/* ================================================================== */}
-            + Agregar {numero.toString().padStart(paddingLength, '0')}
-            {/* ================================================================== */}
-            {/* FIN DE CAMBIOS */}
-            {/* ================================================================== */}
+          <button onClick={seleccionar} className="bg-success hover:bg-green-700 text-white font-mono text-sm px-4 py-2 rounded-lg">
+             {formatTicketNumber(numero, totalBoletos)}
           </button>
         </div>
       )}

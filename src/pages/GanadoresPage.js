@@ -49,48 +49,48 @@ function GanadoresPage() {
 
   return (
     <>
-      <div className="bg-white py-12 sm:py-16">
+      <div className="bg-background-dark py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-base font-semibold text-blue-600 tracking-wide uppercase">Nuestros Afortunados</h2>
-            <p className="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">
+            <h2 className="text-base font-semibold text-accent-start tracking-wide uppercase">Nuestros Afortunados</h2>
+            <p className="mt-2 text-3xl font-extrabold text-text-light tracking-tight sm:text-4xl">
               Galería de Ganadores
             </p>
-            <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
+            <p className="mt-4 max-w-2xl mx-auto text-xl text-text-subtle">
               ¡Felicidades a todos nuestros ganadores! Tú podrías ser el siguiente.
             </p>
           </div>
 
           <div className="mt-12">
             {cargando ? (
-              <p className="text-center">Cargando ganadores...</p>
+              <p className="text-center text-text-light">Cargando ganadores...</p>
             ) : ganadores.length === 0 ? (
-              <p className="text-center text-gray-600">Aún no hay ganadores registrados. ¡Participa para ser el primero!</p>
+              <p className="text-center text-text-subtle">Aún no hay ganadores registrados. ¡Participa para ser el primero!</p>
             ) : (
               <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 {ganadores.map(ganador => (
-                  <div key={ganador.id} className="flex flex-col rounded-lg shadow-lg overflow-hidden">
+                  <div key={ganador.id} className="flex flex-col rounded-lg shadow-lg overflow-hidden bg-background-light border border-border-color">
                     <div className="flex-shrink-0">
                       <img className="h-64 w-full object-cover" src={ganador.fotoURL} alt={`Ganador ${ganador.datosComprador.nombre}`} />
                     </div>
-                    <div className="flex-1 bg-white p-6 flex flex-col justify-between">
+                    <div className="flex-1 p-6 flex flex-col justify-between">
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-blue-600 flex items-center">
+                        <p className="text-sm font-medium text-accent-start flex items-center">
                           <TrophyIcon />
                           <span className="ml-1">Ganador del Sorteo</span>
                         </p>
                         <Link to={`/rifa/${ganador.rifaId}`} className="block mt-2">
-                          <p className="text-xl font-semibold text-gray-900 hover:underline">{ganador.nombreRifa}</p>
+                          <p className="text-xl font-semibold text-text-light hover:underline">{ganador.nombreRifa}</p>
                         </Link>
                         {ganador.testimonio && (
-                          <p className="mt-3 text-base text-gray-500 italic">"{ganador.testimonio}"</p>
+                          <p className="mt-3 text-base text-text-subtle italic">"{ganador.testimonio}"</p>
                         )}
                       </div>
                       <div className="mt-6 flex flex-col">
                         <div className="flex items-center mb-4">
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{ganador.datosComprador.nombre}</p>
-                            <div className="flex space-x-1 text-sm text-gray-500">
+                            <p className="text-sm font-medium text-text-light">{ganador.datosComprador.nombre}</p>
+                            <div className="flex space-x-1 text-sm text-text-subtle">
                               <span>Boleto Ganador:</span>
                               <span className="font-mono">{String(ganador.numeroGanador).padStart(5, '0')}</span>
                             </div>
@@ -99,7 +99,7 @@ function GanadoresPage() {
                         {ganador.videoURL && (
                             <button 
                                 onClick={() => setVideoModalUrl(ganador.videoURL)}
-                                className="w-full flex items-center justify-center bg-gray-800 text-white font-bold py-2 px-4 rounded-lg hover:bg-black transition-colors"
+                                className="w-full flex items-center justify-center bg-background-dark border border-border-color text-text-light font-bold py-2 px-4 rounded-lg hover:bg-border-color transition-colors"
                             >
                                 <VideoIcon/>
                                 Ver Video del Ganador
