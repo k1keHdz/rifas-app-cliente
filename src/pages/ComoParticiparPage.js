@@ -16,7 +16,8 @@ const Paso = ({ icono, titulo, children }) => (
             </div>
         </div>
         <div className="ml-4">
-            <h3 className="text-lg leading-6 font-bold text-text-light">{titulo}</h3>
+            {/* REPARACIÓN: Se elimina text-text-light. El título del paso heredará el color principal. */}
+            <h3 className="text-lg leading-6 font-bold">{titulo}</h3>
             <p className="mt-2 text-base text-text-subtle">{children}</p>
         </div>
     </div>
@@ -28,8 +29,10 @@ function ComoParticiparPage() {
         <div className="bg-background-dark py-12 sm:py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center">
-                    <h2 className="text-base font-semibold text-accent-start tracking-wide uppercase">Participar es muy fácil</h2>
-                    <p className="mt-2 text-3xl font-extrabold text-text-light tracking-tight sm:text-4xl">
+                    {/* REPARACIÓN: Se cambia text-accent-start por text-text-subtle para una jerarquía correcta. */}
+                    <h2 className="text-base font-semibold text-text-subtle tracking-wide uppercase">Participar es muy fácil</h2>
+                    {/* REPARACIÓN: Se elimina text-text-light. */}
+                    <p className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
                         Aprende a Ganar con Nuestro Video Tutorial
                     </p>
                     <p className="mt-4 max-w-2xl mx-auto text-xl text-text-subtle">
@@ -51,13 +54,15 @@ function ComoParticiparPage() {
                 </div>
 
                 <div className="mt-20 text-center">
-                    <h3 className="text-2xl font-bold text-text-light">O Sigue los Pasos Escritos</h3>
+                    {/* REPARACIÓN: Se elimina text-text-light. */}
+                    <h3 className="text-2xl font-bold">O Sigue los Pasos Escritos</h3>
                 </div>
 
                 <div className="mt-12">
                     <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-12">
                         <Paso icono={<ElegirIcon/>} titulo="Paso 1: Elige tu Sorteo">
-                            Navega por nuestra <Link to="/" className="text-accent-start font-semibold hover:underline">página de inicio</Link> y selecciona el premio por el que quieres competir. ¡Tenemos opciones para todos los gustos!
+                            {/* REPARACIÓN: Se cambia text-accent-start por text-accent-primary para usar el color de interacción definido. */}
+                            Navega por nuestra <Link to="/" className="text-accent-primary font-semibold hover:underline">página de inicio</Link> y selecciona el premio por el que quieres competir. ¡Tenemos opciones para todos los gustos!
                         </Paso>
 
                         <Paso icono={<SeleccionarIcon/>} titulo="Paso 2: Selecciona tus Boletos">
@@ -69,7 +74,8 @@ function ComoParticiparPage() {
                         </Paso>
 
                         <Paso icono={<EsperarIcon/>} titulo="Paso 4: ¡Verifica y Espera!">
-                            Una vez confirmado tu pago, tu boleto cambiará a estado "Pagado". Puedes verificarlo en cualquier momento en nuestra página de <Link to="/verificador" className="text-accent-start font-semibold hover:underline">Verificador de Boletos</Link>. Ahora solo queda esperar la fecha del sorteo. ¡Anunciamos a los ganadores en nuestras redes sociales!
+                            {/* REPARACIÓN: Se cambia text-accent-start por text-accent-primary. */}
+                            Una vez confirmado tu pago, tu boleto cambiará a estado "Pagado". Puedes verificarlo en cualquier momento en nuestra página de <Link to="/verificador" className="text-accent-primary font-semibold hover:underline">Verificador de Boletos</Link>. Ahora solo queda esperar la fecha del sorteo. ¡Anunciamos a los ganadores en nuestras redes sociales!
                         </Paso>
                     </div>
                 </div>

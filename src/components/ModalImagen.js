@@ -27,9 +27,9 @@ export default function ModalImagen({ imagenes = [], indexInicial = 0, onClose }
     const diff = touchStartX - touchEndX;
     if (Math.abs(diff) > 50) {
       if (diff > 0) {
-        cambiarImagen(1); // izquierda
+        cambiarImagen(1); // Swipe izquierda
       } else {
-        cambiarImagen(-1); // derecha
+        cambiarImagen(-1); // Swipe derecha
       }
     }
     setTouchStartX(null);
@@ -52,19 +52,15 @@ export default function ModalImagen({ imagenes = [], indexInicial = 0, onClose }
       onClick={handleClickFondo}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4"
     >
-      {/* CAMBIO: Se añadió un ancho máximo generoso al contenedor de la imagen */}
       <div className="relative w-full max-w-4xl text-center">
-        {/* Imagen principal */}
         <img
           src={imagenActual}
           alt="Vista ampliada"
-          // CAMBIO: Se quita max-w-full para que el contenedor lo controle
           className="max-h-[85vh] rounded-lg shadow-2xl mx-auto"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         />
 
-        {/* Botón cerrar */}
         <button
           onClick={onClose}
           className="absolute -top-2 -right-2 text-white text-3xl bg-gray-800 bg-opacity-75 hover:bg-opacity-100 w-10 h-10 flex items-center justify-center rounded-full"
@@ -72,10 +68,8 @@ export default function ModalImagen({ imagenes = [], indexInicial = 0, onClose }
           ✕
         </button>
 
-        {/* Flechas SVG profesionales */}
         {imagenes.length > 1 && (
           <>
-            {/* CAMBIO: Se ajusta la posición de las flechas para que estén sobre la imagen en los costados */}
             <button
               onClick={() => cambiarImagen(-1)}
               className="absolute top-1/2 left-2 md:-left-4 transform -translate-y-1/2 w-12 h-12 flex items-center justify-center text-white rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition shadow-lg"
@@ -93,7 +87,6 @@ export default function ModalImagen({ imagenes = [], indexInicial = 0, onClose }
           </>
         )}
 
-        {/* Miniaturas con scroll horizontal */}
         {imagenes.length > 1 && (
           <div className="mt-4 overflow-x-auto">
             <div className="flex justify-center gap-2 p-2 w-max mx-auto">
@@ -102,9 +95,10 @@ export default function ModalImagen({ imagenes = [], indexInicial = 0, onClose }
                   key={i}
                   src={img}
                   alt={`Miniatura ${i + 1}`}
+                  // REPARACIÓN: Se usa border-accent-primary para la miniatura activa.
                   className={`w-16 h-16 object-cover rounded-md border-2 cursor-pointer transition ${
                     i === index
-                      ? "border-white shadow-lg scale-110"
+                      ? "border-accent-primary shadow-lg scale-110"
                       : "border-transparent opacity-60 hover:opacity-100"
                   }`}
                   onClick={() => setIndex(i)}

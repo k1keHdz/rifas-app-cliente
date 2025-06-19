@@ -4,11 +4,13 @@ import React from 'react';
 
 function NosotrosPage() {
   return (
-    <div className="bg-background-dark text-text-light">
+    // REPARACIÓN: Se elimina text-text-light del div principal.
+    <div className="bg-background-dark">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
         <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
           <div>
-            <h2 className="text-3xl font-extrabold text-text-light sm:text-4xl">
+            {/* REPARACIÓN: Se elimina text-text-light. El título heredará el color principal del tema. */}
+            <h2 className="text-3xl font-extrabold sm:text-4xl">
               Nuestra Historia
             </h2>
             <p className="mt-3 max-w-3xl text-lg text-text-subtle">
@@ -20,10 +22,10 @@ function NosotrosPage() {
           </div>
           <div className="mt-8 grid grid-cols-2 gap-4">
             <div className="col-span-1 flex justify-center items-center bg-background-light border border-border-color rounded-lg h-32">
-              <img className="max-h-24 object-contain" src="https://placehold.co/200x100/374151/9ca3af?text=Equipo" alt="Nuestro Equipo" />
+              <img className="max-h-24 object-contain" src="https://placehold.co/200x100/f3f4f6/6b7280?text=Equipo" alt="Nuestro Equipo" />
             </div>
             <div className="col-span-1 flex justify-center items-center bg-background-light border border-border-color rounded-lg h-32">
-              <img className="max-h-24 object-contain" src="https://placehold.co/200x100/374151/9ca3af?text=Valores" alt="Nuestros Valores" />
+              <img className="max-h-24 object-contain" src="https://placehold.co/200x100/f3f4f6/6b7280?text=Valores" alt="Nuestros Valores" />
             </div>
           </div>
         </div>

@@ -58,7 +58,8 @@ function CompletarPerfil() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background-dark p-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-background-light text-text-light border border-border-color rounded-xl shadow-2xl">
+      {/* REPARACIÓN: Se eliminan las clases de color del contenedor. */}
+      <div className="w-full max-w-md p-8 space-y-6 bg-background-light border border-border-color rounded-xl shadow-2xl">
         <div className="text-center">
           <h2 className="text-3xl font-bold">¡Bienvenido! Un último paso...</h2>
           <p className="mt-2 text-text-subtle">Confirma tus datos y añade tu teléfono para poder participar en los sorteos.</p>
@@ -67,22 +68,24 @@ function CompletarPerfil() {
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-text-light">Nombre(s)</label>
-                    <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required className="block w-full px-3 py-2 mt-1 bg-background-dark text-text-light border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-accent-start focus:border-accent-start"/>
+                    {/* REPARACIÓN: Se eliminan las clases de color de las etiquetas. */}
+                    <label className="block text-sm font-medium">Nombre(s)</label>
+                    <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required className="input-field mt-1"/>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-text-light">Apellidos</label>
-                    <input type="text" value={apellidos} onChange={(e) => setApellidos(e.target.value)} required className="block w-full px-3 py-2 mt-1 bg-background-dark text-text-light border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-accent-start focus:border-accent-start"/>
+                    <label className="block text-sm font-medium">Apellidos</label>
+                    <input type="text" value={apellidos} onChange={(e) => setApellidos(e.target.value)} required className="input-field mt-1"/>
                 </div>
             </div>
             <div>
-                <label className="block text-sm font-medium text-text-light">Teléfono (10 dígitos)</label>
-                <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} required placeholder="Ej. 5512345678" className="block w-full px-3 py-2 mt-1 bg-background-dark text-text-light border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-accent-start focus:border-accent-start"/>
+                <label className="block text-sm font-medium">Teléfono (10 dígitos)</label>
+                <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} required placeholder="Ej. 5512345678" className="input-field mt-1"/>
             </div>
           
             {error && <Alerta tipo="error" mensaje={error} />}
 
-            <button type="submit" disabled={loading} className="w-full px-4 py-2 font-bold text-white bg-gradient-to-r from-accent-start to-accent-end rounded-lg hover:opacity-90 disabled:opacity-50">
+            {/* REPARACIÓN: Se usan las clases de botón del tema. */}
+            <button type="submit" disabled={loading} className="w-full btn btn-primary disabled:opacity-50">
                 {loading ? "Guardando..." : "Guardar y Continuar"}
             </button>
         </form>

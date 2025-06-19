@@ -99,7 +99,7 @@ function ModalVentaManual({ rifa, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-2 sm:p-4 animate-fade-in" onClick={onClose}>
-      <div className="bg-background-light text-text-light border border-border-color rounded-xl shadow-2xl p-4 sm:p-6 max-w-3xl w-full max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-background-light border border-border-color rounded-xl shadow-2xl p-4 sm:p-6 max-w-3xl w-full max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         {step === 1 && (
           <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
             <div className='flex-shrink-0'>
@@ -109,10 +109,10 @@ function ModalVentaManual({ rifa, onClose }) {
 
             <div className='flex-grow min-h-0 overflow-y-auto pr-2 space-y-4'>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input name="nombre" value={comprador.nombre} onChange={handleChange} placeholder="Nombre(s) del Comprador*" required className="w-full bg-background-dark border-border-color rounded p-2 focus:ring-accent-start focus:border-accent-start"/>
-                  <input name="apellidos" value={comprador.apellidos} onChange={handleChange} placeholder="Apellidos del Comprador*" required className="w-full bg-background-dark border-border-color rounded p-2 focus:ring-accent-start focus:border-accent-start"/>
-                  <input name="telefono" value={comprador.telefono} onChange={handleChange} placeholder="Teléfono del Comprador*" required className="w-full bg-background-dark border-border-color rounded p-2 focus:ring-accent-start focus:border-accent-start"/>
-                  <input name="email" type="email" value={comprador.email} onChange={handleChange} placeholder="Email (para comprobante)" className="w-full bg-background-dark border-border-color rounded p-2 focus:ring-accent-start focus:border-accent-start"/>
+                  <input name="nombre" value={comprador.nombre} onChange={handleChange} placeholder="Nombre(s) del Comprador*" required className="input-field"/>
+                  <input name="apellidos" value={comprador.apellidos} onChange={handleChange} placeholder="Apellidos del Comprador*" required className="input-field"/>
+                  <input name="telefono" value={comprador.telefono} onChange={handleChange} placeholder="Teléfono del Comprador*" required className="input-field"/>
+                  <input name="email" type="email" value={comprador.email} onChange={handleChange} placeholder="Email (para comprobante)" className="input-field"/>
                 </div>
                 
                 <div className="p-3 border border-border-color rounded-lg bg-background-dark space-y-4">
@@ -132,12 +132,12 @@ function ModalVentaManual({ rifa, onClose }) {
                       <input
                         id="cantidad-aleatoria" type="number" value={cantidadAleatoria}
                         onChange={(e) => setCantidadAleatoria(Number(e.target.value))}
-                        className="w-24 bg-background-dark border-border-color rounded-md shadow-sm p-2" min="1"
+                        className="input-field w-24 p-2" min="1"
                       />
                       <button
                         type="button"
                         onClick={() => agregarMultiplesBoletos(cantidadAleatoria, rifa.boletos)}
-                        className="flex-1 bg-accent-start text-white font-semibold p-2 rounded-lg hover:opacity-90"
+                        className="btn btn-primary flex-1 py-2"
                       >
                         Generar Boletos
                       </button>
@@ -147,9 +147,9 @@ function ModalVentaManual({ rifa, onClose }) {
 
                 {boletosSeleccionados.length > 0 && (
                   <div className="p-3 border border-border-color rounded-lg bg-background-dark">
-                    <p className="font-bold text-sm mb-2 text-text-light">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p>
+                    <p className="font-bold text-sm mb-2">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p>
                     <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-                      {boletosSeleccionados.sort((a,b) => a-b).map(n => <span key={n} className="bg-success/20 text-green-300 px-2 py-0.5 rounded-full font-mono text-xs cursor-pointer" onClick={() => toggleBoleto(n)} title="Clic para quitar">{formatTicketNumber(n, rifa.boletos)}</span>)}
+                      {boletosSeleccionados.sort((a,b) => a-b).map(n => <span key={n} className="bg-success/20 text-success px-2 py-0.5 rounded-full font-mono text-xs cursor-pointer" onClick={() => toggleBoleto(n)} title="Clic para quitar">{formatTicketNumber(n, rifa.boletos)}</span>)}
                     </div>
                     <button type="button" onClick={limpiarSeleccion} className="mt-2 text-danger/80 text-xs hover:underline">Limpiar selección</button>
                   </div>
@@ -168,8 +168,8 @@ function ModalVentaManual({ rifa, onClose }) {
                 </div>
                 
                 <div className="flex justify-end gap-4 mt-4 border-t border-border-color pt-4">
-                  <button type="button" onClick={onClose} className="bg-border-color text-text-light px-6 py-2 rounded-lg hover:bg-opacity-50">Cancelar</button>
-                  <button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-accent-start to-accent-end text-white font-bold px-6 py-2 rounded-lg hover:opacity-90 disabled:opacity-50">
+                  <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
+                  <button type="submit" disabled={isSubmitting} className="btn btn-primary disabled:opacity-50">
                     {isSubmitting ? 'Registrando...' : 'Registrar Venta'}
                   </button>
                 </div>
@@ -181,8 +181,8 @@ function ModalVentaManual({ rifa, onClose }) {
             <h2 className="text-2xl font-bold text-success mb-4">¡Venta Registrada con Éxito!</h2>
             <p className="mb-6 text-text-subtle">La venta ha sido guardada. Ahora puedes enviar un comprobante al cliente.</p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <a href={`https://wa.me/52${ventaRealizada.comprador.telefono}?text=${generarMensajeWhatsApp(ventaRealizada)}`} target="_blank" rel="noopener noreferrer" className="bg-green-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-600 transition-colors w-full text-center">Enviar por WhatsApp</a>
-              <button disabled className="bg-border-color text-text-subtle font-bold py-3 px-6 rounded-lg cursor-not-allowed w-full">Enviar por Correo (Próximamente)</button>
+              <a href={`https://wa.me/52${ventaRealizada.comprador.telefono}?text=${generarMensajeWhatsApp(ventaRealizada)}`} target="_blank" rel="noopener noreferrer" className="btn bg-green-500 text-white hover:bg-green-600 w-full text-center">Enviar por WhatsApp</a>
+              <button disabled className="btn btn-secondary cursor-not-allowed w-full">Enviar por Correo (Próximamente)</button>
             </div>
             <button onClick={onClose} className="mt-8 text-sm text-text-subtle hover:underline">Finalizar y Cerrar</button>
           </div>

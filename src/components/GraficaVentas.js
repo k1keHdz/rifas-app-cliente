@@ -8,8 +8,10 @@ function GraficaVentas({ datosGrafico = [], graficoRef, modo, setModo }) {
   return (
     <div className="bg-background-light p-4 rounded-lg shadow-md border border-border-color">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-text-light">Gráfica de Ventas</h2>
-        <select value={modo} onChange={(e) => setModo(e.target.value)} className="bg-background-dark border border-border-color text-text-light p-1 rounded focus:ring-accent-start focus:border-accent-start">
+        {/* REPARACIÓN: Se elimina text-text-light. */}
+        <h2 className="text-xl font-bold">Gráfica de Ventas</h2>
+        {/* REPARACIÓN: Se usa la clase .input-field para consistencia. */}
+        <select value={modo} onChange={(e) => setModo(e.target.value)} className="input-field p-1 text-sm">
           <option value="dia">Agrupar por día</option>
           <option value="semana">Agrupar por semana</option>
         </select>
@@ -30,15 +32,16 @@ function GraficaVentas({ datosGrafico = [], graficoRef, modo, setModo }) {
                 contentStyle={{ 
                     backgroundColor: 'var(--background-dark)', 
                     borderColor: 'var(--border-color)',
-                    color: 'var(--text-light)'
+                    color: 'var(--text-primary)' // Usar el color de texto principal para el tooltip
                 }}
               />
               <Legend wrapperStyle={{ color: 'var(--text-subtle)' }}/>
               <Bar dataKey="total" name="Boletos vendidos" fill="url(#colorUv)" />
               <defs>
                   <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="rgb(var(--color-accent-start))" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="rgb(var(--color-accent-end))" stopOpacity={0.8}/>
+                      {/* Los valores del gradiente ahora usan las variables CSS para adaptarse al tema */}
+                      <stop offset="5%" stopColor="rgb(var(--accent-color-primary))" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="rgb(var(--accent-color-secondary))" stopOpacity={0.8}/>
                   </linearGradient>
               </defs>
             </BarChart>

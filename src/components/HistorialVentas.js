@@ -18,20 +18,22 @@ function HistorialVentas({
 
   return (
     <div className="overflow-x-auto bg-background-light p-4 rounded-lg shadow mt-6 border border-border-color">
-      <h2 className="text-xl font-bold mb-4 text-text-light">Historial de Ventas y Apartados</h2>
+      {/* REPARACIÓN: Se elimina text-text-light. */}
+      <h2 className="text-xl font-bold mb-4">Historial de Ventas y Apartados</h2>
       {ventasFiltradas.length === 0 ? (
         <p className="text-center text-text-subtle py-8">No hay ventas que coincidan con los filtros actuales.</p>
       ) : (
         <table className="min-w-full text-left">
           <thead className="bg-background-dark">
             <tr>
-              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm text-text-subtle">ID Compra</th>
-              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm text-text-subtle">Fecha</th>
-              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm text-text-subtle">Comprador</th>
-              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm text-text-subtle">Números</th>
-              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm text-text-subtle text-center">Cant.</th>
-              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm text-text-subtle">Estado</th>
-              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm text-text-subtle">Acciones</th>
+              {/* REPARACIÓN: Se elimina text-text-subtle de los encabezados. */}
+              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm">ID Compra</th>
+              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm">Fecha</th>
+              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm">Comprador</th>
+              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm">Números</th>
+              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm text-center">Cant.</th>
+              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm">Estado</th>
+              <th className="px-4 py-2 border-b border-border-color font-semibold text-sm">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-color">
@@ -42,13 +44,14 @@ function HistorialVentas({
               
               return (
                 <tr key={venta.id} className="hover:bg-border-color/20 text-sm">
-                  <td className="px-4 py-2 align-top font-mono text-xs font-bold text-accent-start/80">
+                  {/* REPARACIÓN: Se usa text-accent-primary para el ID para darle un toque interactivo. */}
+                  <td className="px-4 py-2 align-top font-mono text-xs font-bold text-accent-primary/80">
                     {venta.idCompra || '-'}
                   </td>
                   <td className="px-4 py-2 align-top whitespace-nowrap text-text-subtle">
                     {venta.fechaApartado?.toDate?.().toLocaleString('es-MX') || "-"}
                   </td>
-                  <td className="px-4 py-2 align-top text-text-light">
+                  <td className="px-4 py-2 align-top">
                     <p className="font-medium">{venta.comprador?.nombre} {venta.comprador?.apellidos || ''}</p>
                     <p className="text-text-subtle">{venta.comprador?.telefono || ''}</p>
                     <p className="text-text-subtle text-xs italic">{venta.comprador?.email || ''}</p>
@@ -58,17 +61,18 @@ function HistorialVentas({
                       {venta.numeros?.map(n => formatTicketNumber(n, totalBoletos)).join(', ')}
                     </div>
                   </td>
-                  <td className="px-4 py-2 align-top text-center font-bold text-text-light">
+                  <td className="px-4 py-2 align-top text-center font-bold">
                     {venta.cantidad}
                   </td>
                   <td className="px-4 py-2 align-top">
+                    {/* REPARACIÓN: Se usan los colores semánticos del tema. */}
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      esComprado ? 'bg-success/20 text-green-300' : 'bg-warning/20 text-yellow-300'
+                      esComprado ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'
                     }`}>
                       {esComprado ? 'Pagado' : 'Apartado'}
                     </span>
                     {esApartado && (
-                      <p className={`mt-2 text-xs font-bold ${haExpirado ? 'text-danger/90' : 'text-success/90'}`}>
+                      <p className={`mt-2 text-xs font-bold ${haExpirado ? 'text-danger' : 'text-success'}`}>
                         {haExpirado ? '¡Expirado!' : 'Vigente'}
                       </p>
                     )}
@@ -86,7 +90,7 @@ function HistorialVentas({
                       {esApartado && (
                         <button 
                           onClick={() => onLiberarBoletos(venta.id, venta.numeros)}
-                          className="w-full bg-border-color text-text-light px-3 py-1 rounded text-xs font-bold hover:bg-opacity-50 transition-colors text-center"
+                          className="w-full bg-border-color px-3 py-1 rounded text-xs font-bold hover:bg-opacity-50 transition-colors text-center"
                         >
                           Liberar Boletos
                         </button>
@@ -94,7 +98,7 @@ function HistorialVentas({
                       {esApartado && haExpirado && (
                         <button
                           onClick={() => onEnviarRecordatorio(venta)}
-                          className="w-full bg-accent-start text-white px-3 py-1 rounded text-xs font-bold hover:opacity-90 transition-colors text-center"
+                          className="w-full bg-accent-primary text-white px-3 py-1 rounded text-xs font-bold hover:opacity-90 transition-colors text-center"
                         >
                           Enviar Recordatorio
                         </button>
@@ -116,7 +120,7 @@ function HistorialVentas({
             <tfoot>
               <tr className="bg-background-dark font-bold">
                 <td colSpan="5" className="px-4 py-2 border-t border-border-color text-right text-text-subtle">Total de Boletos (en esta vista)</td>
-                <td className="px-4 py-2 border-t border-border-color text-center text-text-light">{totalBoletosSum}</td>
+                <td className="px-4 py-2 border-t border-border-color text-center">{totalBoletosSum}</td>
                 <td colSpan="2" className="px-4 py-2 border-t border-border-color"></td>
               </tr>
             </tfoot>

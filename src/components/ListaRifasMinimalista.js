@@ -19,13 +19,15 @@ function ListaRifasMinimalista() {
             <Link
               key={rifa.id}
               to={`/admin/rifa/${rifa.id}`}
-              className="block p-4 border border-border-color rounded-lg hover:bg-border-color/20 hover:border-accent-start/50 transition-all duration-200"
+              className="block p-4 border border-border-color rounded-lg hover:bg-border-color/20 hover:border-accent-primary/50 transition-all duration-200"
             >
               <div className="flex justify-between items-center">
-                <span className="font-semibold text-lg text-text-light">{rifa.nombre}</span>
+                {/* REPARACIÓN: Se elimina text-text-light. */}
+                <span className="font-semibold text-lg">{rifa.nombre}</span>
+                {/* REPARACIÓN: Se usan los colores semánticos del tema. */}
                 <span className={`px-3 py-1 text-xs font-bold rounded-full ${
-                    rifa.estado === 'activa' ? 'bg-success/20 text-green-300' :
-                    rifa.estado === 'pendiente' ? 'bg-warning/20 text-yellow-300' : 'bg-danger/20 text-red-300'
+                  rifa.estado === 'activa' ? 'bg-success/20 text-success' :
+                  rifa.estado === 'pendiente' ? 'bg-warning/20 text-warning' : 'bg-danger/20 text-danger'
                 }`}>
                   {rifa.estado}
                 </span>

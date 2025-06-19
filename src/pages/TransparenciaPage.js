@@ -9,7 +9,8 @@ function TransparenciaPage() {
         <div className="bg-background-light border border-border-color rounded-lg shadow-xl overflow-hidden lg:grid lg:grid-cols-2 lg:gap-4">
           <div className="pt-10 pb-12 px-6 sm:pt-16 sm:px-16 lg:py-16 lg:pr-0 xl:py-20 xl:px-20">
             <div className="lg:self-center">
-              <h2 className="text-3xl font-extrabold text-text-light sm:text-4xl">
+              {/* REPARACIÓN: Se elimina text-text-light. */}
+              <h2 className="text-3xl font-extrabold sm:text-4xl">
                 <span className="block">Compromiso con la Transparencia</span>
               </h2>
               <p className="mt-4 text-lg leading-6 text-text-subtle">
@@ -25,7 +26,7 @@ function TransparenciaPage() {
               className="rounded-md object-contain w-full"
               src="https://www.loterianacional.gob.mx/images/logo-institucional.png"
               alt="Logo de la Lotería Nacional"
-              onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/1f2937/e5e7eb?text=Lotería+Nacional'; }}
+              onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/f9fafb/6b7280?text=Lotería+Nacional'; }}
             />
           </div>
         </div>

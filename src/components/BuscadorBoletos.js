@@ -42,28 +42,30 @@ const BuscadorBoletos = ({
   };
 
   const renderEstado = () => {
-    if (estado === 'comprado') return <span className="text-danger/90 font-bold">NO DISPONIBLE</span>;
-    if (estado === 'disponible') return <span className="text-success/90 font-bold">DISPONIBLE</span>;
+    if (estado === 'comprado') return <span className="text-danger font-bold">NO DISPONIBLE</span>;
+    if (estado === 'disponible') return <span className="text-success font-bold">DISPONIBLE</span>;
     if (estado === 'no_existe') return <span className="text-text-subtle font-semibold">No existe</span>;
     return null;
   };
 
   return (
     <div className="text-center mb-4 w-full max-w-xs">
-      <h3 className="font-bold text-lg mb-2 text-center text-text-light">Busca un Boleto Específico</h3>
+      {/* REPARACIÓN: Se eliminan clases de color. */}
+      <h3 className="font-bold text-lg mb-2 text-center">Busca un Boleto Específico</h3>
       <input
         type="number"
         value={numero}
         onChange={handleInput}
-        className="w-full text-center text-lg bg-background-dark text-text-light border border-border-color rounded-md shadow-sm p-2 focus:ring-accent-start focus:border-accent-start"
+        className="input-field w-full text-center text-lg" // REPARACIÓN: Se usa la clase .input-field.
         placeholder={`Ej: ${formatTicketNumber(Math.floor(Math.random() * totalBoletos), totalBoletos)}`}
       />
       <div className="text-sm mt-1 h-5 text-text-subtle">Estado: {renderEstado()}</div>
 
       {estado === 'disponible' && !boletosSeleccionados.includes(parseInt(numero, 10)) && (
         <div className="mt-2 animate-fade-in">
-          <button onClick={seleccionar} className="bg-success hover:bg-green-700 text-white font-mono text-sm px-4 py-2 rounded-lg">
-             {formatTicketNumber(numero, totalBoletos)}
+          {/* REPARACIÓN: Se usa la clase de botón del tema. */}
+          <button onClick={seleccionar} className="btn bg-success text-white font-mono text-sm py-2">
+            Añadir {formatTicketNumber(numero, totalBoletos)}
           </button>
         </div>
       )}

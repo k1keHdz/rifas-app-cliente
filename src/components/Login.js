@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'; // Importamos serverTimestamp
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import Alerta from './Alerta';
 
@@ -40,7 +40,6 @@ function Login() {
     }
   };
 
-  // --- INICIO DE LA CORRECCIÓN: Lógica completa restaurada ---
   const handleGoogleLogin = async () => {
     setError('');
     setMessage('');
@@ -58,9 +57,6 @@ function Login() {
           navigate('/perfil');
         }
       } else {
-        // Esta lógica es manejada por AuthContext ahora, pero la dejamos como fallback
-        // para asegurar que el perfil se cree si AuthContext falla por alguna razón.
-        console.log("Creando perfil para nuevo usuario de Google desde Login.js");
         const nameParts = user.displayName ? user.displayName.split(' ') : ['Usuario'];
         const nombre = nameParts[0] || '';
         const apellidos = nameParts.slice(1).join(' ');
@@ -81,7 +77,6 @@ function Login() {
       setError("No se pudo iniciar sesión con Google. Por favor, intenta de nuevo.");
     }
   };
-  // --- FIN DE LA CORRECCIÓN ---
   
   const handlePasswordReset = async () => {
     if (!email) {
@@ -100,14 +95,16 @@ function Login() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background-dark p-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-background-light text-text-light border border-border-color rounded-xl shadow-2xl">
+      {/* REPARACIÓN: Se eliminan clases de color. Heredará los colores del tema. */}
+      <div className="w-full max-w-md p-8 space-y-6 bg-background-light border border-border-color rounded-xl shadow-2xl">
         <div className="text-center">
           <h2 className="text-3xl font-bold">Accede a tu Cuenta</h2>
           <p className="mt-2 text-text-subtle">Para ver tus boletos y participar en nuevos sorteos.</p>
         </div>
         
         <div className="space-y-4">
-          <button onClick={handleGoogleLogin} className="w-full flex items-center justify-center px-4 py-3 font-medium text-text-dark bg-background-white border border-border-color rounded-lg shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background-light focus:ring-accent-start transition-all duration-200">
+          {/* REPARACIÓN: Se usan clases neutrales para el botón de Google. */}
+          <button onClick={handleGoogleLogin} className="w-full flex items-center justify-center px-4 py-3 font-medium bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background-light focus:ring-accent-primary transition-all duration-200">
             <GoogleLogo />
             Continuar con Google
           </button>
@@ -119,19 +116,22 @@ function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div><input placeholder="Correo Electrónico" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="block w-full px-3 py-2 mt-1 bg-background-dark text-text-light border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-accent-start focus:border-accent-start sm:text-sm"/></div>
-          <div><input placeholder="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="block w-full px-3 py-2 mt-1 bg-background-dark text-text-light border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-accent-start focus:border-accent-start sm:text-sm"/></div>
-          <button type="submit" className="w-full px-4 py-2 font-bold text-white bg-gradient-to-r from-accent-start to-accent-end rounded-lg hover:opacity-90 transition-opacity">Iniciar Sesión</button>
+          {/* REPARACIÓN: Se usa la clase .input-field para consistencia. */}
+          <div><input placeholder="Correo Electrónico" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="input-field" /></div>
+          <div><input placeholder="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="input-field" /></div>
+          {/* REPARACIÓN: Se usa la clase .btn y .btn-primary para consistencia. */}
+          <button type="submit" className="w-full btn btn-primary">Iniciar Sesión</button>
         </form>
 
         <div className="text-center text-sm">
-          <button onClick={handlePasswordReset} className="font-medium text-text-subtle hover:text-accent-start hover:underline">
+          {/* REPARACIÓN: Se usa text-accent-primary para el enlace. */}
+          <button onClick={handlePasswordReset} className="font-medium text-text-subtle hover:text-accent-primary hover:underline">
             ¿Olvidaste tu contraseña?
           </button>
         </div>
         
         <div className="text-center">
-            <p className="text-sm text-text-subtle">¿No tienes una cuenta? <Link to="/registro" className="font-medium text-accent-start hover:underline">Regístrate aquí</Link></p>
+          <p className="text-sm text-text-subtle">¿No tienes una cuenta? <Link to="/registro" className="font-medium text-accent-primary hover:underline">Regístrate aquí</Link></p>
         </div>
 
         {error && <Alerta mensaje={error} tipo="error" onClose={() => setError('')} />}

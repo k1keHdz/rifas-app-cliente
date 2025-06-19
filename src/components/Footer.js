@@ -3,9 +3,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-// --- Íconos Sociales (puedes reutilizarlos si los defines en un archivo central) ---
+// --- Íconos Sociales ---
+// REPARACIÓN: Se eliminan las clases de color del componente. Ahora los iconos heredarán el color del texto.
 const SocialIcon = ({ href, title, children }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" title={title} className="text-text-subtle hover:text-text-light transition-colors">
+    <a href={href} target="_blank" rel="noopener noreferrer" title={title} className="hover:opacity-75 transition-opacity">
         <span className="sr-only">{title}</span>
         {children}
     </a>
@@ -24,8 +25,9 @@ function Footer() {
         tiktok: 'https://tiktok.com/@tu_usuario_real'
     };
 
+    // REPARACIÓN: Se elimina la clase `text-text-light` del footer. Ahora el color del texto será heredado del `body`.
     return (
-        <footer className="bg-background-dark text-text-light">
+        <footer className="bg-background-dark">
             <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 
@@ -37,26 +39,28 @@ function Footer() {
                     </div>
 
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Navegación</h3>
+                        {/* REPARACIÓN: Se elimina `text-gray-400`. El título del widget ahora usará el color de texto secundario definido en el tema (`text-text-subtle`). */}
+                        <h3 className="text-sm font-semibold text-text-subtle tracking-wider uppercase">Navegación</h3>
                         <ul className="mt-4 space-y-2">
-                            <li><Link to="/" className="text-base text-text-subtle hover:text-text-light">Inicio</Link></li>
-                            <li><Link to="/ganadores" className="text-base text-text-subtle hover:text-text-light">Ganadores</Link></li>
-                            <li><Link to="/como-participar" className="text-base text-text-subtle hover:text-text-light">Cómo Participar</Link></li>
-                            <li><Link to="/verificador" className="text-base text-text-subtle hover:text-text-light">Verificar Boleto</Link></li>
+                            {/* REPARACIÓN: Se eliminan las clases de color de los links. Ahora heredan el color principal y tienen un hover sutil. */}
+                            <li><Link to="/" className="text-base hover:opacity-75">Inicio</Link></li>
+                            <li><Link to="/ganadores" className="text-base hover:opacity-75">Ganadores</Link></li>
+                            <li><Link to="/como-participar" className="text-base hover:opacity-75">Cómo Participar</Link></li>
+                            <li><Link to="/verificador" className="text-base hover:opacity-75">Verificar Boleto</Link></li>
                         </ul>
                     </div>
 
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Soporte</h3>
+                        <h3 className="text-sm font-semibold text-text-subtle tracking-wider uppercase">Soporte</h3>
                         <ul className="mt-4 space-y-2">
-                            <li><Link to="/contacto" className="text-base text-text-subtle hover:text-text-light">Contacto</Link></li>
-                            <li><Link to="/nosotros" className="text-base text-text-subtle hover:text-text-light">Nosotros</Link></li>
-                            <li><Link to="/transparencia" className="text-base text-text-subtle hover:text-text-light">Transparencia</Link></li>
+                            <li><Link to="/contacto" className="text-base hover:opacity-75">Contacto</Link></li>
+                            <li><Link to="/nosotros" className="text-base hover:opacity-75">Nosotros</Link></li>
+                            <li><Link to="/transparencia" className="text-base hover:opacity-75">Transparencia</Link></li>
                         </ul>
                     </div>
                     
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Síguenos</h3>
+                        <h3 className="text-sm font-semibold text-text-subtle tracking-wider uppercase">Síguenos</h3>
                         <div className="flex mt-4 space-x-6">
                             <SocialIcon href={socialLinks.facebook} title="Facebook"><FacebookIcon /></SocialIcon>
                             <SocialIcon href={socialLinks.instagram} title="Instagram"><InstagramIcon /></SocialIcon>

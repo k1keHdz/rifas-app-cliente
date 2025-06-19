@@ -141,8 +141,8 @@ function RifaDetalle() {
     setImagenIndex((prev) => (prev + direccion + rifa.imagenes.length) % rifa.imagenes.length);
   };
 
-  if (cargandoRifa) return <div className="bg-background-dark text-center py-40 text-text-light">Cargando sorteo...</div>;
-  if (!rifa) return <div className="bg-background-dark p-4 text-center text-text-light"><p>Sorteo no encontrado.</p></div>;
+  if (cargandoRifa) return <div className="text-center py-40">Cargando sorteo...</div>;
+  if (!rifa) return <div className="p-4 text-center"><p>Sorteo no encontrado.</p></div>;
   
   const boletosVendidos = rifa.boletosVendidos || 0;
   const porcentajeVendido = rifa.boletos > 0 ? (boletosVendidos / rifa.boletos) * 100 : 0;
@@ -153,7 +153,7 @@ function RifaDetalle() {
   const rangoFin = Math.min(currentPage * boletosPorPagina, rifa.boletos);
 
   return (
-    <div className="bg-background-dark text-text-light">
+    <div className="bg-background-dark">
       <div className="p-4 max-w-5xl mx-auto">
         <div className="bg-background-light border border-border-color rounded-lg shadow-lg p-6">
           <div className="md:flex md:gap-8 items-start">
@@ -171,22 +171,26 @@ function RifaDetalle() {
               )}
             </div>
             <div className="md:w-1/2 mt-4 md:mt-0">
-              <h2 className="text-3xl font-bold mb-2 text-background-white">{rifa.nombre}</h2>
+              {/* REPARACIÓN: Se elimina la clase de color específica. Ahora heredará el color del texto principal definido en theme.css */}
+              <h2 className="text-3xl font-bold mb-2">{rifa.nombre}</h2>
               <p className="whitespace-pre-wrap text-text-subtle mb-3">{rifa.descripcion}</p>
               
+              {/* REPARACIÓN: Se mantiene el layout 'flex', pero se elimina la clase de color del precio. */}
               <div className="flex items-baseline mb-2">
-                <p className="text-3xl font-bold text-accent-start">${rifa.precio.toLocaleString('es-MX')}</p>
+                <p className="text-3xl font-bold">${rifa.precio.toLocaleString('es-MX')}</p>
                 <span className="ml-2 text-base text-text-subtle">por boleto</span>
               </div>
               
+              {/* REPARACIÓN: Se mantiene el layout 'flex', pero se elimina la clase de color de 'Estado:'. */}
               <div className="my-3 flex items-center gap-2">
-                <strong className="text-md text-text-light">Estado:</strong>
+                <strong className="text-md">Estado:</strong>
                 <span className={`px-3 py-1 rounded-full text-white text-sm font-semibold capitalize ${rifa.estado === "activa" ? "bg-success" : "bg-danger"}`}>{rifa.estado}</span>
               </div>
               <p className="text-sm text-text-subtle mb-4 italic">{conditionText}</p>
               {rifa.boletos > 0 && (
                 <div className="mb-6 w-full">
-                  <p className="text-sm font-medium mb-1 text-text-light">{porcentajeVendido.toFixed(1)}% Vendido</p>
+                  {/* REPARACIÓN: Se elimina la clase de color de 'Vendido'. */}
+                  <p className="text-sm font-medium mb-1">{porcentajeVendido.toFixed(1)}% Vendido</p>
                   <div className="w-full h-4 bg-background-dark border border-border-color rounded-full"><div className="bg-gradient-to-r from-accent-start to-accent-end h-full rounded-full" style={{ width: `${porcentajeVendido}%` }}></div></div>
                 </div>
               )}
@@ -202,42 +206,42 @@ function RifaDetalle() {
             <div className="flex items-center gap-2"><div className="w-4 h-4 bg-success/80 border border-green-400 rounded-sm"></div> <span className="text-text-subtle">Seleccionado</span></div>
           </div>
           <div className="flex flex-col items-center">
-              <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={seleccionarBoleto} paddingLength={paddingLength} />
-              {boletosSeleccionados.length > 0 && ( 
-                <div className="text-center my-4 p-4 bg-background-dark border border-border-color rounded-lg w-full max-w-lg animate-fade-in"> 
-                  <p className="font-bold mb-2 text-text-light">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> 
-                  <div className="flex justify-center flex-wrap gap-2 mb-2"> 
-                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-success text-white rounded-md font-mono cursor-pointer hover:bg-danger" title="Haz clic para quitar">{String(n).padStart(paddingLength, "0")}</span> ))} 
-                  </div> 
-                  <p className="text-xs text-text-subtle italic my-2">Para eliminar un boleto, solo haz clic sobre él.</p> 
-                  <button onClick={limpiarSeleccion} className="mt-1 text-danger underline text-sm hover:text-red-400">Eliminar todos</button> 
-                  <div className="mt-4 pt-4 border-t border-border-color flex justify-center">
-                    <button onClick={handleReservarPorWhatsapp} className="w-full sm:w-auto bg-success text-white font-bold px-8 py-3 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 shadow-lg">Apartar por WhatsApp</button>
-                  </div> 
+            <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={seleccionarBoleto} paddingLength={paddingLength} />
+            {boletosSeleccionados.length > 0 && ( 
+              <div className="text-center my-4 p-4 bg-background-dark border border-border-color rounded-lg w-full max-w-lg animate-fade-in"> 
+                <p className="font-bold mb-2">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> 
+                <div className="flex justify-center flex-wrap gap-2 mb-2"> 
+                  {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-success text-white rounded-md font-mono cursor-pointer hover:bg-danger" title="Haz clic para quitar">{String(n).padStart(paddingLength, "0")}</span> ))} 
                 </div> 
-              )}
-              <div className="w-full max-w-lg text-center my-2">
-                <button onClick={() => setFiltroDisponibles(!filtroDisponibles)} className="text-sm bg-background-light border border-border-color hover:bg-border-color text-text-light font-semibold py-2 px-4 rounded-lg transition-colors"> 
-                    {filtroDisponibles ? 'Mostrar Todos los Boletos' : 'Mostrar Solo Disponibles'} 
-                </button> 
-              </div>
-              <div className="flex justify-center items-center gap-4 my-4 w-full">
-                <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="px-4 py-2 bg-background-light border border-border-color text-text-light font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"> Anterior </button>
-                <span className="font-mono text-lg text-text-subtle"> Página {currentPage} de {totalPaginas} </span>
-                <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPaginas} className="px-4 py-2 bg-background-light border border-border-color text-text-light font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"> Siguiente </button>
-              </div>
-              {cargandoBoletos ? <p className="text-center py-10 text-text-light">Cargando boletos...</p> : 
-                <SelectorBoletos 
-                    totalBoletos={rifa.boletos}
-                    boletosOcupados={boletosOcupados} 
-                    boletosSeleccionados={boletosSeleccionados} 
-                    onToggleBoleto={toggleBoleto} 
-                    filtroActivo={filtroDisponibles} 
-                    rangoInicio={rangoInicio} 
-                    rangoFin={rangoFin}
-                    paddingLength={paddingLength}
-                /> 
-              }
+                <p className="text-xs text-text-subtle italic my-2">Para eliminar un boleto, solo haz clic sobre él.</p> 
+                <button onClick={limpiarSeleccion} className="mt-1 text-danger underline text-sm hover:text-red-400">Eliminar todos</button> 
+                <div className="mt-4 pt-4 border-t border-border-color flex justify-center">
+                  <button onClick={handleReservarPorWhatsapp} className="w-full sm:w-auto bg-success text-white font-bold px-8 py-3 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 shadow-lg">Apartar por WhatsApp</button>
+                </div> 
+              </div> 
+            )}
+            <div className="w-full max-w-lg text-center my-2">
+              <button onClick={() => setFiltroDisponibles(!filtroDisponibles)} className="text-sm bg-background-light border border-border-color hover:bg-border-color font-semibold py-2 px-4 rounded-lg transition-colors"> 
+                {filtroDisponibles ? 'Mostrar Todos los Boletos' : 'Mostrar Solo Disponibles'} 
+              </button> 
+            </div>
+            <div className="flex justify-center items-center gap-4 my-4 w-full">
+              <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="px-4 py-2 bg-background-light border border-border-color font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"> Anterior </button>
+              <span className="font-mono text-lg text-text-subtle"> Página {currentPage} de {totalPaginas} </span>
+              <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPaginas} className="px-4 py-2 bg-background-light border border-border-color font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"> Siguiente </button>
+            </div>
+            {cargandoBoletos ? <p className="text-center py-10">Cargando boletos...</p> : 
+              <SelectorBoletos 
+                totalBoletos={rifa.boletos}
+                boletosOcupados={boletosOcupados} 
+                boletosSeleccionados={boletosSeleccionados} 
+                onToggleBoleto={toggleBoleto} 
+                filtroActivo={filtroDisponibles} 
+                rangoInicio={rangoInicio} 
+                rangoFin={rangoFin}
+                paddingLength={paddingLength}
+              /> 
+            }
           </div>
         </div>
       </div>

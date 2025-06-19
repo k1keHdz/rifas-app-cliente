@@ -9,7 +9,8 @@ function FiltroFechas({ fechaDesde, setFechaDesde, fechaHasta, setFechaHasta }) 
           type="date"
           value={fechaDesde}
           onChange={(e) => setFechaDesde(e.target.value)}
-          className="bg-background-dark text-text-light border border-border-color rounded-md p-1 focus:ring-accent-start focus:border-accent-start"
+          // REPARACIÓN: Se usa la clase .input-field para consistencia.
+          className="input-field p-1"
         />
       </div>
       <div className="flex flex-col">
@@ -18,7 +19,7 @@ function FiltroFechas({ fechaDesde, setFechaDesde, fechaHasta, setFechaHasta }) 
           type="date"
           value={fechaHasta}
           onChange={(e) => setFechaHasta(e.target.value)}
-          className="bg-background-dark text-text-light border border-border-color rounded-md p-1 focus:ring-accent-start focus:border-accent-start"
+          className="input-field p-1"
         />
       </div>
     </div>

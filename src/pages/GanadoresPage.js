@@ -52,8 +52,10 @@ function GanadoresPage() {
       <div className="bg-background-dark py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-base font-semibold text-accent-start tracking-wide uppercase">Nuestros Afortunados</h2>
-            <p className="mt-2 text-3xl font-extrabold text-text-light tracking-tight sm:text-4xl">
+            {/* REPARACIÓN: Se cambia text-accent-start por text-text-subtle para una jerarquía correcta. */}
+            <h2 className="text-base font-semibold text-text-subtle tracking-wide uppercase">Nuestros Afortunados</h2>
+            {/* REPARACIÓN: Se elimina text-text-light. El título heredará el color principal. */}
+            <p className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
               Galería de Ganadores
             </p>
             <p className="mt-4 max-w-2xl mx-auto text-xl text-text-subtle">
@@ -63,7 +65,7 @@ function GanadoresPage() {
 
           <div className="mt-12">
             {cargando ? (
-              <p className="text-center text-text-light">Cargando ganadores...</p>
+              <p className="text-center">Cargando ganadores...</p>
             ) : ganadores.length === 0 ? (
               <p className="text-center text-text-subtle">Aún no hay ganadores registrados. ¡Participa para ser el primero!</p>
             ) : (
@@ -75,12 +77,14 @@ function GanadoresPage() {
                     </div>
                     <div className="flex-1 p-6 flex flex-col justify-between">
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-accent-start flex items-center">
+                        {/* REPARACIÓN: Se cambia text-accent-start por text-text-subtle para una correcta jerarquía. */}
+                        <p className="text-sm font-medium text-text-subtle flex items-center">
                           <TrophyIcon />
                           <span className="ml-1">Ganador del Sorteo</span>
                         </p>
                         <Link to={`/rifa/${ganador.rifaId}`} className="block mt-2">
-                          <p className="text-xl font-semibold text-text-light hover:underline">{ganador.nombreRifa}</p>
+                          {/* REPARACIÓN: Se elimina text-text-light. */}
+                          <p className="text-xl font-semibold hover:underline">{ganador.nombreRifa}</p>
                         </Link>
                         {ganador.testimonio && (
                           <p className="mt-3 text-base text-text-subtle italic">"{ganador.testimonio}"</p>
@@ -89,7 +93,8 @@ function GanadoresPage() {
                       <div className="mt-6 flex flex-col">
                         <div className="flex items-center mb-4">
                           <div>
-                            <p className="text-sm font-medium text-text-light">{ganador.datosComprador.nombre}</p>
+                            {/* REPARACIÓN: Se elimina text-text-light. */}
+                            <p className="text-sm font-medium">{ganador.datosComprador.nombre}</p>
                             <div className="flex space-x-1 text-sm text-text-subtle">
                               <span>Boleto Ganador:</span>
                               <span className="font-mono">{String(ganador.numeroGanador).padStart(5, '0')}</span>
@@ -97,13 +102,14 @@ function GanadoresPage() {
                           </div>
                         </div>
                         {ganador.videoURL && (
-                            <button 
-                                onClick={() => setVideoModalUrl(ganador.videoURL)}
-                                className="w-full flex items-center justify-center bg-background-dark border border-border-color text-text-light font-bold py-2 px-4 rounded-lg hover:bg-border-color transition-colors"
-                            >
-                                <VideoIcon/>
-                                Ver Video del Ganador
-                            </button>
+                          <button 
+                            onClick={() => setVideoModalUrl(ganador.videoURL)}
+                            // REPARACIÓN: Se eliminan las clases de color. Ahora es un botón secundario neutro.
+                            className="w-full flex items-center justify-center bg-background-dark border border-border-color font-bold py-2 px-4 rounded-lg hover:bg-border-color transition-colors"
+                          >
+                            <VideoIcon/>
+                            Ver Video del Ganador
+                          </button>
                         )}
                       </div>
                     </div>

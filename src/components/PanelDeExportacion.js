@@ -140,13 +140,15 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
 
   return (
     <div className="bg-background-dark p-4 rounded-lg mt-6 border border-border-color">
-      <h3 className="text-lg font-bold mb-4 text-text-light">Exportar Informes</h3>
+      {/* REPARACIÓN: Se elimina text-text-light. */}
+      <h3 className="text-lg font-bold mb-4">Exportar Informes</h3>
       <div className="flex flex-col sm:flex-row gap-4">
-        <button onClick={generarPDF} className="flex-1 bg-danger/80 text-white font-bold py-2 px-4 rounded-lg hover:bg-danger transition-colors flex items-center justify-center">
+        {/* REPARACIÓN: Se usan los colores semánticos del tema. */}
+        <button onClick={generarPDF} className="flex-1 bg-danger text-white font-bold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors flex items-center justify-center">
           <PDFIcon />
           Exportar a PDF
         </button>
-        <button onClick={generarExcel} className="flex-1 bg-success/80 text-white font-bold py-2 px-4 rounded-lg hover:bg-success transition-colors flex items-center justify-center">
+        <button onClick={generarExcel} className="flex-1 bg-success text-white font-bold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors flex items-center justify-center">
           <ExcelIcon />
           Exportar a Excel
         </button>

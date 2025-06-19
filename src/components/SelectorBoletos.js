@@ -30,13 +30,15 @@ const SelectorBoletos = ({
             let colorClasses = 'bg-background-light text-text-subtle border-border-color hover:bg-border-color/50';
 
             if (estaSeleccionado) {
-              colorClasses = 'bg-success text-white border-green-400 scale-110 shadow-lg';
+              // REPARACIÓN: Se usa bg-accent-primary y el texto sobre acento para consistencia.
+              colorClasses = 'bg-accent-primary text-text-on-accent border-accent-primary scale-110 shadow-lg';
             } else if (estaOcupado) {
               const estado = boletosOcupados.get(numeroBoleto);
+              // REPARACIÓN: Se usan los colores semánticos del tema para claridad.
               if (estado === 'apartado') {
-                colorClasses = 'bg-warning/80 text-yellow-100 border-yellow-400 cursor-not-allowed opacity-70';
+                colorClasses = 'bg-warning text-text-dark border-warning cursor-not-allowed opacity-70';
               } else {
-                colorClasses = 'bg-danger/80 text-red-100 border-red-400 cursor-not-allowed opacity-70';
+                colorClasses = 'bg-danger text-white border-danger cursor-not-allowed opacity-70';
               }
             }
             

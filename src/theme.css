@@ -1,47 +1,89 @@
-/* /src/theme.css - TEMA "RIFANET NEÓN MONOCROMÁTICO" */
+/* /src/theme.css - TEMA FINAL "CLARIDAD TOTAL" */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   /* Tipografía */
-  --font-sans: 'Inter', sans-serif;
-  --font-display: 'Poppins', sans-serif;
+  --font-sans: 'Figtree', sans-serif;
+  --font-display: 'Figtree', sans-serif;
 
-  /* Paleta de Colores (Monocromática) */
-  --color-base-blue: 0 191 255; /* Azul eléctrico */
-  /* Hacemos que ambos acentos apunten al mismo color */
-  --color-accent-start: var(--color-base-blue);
-  --color-accent-primary: var(--color-base-blue);
-  --color-accent-end: var(--color-base-blue);
-  --color-accent-secondary: var(--color-base-blue);
+  /* Paleta de Colores con ROLES DE COLOR definidos */
+  /* -------------------------------------------------------------------------- */
+  /* ROL: COLORES DE TEXTO                                                      */
+  /* -------------------------------------------------------------------------- */
+  --text-color-primary: 23 48 78;     /* Azul marino oscuro para texto principal */
+  --text-color-secondary: 107 131 156; /* Gris azulado para texto secundario */
+  --text-color-on-accent: 255 255 255;/* Blanco para texto sobre botones de color */
 
-  --background-dark: 10 10 10;      /* Negro puro */
-  --background-light: 23 23 23;     /* Gris muy oscuro */
-  --text-light: 240 240 240;
-  --text-dark: 10 10 10;
-  --text-subtle: 160 160 160;
-  --color-success: 0 220 130;
-  --color-danger: 255 80 100;
-  --color-warning: 255 210 80;
-  --color-border: 40 40 40;
+  /* -------------------------------------------------------------------------- */
+  /* ROL: COLORES DE ACENTO (SOLO PARA INTERACCIÓN)                             */
+  /* -------------------------------------------------------------------------- */
+  --accent-color-primary: 0 119 255;  /* Azul brillante */
+  --accent-color-secondary: 23 48 78; /* El mismo que el texto, para botones sutiles */
+
+  /* -------------------------------------------------------------------------- */
+  /* ROL: COLORES DE FONDO                                                      */
+  /* -------------------------------------------------------------------------- */
+  --bg-color-main: 255 255 255;      /* Fondo principal blanco */
+  --bg-color-subtle: 249 250 251;    /* Gris muy claro para tarjetas, etc. */
+
+  /* -------------------------------------------------------------------------- */
+  /* ROL: COLORES DE ESTADO                                                     */
+  /* -------------------------------------------------------------------------- */
+  --status-color-success: 22 163 74;
+  --status-color-danger: 220 38 38;
+  --status-color-warning: 245 158 11;
+
+  /* -------------------------------------------------------------------------- */
+  /* ROL: COLORES DE BORDE                                                      */
+  /* -------------------------------------------------------------------------- */
+  --border-color-primary: 226 232 240;
+
+  /* --- SISTEMA BILINGÜE Y COMPATIBILIDAD --- */
+  --color-accent-start: var(--accent-color-primary);
+  --color-accent-primary: var(--accent-color-primary);
+  --color-accent-end: var(--accent-color-secondary);
+  --color-accent-secondary: var(--accent-color-secondary);
+
+  --background-dark: var(--bg-color-main);
+  --background-light: var(--bg-color-subtle);
+  --text-light: var(--text-color-on-accent);
+  --text-dark: var(--text-color-primary);
+  --text-subtle: var(--text-color-secondary);
+  --color-success: var(--status-color-success);
+  --color-danger: var(--status-color-danger);
+  --color-warning: var(--status-color-warning);
+  --border-color: var(--border-color-primary);
   --color-white: 255 255 255;
 
-  /* Layout y Efectos */
-  --border-radius-base: 1rem;
-  --border-radius-lg: 1.5rem;
-  --shadow-glow-md: 0 0 15px 0 rgba(var(--color-base-blue), 0.3);
-  --shadow-glow-lg: 0 0 25px 0 rgba(var(--color-base-blue), 0.4);
+  /* Layout */
+  --border-radius-base: 0.75rem;
+  --border-radius-lg: 1rem;
+  
+  /* Efectos */
+  --shadow-glow-md: 0 5px 15px rgba(0,0,0,0.06);
+  --shadow-glow-lg: 0 12px 30px rgba(0,0,0,0.07);
 }
 
-body { font-family: var(--font-sans); background-color: rgb(var(--background-dark)); color: rgb(var(--text-light)); }
-h1,h2,h3,h4 { font-family: var(--font-display); }
+/* Regla Maestra: El color del texto del body se define aquí y se hereda */
+body { 
+  font-family: var(--font-sans); 
+  background-color: rgb(var(--bg-color-main)); 
+  color: rgb(var(--text-dark)); /* Usa el color de texto primario */
+  font-weight: 600; 
+}
+
+/* Regla Maestra: Los títulos SIEMPRE heredan el color del body. */
+h1,h2,h3,h4,h5,h6 { 
+  font-weight: 800; 
+  color: inherit; 
+}
 
 @layer components {
-  .btn { @apply px-7 py-3 rounded-full transition-all duration-300 font-bold focus:outline-none; }
-  /* Como ambos colores del gradiente son iguales, el botón será de un color sólido */
-  .btn-primary { @apply btn bg-accent-primary text-text-dark shadow-glow-lg hover:brightness-125; }
-  .btn-secondary { @apply btn bg-background-light text-text-light hover:bg-border-color; }
-  .card { @apply bg-background-light border border-border-color rounded-app-lg shadow-glow-lg; }
-  .input-field { @apply block w-full px-4 py-3 mt-1 bg-background-light text-text-light border border-border-color rounded-full focus:outline-none focus:ring-2 focus:ring-accent-primary; }
+  .btn { @apply px-7 py-3 rounded-full transition-all duration-200 font-bold focus:outline-none; }
+  .btn-primary { @apply btn bg-accent-primary text-text-light shadow-lg hover:brightness-110; }
+  .btn-secondary { @apply btn bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100; }
+  .card { @apply bg-white border border-border-color rounded-app-lg shadow-xl; }
+  .input-field { @apply block w-full px-4 py-3 mt-1 bg-background-light text-text-dark border-2 border-border-color rounded-full focus:outline-none focus:ring-2 focus:ring-accent-primary; }
 }

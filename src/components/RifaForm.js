@@ -162,81 +162,83 @@ function RifaForm() {
     }
   };
   
+  // REPARACIÓN: Se elimina text-text-light del formulario.
   return (
-    <form onSubmit={handleSubmit} className="bg-background-light rounded-xl shadow-lg p-6 mb-6 border border-border-color animate-fade-in text-text-light">
+    <form onSubmit={handleSubmit} className="bg-background-light rounded-xl shadow-lg p-6 mb-6 border border-border-color animate-fade-in">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">{rifaSeleccionada ? "Editando Sorteo" : "Crear Nuevo Sorteo"}</h2>
       </div>
       <div className="border-b border-border-color mb-6">
         <nav className="-mb-px flex space-x-2 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
-          <button type="button" onClick={() => setActiveTab('general')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'general' ? 'border-accent-start text-accent-start' : 'border-transparent text-text-subtle hover:text-text-light hover:border-border-color' }`}><InfoIcon/> Información General</button>
-          <button type="button" onClick={() => setActiveTab('imagenes')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'imagenes' ? 'border-accent-start text-accent-start' : 'border-transparent text-text-subtle hover:text-text-light hover:border-border-color' }`}><ImageIcon/> Imágenes</button>
-          <button type="button" onClick={() => setActiveTab('reglas')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'reglas' ? 'border-accent-start text-accent-start' : 'border-transparent text-text-subtle hover:text-text-light hover:border-border-color' }`}><RulesIcon/> Reglas</button>
+          {/* REPARACIÓN: Se eliminan clases de color para que hereden del tema. */}
+          <button type="button" onClick={() => setActiveTab('general')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'general' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><InfoIcon/> Información General</button>
+          <button type="button" onClick={() => setActiveTab('imagenes')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'imagenes' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><ImageIcon/> Imágenes</button>
+          <button type="button" onClick={() => setActiveTab('reglas')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'reglas' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><RulesIcon/> Reglas</button>
         </nav>
       </div>
       <div className="animate-fade-in min-h-[250px]">
         {activeTab === 'general' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="block col-span-2">Nombre del Sorteo: <input type="text" name="nombre" value={formulario.nombre} onChange={handleChange} required className="w-full bg-background-dark border-border-color rounded p-2 mt-1 focus:ring-accent-start focus:border-accent-start" /></label>
-            <label className="block col-span-2">Descripción: <textarea name="descripcion" value={formulario.descripcion} onChange={handleChange} className="w-full bg-background-dark border-border-color rounded p-2 mt-1" rows="4" /></label>
-            <label className="block">Precio por Boleto ($): <input type="number" name="precio" value={formulario.precio} onChange={handleChange} required className="w-full bg-background-dark border-border-color rounded p-2 mt-1" min="0" /></label>
-            <label className="block">Total de Boletos: <input type="number" name="boletos" value={formulario.boletos} onChange={handleChange} required className="w-full bg-background-dark border-border-color rounded p-2 mt-1" min="1" max="100000" /></label>
+            <label className="block col-span-2">Nombre del Sorteo: <input type="text" name="nombre" value={formulario.nombre} onChange={handleChange} required className="input-field mt-1" /></label>
+            <label className="block col-span-2">Descripción: <textarea name="descripcion" value={formulario.descripcion} onChange={handleChange} className="input-field mt-1" rows="4" /></label>
+            <label className="block">Precio por Boleto ($): <input type="number" name="precio" value={formulario.precio} onChange={handleChange} required className="input-field mt-1" min="0" /></label>
+            <label className="block">Total de Boletos: <input type="number" name="boletos" value={formulario.boletos} onChange={handleChange} required className="input-field mt-1" min="1" max="100000" /></label>
           </div>
         )}
         {activeTab === 'imagenes' && (
-           <div>
-             <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-               <label className="block">Añadir Nuevas Imágenes: <input type="file" accept="image/*" multiple onChange={handleImagenesChange} disabled={reorderMode} className="block w-full text-sm text-text-subtle file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent-start/10 file:text-accent-start hover:file:bg-accent-start/20 disabled:opacity-50"/></label>
-               <button type="button" onClick={toggleReorderMode} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${reorderMode ? 'bg-danger text-white' : 'bg-border-color text-text-light'}`}>
+            <div>
+              <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+                <label className="block">Añadir Nuevas Imágenes: <input type="file" accept="image/*" multiple onChange={handleImagenesChange} disabled={reorderMode} className="block w-full text-sm text-text-subtle file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent-primary/10 file:text-accent-primary hover:file:bg-accent-primary/20 disabled:opacity-50"/></label>
+                <button type="button" onClick={toggleReorderMode} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${reorderMode ? 'bg-danger text-white' : 'btn-secondary'}`}>
                  {reorderMode ? 'Finalizar Orden' : 'Cambiar Orden'}
-               </button>
-             </div>
-             <p className="text-xs text-text-subtle mb-4">
-               {reorderMode 
-                 ? "Modo 'Cambiar Orden' activado: 1) Haz clic en la imagen que quieres mover. 2) Haz clic en la posición a donde la quieres enviar."
-                 : "La primera imagen de la lista será la portada. Usa la estrella (⭐) para designar una nueva portada."
-               }
-             </p>
-             <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-               {imagenes.map((img, i) => (
-                 <div 
-                   key={img.id || i} 
-                   onClick={() => handleImageClick(i)} 
-                   className={`relative group border-4 rounded-lg overflow-hidden aspect-w-1 aspect-h-1 transition-all
-                     ${reorderMode ? 'cursor-pointer' : ''}
-                     ${selectedImageIndex === i ? 'border-success scale-105 shadow-2xl' : 'border-transparent'}
-                   `}
-                 >
-                   <img src={img.preview} alt={`preview-${i}`} className="w-full h-full object-cover" />
-                   {!reorderMode && (
-                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all flex items-center justify-center gap-2 p-1">
-                       <button type="button" title="Establecer como portada" onClick={() => handleSetCover(i)} disabled={i === 0} className="p-2 bg-background-white rounded-full text-yellow-400 hover:bg-gray-200 opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"><StarIcon filled={i === 0} /></button>
-                       <button type="button" title="Eliminar imagen" onClick={() => handleRemoveImage(i)} className="p-2 bg-background-white rounded-full text-danger hover:bg-gray-200 opacity-0 group-hover:opacity-100"><TrashIcon /></button>
-                     </div>
-                   )}
-                     {i === 0 && !reorderMode && <div className="absolute top-1 right-1 bg-yellow-400 text-white p-1 rounded-full" title="Imagen de portada"><StarIcon filled={true} /></div>}
-                 </div>
-               ))}
-             </div>
-           </div>
+                </button>
+              </div>
+              <p className="text-xs text-text-subtle mb-4">
+                {reorderMode 
+                  ? "Modo 'Cambiar Orden' activado: 1) Haz clic en la imagen que quieres mover. 2) Haz clic en la posición a donde la quieres enviar."
+                  : "La primera imagen de la lista será la portada. Usa la estrella (⭐) para designar una nueva portada."
+                }
+              </p>
+              <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {imagenes.map((img, i) => (
+                  <div 
+                    key={img.id || i} 
+                    onClick={() => handleImageClick(i)} 
+                    className={`relative group border-4 rounded-lg overflow-hidden aspect-w-1 aspect-h-1 transition-all
+                      ${reorderMode ? 'cursor-pointer' : ''}
+                      ${selectedImageIndex === i ? 'border-success scale-105 shadow-2xl' : 'border-transparent'}
+                    `}
+                  >
+                    <img src={img.preview} alt={`preview-${i}`} className="w-full h-full object-cover" />
+                    {!reorderMode && (
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all flex items-center justify-center gap-2 p-1">
+                        <button type="button" title="Establecer como portada" onClick={() => handleSetCover(i)} disabled={i === 0} className="p-2 bg-white rounded-full text-yellow-400 hover:bg-gray-200 opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"><StarIcon filled={i === 0} /></button>
+                        <button type="button" title="Eliminar imagen" onClick={() => handleRemoveImage(i)} className="p-2 bg-white rounded-full text-danger hover:bg-gray-200 opacity-0 group-hover:opacity-100"><TrashIcon /></button>
+                      </div>
+                    )}
+                      {i === 0 && !reorderMode && <div className="absolute top-1 right-1 bg-yellow-400 text-white p-1 rounded-full" title="Imagen de portada"><StarIcon filled={true} /></div>}
+                  </div>
+                ))}
+              </div>
+            </div>
         )}
         {activeTab === 'reglas' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <label className="block">
                 Estado del Sorteo:
-                <select name="estado" value={formulario.estado} onChange={handleChange} className="w-full bg-background-dark border-border-color rounded p-2 mt-1 focus:ring-accent-start focus:border-accent-start">
-                    <option value="pendiente">Pendiente</option>
-                    <option value="activa">Activa</option>
-                    <option value="finalizada">Finalizada</option>
+                <select name="estado" value={formulario.estado} onChange={handleChange} className="input-field mt-1">
+                  <option value="pendiente">Pendiente</option>
+                  <option value="activa">Activa</option>
+                  <option value="finalizada">Finalizada</option>
                 </select>
               </label>
               <label className="block">
                 Condición para realizar el Sorteo:
-                <select name="tipoRifa" value={formulario.tipoRifa} onChange={handleChange} className="w-full bg-background-dark border-border-color rounded p-2 mt-1 focus:ring-accent-start focus:border-accent-start">
-                    <option value="porcentaje">Solo por Porcentaje de Venta</option>
-                    <option value="fecha">Solo por Fecha (incondicional)</option>
-                    <option value="fechaConCondicion">Por Fecha (con condición de venta)</option>
+                <select name="tipoRifa" value={formulario.tipoRifa} onChange={handleChange} className="input-field mt-1">
+                  <option value="porcentaje">Solo por Porcentaje de Venta</option>
+                  <option value="fecha">Solo por Fecha (incondicional)</option>
+                  <option value="fechaConCondicion">Por Fecha (con condición de venta)</option>
                 </select>
               </label>
             </div>
@@ -244,13 +246,13 @@ function RifaForm() {
                 {(formulario.tipoRifa === 'porcentaje' || formulario.tipoRifa === 'fechaConCondicion') && (
                     <label className="block">
                         Porcentaje de Venta (%):
-                        <input type="number" name="porcentajeVenta" value={formulario.porcentajeVenta} onChange={handleChange} required={formulario.tipoRifa !== 'fecha'} className="w-full bg-background-dark border-border-color rounded p-2 mt-1" min="1" max="100" />
+                        <input type="number" name="porcentajeVenta" value={formulario.porcentajeVenta} onChange={handleChange} required={formulario.tipoRifa !== 'fecha'} className="input-field mt-1" min="1" max="100" />
                     </label>
                 )}
                 {(formulario.tipoRifa === 'fecha' || formulario.tipoRifa === 'fechaConCondicion') && (
                     <label className="block">
                         Fecha Programada del Sorteo:
-                        <input type="date" name="fechaCierre" value={formulario.fechaCierre} onChange={handleChange} required={formulario.tipoRifa !== 'porcentaje'} className="w-full bg-background-dark border-border-color rounded p-2 mt-1" />
+                        <input type="date" name="fechaCierre" value={formulario.fechaCierre} onChange={handleChange} required={formulario.tipoRifa !== 'porcentaje'} className="input-field mt-1" />
                     </label>
                 )}
                  {formulario.tipoRifa === 'fechaConCondicion' && (
@@ -268,10 +270,10 @@ function RifaForm() {
         )}
       </div>
       <div className="flex items-center gap-4 mt-8 border-t border-border-color pt-6">
-        <button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-accent-start to-accent-end text-white font-bold px-6 py-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50">
+        <button type="submit" disabled={isSubmitting} className="btn btn-primary disabled:opacity-50">
           {isSubmitting ? 'Guardando...' : (rifaSeleccionada ? "Actualizar Sorteo" : "Guardar Sorteo")}
         </button>
-        <button type="button" onClick={ocultarFormulario} className="bg-background-light border border-border-color text-text-light px-6 py-2 rounded-lg hover:bg-border-color/50">
+        <button type="button" onClick={ocultarFormulario} className="btn btn-secondary">
           Cancelar
         </button>
       </div>

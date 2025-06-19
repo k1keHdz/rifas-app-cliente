@@ -6,33 +6,35 @@ import { collection, query, where, orderBy, limit, getDocs } from 'firebase/fire
 import { db } from '../firebase/firebaseConfig';
 import { RIFAS_ESTADOS } from '../constants/rifas';
 
-// --- Sub-componente "Cómo participar" con el nuevo tema ---
+// --- Sub-componente "Cómo participar" ---
 const PasosSection = () => (
     <div className="bg-background-dark py-16 sm:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-                <h2 className="text-3xl font-extrabold text-text-light sm:text-4xl">Participar es Muy Fácil</h2>
+                {/* REPARACIÓN: Se elimina text-text-light. El título heredará el color principal. */}
+                <h2 className="text-3xl font-extrabold sm:text-4xl">Participar es Muy Fácil</h2>
                 <p className="mt-4 text-lg text-text-subtle">Sigue estos simples pasos y podrías ser nuestro próximo ganador.</p>
             </div>
             <div className="mt-12 grid gap-10 md:grid-cols-2 lg:grid-cols-4">
                 <div className="text-center">
                     <div className="flex items-center justify-center h-12 w-12 mx-auto bg-gradient-to-r from-accent-start to-accent-end text-white rounded-full text-xl font-bold">1</div>
-                    <h3 className="mt-5 text-lg font-medium text-text-light">Elige tu Sorteo</h3>
+                    {/* REPARACIÓN: Se elimina text-text-light. */}
+                    <h3 className="mt-5 text-lg font-medium">Elige tu Sorteo</h3>
                     <p className="mt-2 text-base text-text-subtle">Explora nuestros sorteos activos y selecciona el premio que más te guste.</p>
                 </div>
                 <div className="text-center">
                     <div className="flex items-center justify-center h-12 w-12 mx-auto bg-gradient-to-r from-accent-start to-accent-end text-white rounded-full text-xl font-bold">2</div>
-                    <h3 className="mt-5 text-lg font-medium text-text-light">Selecciona Boletos</h3>
+                    <h3 className="mt-5 text-lg font-medium">Selecciona Boletos</h3>
                     <p className="mt-2 text-base text-text-subtle">Usa el tablero interactivo para escoger tus números de la suerte.</p>
                 </div>
                 <div className="text-center">
                     <div className="flex items-center justify-center h-12 w-12 mx-auto bg-gradient-to-r from-accent-start to-accent-end text-white rounded-full text-xl font-bold">3</div>
-                    <h3 className="mt-5 text-lg font-medium text-text-light">Aparta y Paga</h3>
+                    <h3 className="mt-5 text-lg font-medium">Aparta y Paga</h3>
                     <p className="mt-2 text-base text-text-subtle">Contáctanos por WhatsApp para apartar tus boletos y recibir los datos de pago.</p>
                 </div>
                 <div className="text-center">
                     <div className="flex items-center justify-center h-12 w-12 mx-auto bg-gradient-to-r from-accent-start to-accent-end text-white rounded-full text-xl font-bold">4</div>
-                    <h3 className="mt-5 text-lg font-medium text-text-light">¡Espera y Gana!</h3>
+                    <h3 className="mt-5 text-lg font-medium">¡Espera y Gana!</h3>
                     <p className="mt-2 text-base text-text-subtle">Verifica tu boleto y espera el día del sorteo. ¡Mucha suerte!</p>
                 </div>
             </div>
@@ -40,16 +42,17 @@ const PasosSection = () => (
     </div>
 );
 
-// --- Componente para la sección Héroe con el nuevo tema ---
+// --- Componente para la sección Héroe ---
 const RifaHero = ({ rifa }) => {
     const porcentajeVendido = rifa.boletos > 0 ? ((rifa.boletosVendidos || 0) / rifa.boletos) * 100 : 0;
     
+    // REPARACIÓN: Se elimina text-text-light del div principal.
     return (
-        <div className="bg-background-dark text-text-light">
+        <div className="bg-background-dark">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
                 <div className="lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center">
                     <div className="relative group rounded-xl overflow-hidden shadow-2xl border-2 border-border-color/50">
-                         <Link to={`/rifa/${rifa.id}`} className="block">
+                        <Link to={`/rifa/${rifa.id}`} className="block">
                             <div className="aspect-w-16 aspect-h-9">
                                 <img 
                                     src={rifa.imagenes?.[0] || `https://placehold.co/800x450/111827/e5e7eb?text=Sorteo+Estelar`}
@@ -57,24 +60,29 @@ const RifaHero = ({ rifa }) => {
                                     className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-105"
                                 />
                             </div>
-                         </Link>
+                        </Link>
                     </div>
                     <div className="mt-12 lg:mt-0">
-                        <span className="text-accent-start font-semibold tracking-wide uppercase">Sorteo Principal</span>
-                        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mt-2 text-background-white">{rifa.nombre}</h1>
+                        {/* REPARACIÓN: Se elimina text-accent-start. Se reemplaza con text-text-subtle para una jerarquía correcta. */}
+                        <span className="text-text-subtle font-semibold tracking-wide uppercase">Sorteo Principal</span>
+                        {/* REPARACIÓN: Se elimina text-background-white. */}
+                        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mt-2">{rifa.nombre}</h1>
                         <p className="mt-4 text-lg text-text-subtle line-clamp-3">{rifa.descripcion}</p>
                         <div className="mt-8">
-                           <p className="text-text-subtle text-sm">Precio del boleto</p>
-                           <p className="text-4xl font-bold text-accent-start">${rifa.precio.toLocaleString('es-MX')}</p>
+                            <p className="text-text-subtle text-sm">Precio del boleto</p>
+                            {/* REPARACIÓN: Se elimina text-accent-start. El precio ahora usará el color de texto principal. */}
+                            <p className="text-4xl font-bold">${rifa.precio.toLocaleString('es-MX')}</p>
                         </div>
                         <div className="mt-6">
-                           <div className="flex justify-between items-center mb-1">
-                               <span className="text-sm font-semibold text-text-light">Progreso</span>
-                               <span className="text-sm font-bold text-accent-start">{porcentajeVendido.toFixed(1)}%</span>
-                           </div>
-                           <div className="bg-background-light h-4 rounded-full overflow-hidden border border-border-color">
-                               <div className="bg-gradient-to-r from-accent-start to-accent-end h-full rounded-full" style={{ width: `${porcentajeVendido}%` }}></div>
-                           </div>
+                            <div className="flex justify-between items-center mb-1">
+                                {/* REPARACIÓN: Se elimina text-text-light. */}
+                                <span className="text-sm font-semibold">Progreso</span>
+                                {/* REPARACIÓN: Se elimina text-accent-start. Se reemplaza con text-text-subtle. */}
+                                <span className="text-sm font-bold text-text-subtle">{porcentajeVendido.toFixed(1)}%</span>
+                            </div>
+                            <div className="bg-background-light h-4 rounded-full overflow-hidden border border-border-color">
+                                <div className="bg-gradient-to-r from-accent-start to-accent-end h-full rounded-full" style={{ width: `${porcentajeVendido}%` }}></div>
+                            </div>
                         </div>
                         <Link to={`/rifa/${rifa.id}`} className="mt-10 inline-block bg-gradient-to-r from-accent-start to-accent-end text-white font-bold text-lg py-4 px-10 rounded-lg hover:shadow-2xl hover:scale-105 transition-all transform w-full sm:w-auto text-center shadow-lg">
                             ¡Participar ahora!
@@ -86,7 +94,7 @@ const RifaHero = ({ rifa }) => {
     );
 }
 
-// --- Componente para las tarjetas de sorteos con el nuevo tema ---
+// --- Componente para las tarjetas de sorteos ---
 const RifaCard = ({ rifa, isFinished = false, onShowResults }) => {
     const porcentajeVendido = rifa.boletos > 0 ? ((rifa.boletosVendidos || 0) / rifa.boletos) * 100 : 0;
     
@@ -102,7 +110,8 @@ const RifaCard = ({ rifa, isFinished = false, onShowResults }) => {
             return (
                 <button
                     onClick={() => onShowResults(rifa.id)}
-                    className="w-full text-center block font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-105 text-text-light bg-background-light hover:bg-border-color"
+                    // REPARACIÓN: Se elimina text-text-light.
+                    className="w-full text-center block font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-105 bg-background-light hover:bg-border-color"
                 >
                     Ver Resultados
                 </button>
@@ -128,12 +137,15 @@ const RifaCard = ({ rifa, isFinished = false, onShowResults }) => {
                 />
             </ImageContainer>
             <div className="p-5 flex flex-col flex-grow text-left">
-                <h3 className="text-lg font-bold text-text-light truncate">{rifa.nombre}</h3>
-                <p className="text-2xl font-extrabold text-accent-start my-2">${rifa.precio.toLocaleString('es-MX')}</p>
+                {/* REPARACIÓN: Se elimina text-text-light. */}
+                <h3 className="text-lg font-bold truncate">{rifa.nombre}</h3>
+                {/* REPARACIÓN: Se elimina text-accent-start. */}
+                <p className="text-2xl font-extrabold my-2">${rifa.precio.toLocaleString('es-MX')}</p>
                 <div className="w-full mt-2">
                     <div className="flex justify-between items-center mb-1">
                         <span className="text-xs font-semibold text-text-subtle uppercase">Progreso</span>
-                        <span className="text-sm font-bold text-accent-start">{porcentajeVendido.toFixed(1)}%</span>
+                        {/* REPARACIÓN: Se elimina text-accent-start. */}
+                        <span className="text-sm font-bold text-text-subtle">{porcentajeVendido.toFixed(1)}%</span>
                     </div>
                     <div className="bg-background-dark h-2.5 rounded-full overflow-hidden border border-border-color">
                         <div 
@@ -150,7 +162,7 @@ const RifaCard = ({ rifa, isFinished = false, onShowResults }) => {
     )
 }
 
-// --- Componente para el Modal de Resultados con el nuevo tema ---
+// --- Componente para el Modal de Resultados ---
 const ResultadosModal = ({ isOpen, onClose, data, isLoading }) => {
     if (!isOpen) return null;
 
@@ -163,22 +175,24 @@ const ResultadosModal = ({ isOpen, onClose, data, isLoading }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 animate-fade-in-fast" onClick={onClose}>
-            <div className="bg-background-light text-text-light border border-border-color rounded-2xl shadow-2xl w-full max-w-md transform transition-all" onClick={(e) => e.stopPropagation()}>
+            {/* REPARACIÓN: Se elimina text-text-light. */}
+            <div className="bg-background-light border border-border-color rounded-2xl shadow-2xl w-full max-w-md transform transition-all" onClick={(e) => e.stopPropagation()}>
                 <div className="p-6 text-center relative">
-                    <button onClick={onClose} className="absolute top-2 right-2 text-text-subtle hover:text-text-light p-2 rounded-full text-2xl leading-none">&times;</button>
+                    <button onClick={onClose} className="absolute top-2 right-2 text-text-subtle hover:opacity-75 p-2 rounded-full text-2xl leading-none">&times;</button>
                     {isLoading ? (
                         <div className="py-10">Cargando resultados...</div>
                     ) : data ? (
                         <>
-                            <span className="text-sm font-bold text-accent-start uppercase">Resultados del Sorteo</span>
-                            <h3 className="text-2xl font-bold text-text-light mt-2">{data.nombreRifa}</h3>
+                            {/* REPARACIÓN: Se cambia text-accent-start por text-text-subtle. */}
+                            <span className="text-sm font-bold text-text-subtle uppercase">Resultados del Sorteo</span>
+                            <h3 className="text-2xl font-bold mt-2">{data.nombreRifa}</h3>
                             <p className="text-sm text-text-subtle mt-1">Sorteo realizado el: {formatDate(data.fechaRegistro)}</p>
                             
                             <div className="mt-8 bg-background-dark rounded-lg py-6">
-                               <p className="text-lg text-text-subtle">Boleto Ganador:</p>
-                               <p className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-accent-start to-accent-end tracking-wider">
-                                   {String(data.numeroGanador).padStart(5, '0')}
-                               </p>
+                                <p className="text-lg text-text-subtle">Boleto Ganador:</p>
+                                <p className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-accent-start to-accent-end tracking-wider">
+                                    {String(data.numeroGanador).padStart(5, '0')}
+                                </p>
                             </div>
                             <p className="text-xs text-text-subtle mt-6">¡Felicidades al afortunado ganador! Gracias a todos por participar.</p>
                         </>
@@ -257,14 +271,15 @@ function Home() {
                 isLoading={isLoadingModal}
             />
             {cargando ? (
-                <div className="text-center py-40 text-text-light">Cargando...</div>
+                // REPARACIÓN: Se elimina text-text-light.
+                <div className="text-center py-40">Cargando...</div>
             ) : rifaDestacada ? (
                 <>
                     <RifaHero rifa={rifaDestacada} />
                     {(otrasRifas.length > 0) && (
                         <div className="py-16 sm:py-24 bg-background-dark">
                             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                                <h2 className="text-3xl font-extrabold text-text-light text-center mb-12">Más Oportunidades Para Ganar</h2>
+                                <h2 className="text-3xl font-extrabold text-center mb-12">Más Oportunidades Para Ganar</h2>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                                     {otrasRifas.map(rifa => <RifaCard key={rifa.id} rifa={rifa} onShowResults={handleVerResultados} />)}
                                 </div>
@@ -273,21 +288,21 @@ function Home() {
                     )}
                 </>
             ) : (
-                <div className="bg-background-dark text-center py-40">
-                    <h2 className="text-3xl font-bold text-text-light">No hay sorteos disponibles</h2>
+                <div className="text-center py-40">
+                    <h2 className="text-3xl font-bold">No hay sorteos disponibles</h2>
                     <p className="text-text-subtle mt-2">¡Vuelve pronto para más oportunidades de ganar!</p>
                 </div>
             )}
             
             {rifasFinalizadas.length > 0 && (
-                 <div className="bg-background-light pt-16 sm:pt-24 pb-4 border-t-2 border-border-color">
-                      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                          <h2 className="text-3xl font-extrabold text-text-light text-center mb-12">Sorteos Finalizados</h2>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                               {rifasFinalizadas.map(rifa => <RifaCard key={rifa.id} rifa={rifa} isFinished={true} onShowResults={handleVerResultados} />)}
-                          </div>
-                      </div>
-                 </div>
+                   <div className="bg-background-light pt-16 sm:pt-24 pb-4 border-t-2 border-border-color">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <h2 className="text-3xl font-extrabold text-center mb-12">Sorteos Finalizados</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {rifasFinalizadas.map(rifa => <RifaCard key={rifa.id} rifa={rifa} isFinished={true} onShowResults={handleVerResultados} />)}
+                            </div>
+                        </div>
+                   </div>
             )}
             
             <PasosSection />

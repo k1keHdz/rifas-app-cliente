@@ -13,10 +13,10 @@ import PanelDeExportacion from "./PanelDeExportacion";
 import emailjs from '@emailjs/browser';
 import EMAIL_CONFIG from '../emailjsConfig';
 
+// --- Íconos ---
 const VentasIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
 const StatsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M3 3v18h18"/><path d="m18 9-5 5-4-4-3 3"/></svg>;
 const AccionesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
-
 
 function RifaDetalleAdmin() {
   const { id: rifaId } = useParams();
@@ -186,28 +186,29 @@ function RifaDetalleAdmin() {
     return Object.entries(agrupadas).map(([fecha, total]) => ({ fecha, total })).reverse();
   }, [ventasFiltradas, modoGrafica]);
 
-  if (cargando) return <div className="bg-background-dark text-text-light text-center p-10">Cargando detalles del sorteo...</div>;
-  if (!rifa) return <div className="bg-background-dark text-danger text-center p-10">No se encontró el sorteo.</div>;
+  if (cargando) return <div className="text-center p-10">Cargando detalles del sorteo...</div>;
+  if (!rifa) return <div className="text-danger text-center p-10">No se encontró el sorteo.</div>;
   
   return (
-    <div className="p-4 max-w-7xl mx-auto bg-background-dark text-text-light min-h-screen">
-      <Link to="/admin/historial-ventas" className="text-accent-start hover:underline mb-4 inline-block">← Volver a la selección de sorteos</Link>
+    <div className="p-4 max-w-7xl mx-auto min-h-screen">
+      <Link to="/admin/historial-ventas" className="text-accent-primary hover:underline mb-4 inline-block">← Volver a la selección de sorteos</Link>
       
       <div className="bg-background-light border border-border-color shadow-lg rounded-xl p-6 mb-6">
         <h1 className="text-3xl font-bold mb-4">{rifa.nombre}</h1>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+          {/* REPARACIÓN: Se usan los colores de texto correctos para cada estado. */}
           <div className="p-2 rounded-lg bg-background-dark"><p className="text-xs text-text-subtle uppercase font-semibold">Boletos Totales</p><p className="text-2xl font-bold">{rifa.boletos}</p></div>
-          <div className="p-2 rounded-lg bg-success/10"><p className="text-xs text-green-300 uppercase font-semibold">Vendidos</p><p className="text-xl font-bold text-green-300">{estadisticas.vendidosCount} <span className="text-sm font-normal">(${estadisticas.vendidosDinero.toLocaleString()})</span></p></div>
-          <div className="p-2 rounded-lg bg-warning/10"><p className="text-xs text-yellow-300 uppercase font-semibold">Apartados</p><p className="text-xl font-bold text-yellow-300">{estadisticas.apartadosCount} <span className="text-sm font-normal">(${estadisticas.apartadosDinero.toLocaleString()})</span></p></div>
-          <div className="p-2 rounded-lg bg-accent-start/10"><p className="text-xs text-accent-start/80 uppercase font-semibold">Disponibles</p><p className="text-2xl font-bold text-accent-start">{estadisticas.disponiblesCount}</p></div>
+          <div className="p-2 rounded-lg bg-success/10"><p className="text-xs text-success uppercase font-semibold">Vendidos</p><p className="text-xl font-bold text-success">{estadisticas.vendidosCount} <span className="text-sm font-normal">(${estadisticas.vendidosDinero.toLocaleString()})</span></p></div>
+          <div className="p-2 rounded-lg bg-warning/10"><p className="text-xs text-warning uppercase font-semibold">Apartados</p><p className="text-xl font-bold text-warning">{estadisticas.apartadosCount} <span className="text-sm font-normal">(${estadisticas.apartadosDinero.toLocaleString()})</span></p></div>
+          <div className="p-2 rounded-lg bg-accent-primary/10"><p className="text-xs text-accent-primary/80 uppercase font-semibold">Disponibles</p><p className="text-2xl font-bold text-accent-primary">{estadisticas.disponiblesCount}</p></div>
         </div>
       </div>
 
       <div className="border-b border-border-color mb-6">
         <nav className="-mb-px flex space-x-2 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
-          <button onClick={() => setActiveTab('ventas')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'ventas' ? 'border-accent-start text-accent-start' : 'border-transparent text-text-subtle hover:text-text-light hover:border-border-color' }`}><VentasIcon/> Historial de Ventas</button>
-          <button onClick={() => setActiveTab('stats')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'stats' ? 'border-accent-start text-accent-start' : 'border-transparent text-text-subtle hover:text-text-light hover:border-border-color' }`}><StatsIcon/> Estadísticas</button>
-          <button onClick={() => setActiveTab('acciones')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'acciones' ? 'border-accent-start text-accent-start' : 'border-transparent text-text-subtle hover:text-text-light hover:border-border-color' }`}><AccionesIcon/> Acciones</button>
+          <button onClick={() => setActiveTab('ventas')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'ventas' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><VentasIcon/> Historial de Ventas</button>
+          <button onClick={() => setActiveTab('stats')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'stats' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><StatsIcon/> Estadísticas</button>
+          <button onClick={() => setActiveTab('acciones')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'acciones' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><AccionesIcon/> Acciones</button>
         </nav>
       </div>
 
@@ -215,24 +216,25 @@ function RifaDetalleAdmin() {
         {activeTab === 'ventas' && (
           <div className="bg-background-light p-4 sm:p-6 rounded-xl shadow-lg border border-border-color">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                <h2 className="text-xl font-bold">Filtros de Búsqueda</h2>
-                <div className="flex-grow sm:flex-grow-0 sm:w-72">
-                    <input 
-                        type="text"
-                        placeholder="Buscar por ID o No. Boleto..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-background-dark text-text-light border-border-color rounded-md shadow-sm focus:ring-accent-start focus:border-accent-start"
-                    />
-                </div>
+              <h2 className="text-xl font-bold">Filtros de Búsqueda</h2>
+              <div className="flex-grow sm:flex-grow-0 sm:w-72">
+                <input 
+                  type="text"
+                  placeholder="Buscar por ID o No. Boleto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="input-field w-full"
+                />
+              </div>
             </div>
             <div className="border-b border-border-color">
-                <nav className="-mb-px flex space-x-4 overflow-x-auto" aria-label="Filters">
-                    <button onClick={() => setFiltroVentas('todos')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'todos' ? 'border-accent-start text-accent-start' : 'border-transparent text-text-subtle hover:text-text-light'}`}>Todos</button>
-                    <button onClick={() => setFiltroVentas('pagados')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'pagados' ? 'border-green-400 text-green-400' : 'border-transparent text-text-subtle hover:text-text-light'}`}>Pagados</button>
-                    <button onClick={() => setFiltroVentas('apartados')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'apartados' ? 'border-yellow-400 text-yellow-400' : 'border-transparent text-text-subtle hover:text-text-light'}`}>Apartados</button>
-                    <button onClick={() => setFiltroVentas('manual')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'manual' ? 'border-purple-400 text-purple-400' : 'border-transparent text-text-subtle hover:text-text-light'}`}>Venta Manual</button>
-                </nav>
+              <nav className="-mb-px flex space-x-4 overflow-x-auto" aria-label="Filters">
+                {/* REPARACIÓN: Se usan los colores semánticos del tema. */}
+                <button onClick={() => setFiltroVentas('todos')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'todos' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle'}`}>Todos</button>
+                <button onClick={() => setFiltroVentas('pagados')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'pagados' ? 'border-success text-success' : 'border-transparent text-text-subtle'}`}>Pagados</button>
+                <button onClick={() => setFiltroVentas('apartados')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'apartados' ? 'border-warning text-warning' : 'border-transparent text-text-subtle'}`}>Apartados</button>
+                <button onClick={() => setFiltroVentas('manual')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'manual' ? 'border-purple-400 text-purple-400' : 'border-transparent text-text-subtle'}`}>Venta Manual</button>
+              </nav>
             </div>
             <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
             <HistorialVentas 
@@ -250,9 +252,9 @@ function RifaDetalleAdmin() {
         {activeTab === 'stats' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-background-light p-4 rounded-lg shadow-md border border-border-color space-y-4">
-                <h3 className="text-lg font-bold">Filtros de Reporte</h3>
-                <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
-                <PanelDeExportacion rifa={rifa} ventasFiltradas={ventasFiltradas} graficoRef={graficoRef} />
+              <h3 className="text-lg font-bold">Filtros de Reporte</h3>
+              <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
+              <PanelDeExportacion rifa={rifa} ventasFiltradas={ventasFiltradas} graficoRef={graficoRef} />
             </div>
             <GraficaVentas graficoRef={graficoRef} datosGrafico={datosGrafico} modo={modoGrafica} setModo={setModoGrafica} />
           </div>
@@ -261,7 +263,7 @@ function RifaDetalleAdmin() {
           <div className="bg-background-light p-6 rounded-xl shadow-lg border border-border-color">
              <h2 className="text-2xl font-bold mb-4">Acciones del Sorteo</h2>
              <p className="text-text-subtle mb-6">Usa estas herramientas para gestionar tu sorteo manualmente.</p>
-             <button onClick={() => setShowModalVenta(true)} className="bg-success text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors shadow-md">
+             <button onClick={() => setShowModalVenta(true)} className="btn bg-success text-white hover:bg-green-700">
                + Registrar Venta Manual
              </button>
              <p className="text-xs text-text-subtle mt-2">Para registrar ventas en efectivo o por otros medios.</p>

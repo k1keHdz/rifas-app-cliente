@@ -53,34 +53,36 @@ const BuscadorGanador = ({ todasLasRifas, loadingRifas }) => {
 
   return (
     <div className="bg-background-light rounded-xl shadow-lg p-6 mb-8 border border-border-color">
-      <h2 className="text-2xl font-bold text-text-light mb-4">Buscar y Notificar Ganador</h2>
+      {/* REPARACIÓN: Se eliminan clases de color. */}
+      <h2 className="text-2xl font-bold mb-4">Buscar y Notificar Ganador</h2>
       <form onSubmit={handleSearch} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <select value={rifaId} onChange={(e) => { setRifaId(e.target.value); setResultado(null); }} className="w-full bg-background-dark border-border-color rounded-md focus:ring-accent-start focus:border-accent-start" required>
+          {/* REPARACIÓN: Se usa la clase .input-field para consistencia. */}
+          <select value={rifaId} onChange={(e) => { setRifaId(e.target.value); setResultado(null); }} className="input-field" required>
             <option value="">{loadingRifas ? "Cargando..." : "-- Selecciona Sorteo --"}</option>
             {todasLasRifas.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
           </select>
-          <input type="number" value={boleto} onChange={(e) => setBoleto(e.target.value)} placeholder="No. de Boleto Ganador" className="w-full bg-background-dark border-border-color rounded-md focus:ring-accent-start focus:border-accent-start" required />
+          <input type="number" value={boleto} onChange={(e) => setBoleto(e.target.value)} placeholder="No. de Boleto Ganador" className="input-field" required />
         </div>
-        <button type="submit" disabled={isSearching || !rifaId} className="w-full bg-gradient-to-r from-accent-start to-accent-end text-white font-bold py-2 rounded-lg hover:opacity-90 disabled:opacity-50">
+        <button type="submit" disabled={isSearching || !rifaId} className="w-full btn btn-primary disabled:opacity-50">
           {isSearching ? "Buscando..." : "Buscar Comprador"}
         </button>
       </form>
 
-      {resultado === 'no_encontrado' && <p className="mt-4 text-center text-danger/90 font-semibold">No se encontró un comprador para este boleto o no ha sido pagado.</p>}
+      {resultado === 'no_encontrado' && <p className="mt-4 text-center text-danger font-semibold">No se encontró un comprador para este boleto o no ha sido pagado.</p>}
 
       {resultado && resultado !== 'no_encontrado' && (
         <div className="mt-6 border-t border-border-color pt-4 animate-fade-in">
           <h3 className="font-bold text-lg text-success">¡Ganador Encontrado!</h3>
           <div className="mt-2 p-4 bg-success/10 rounded-lg text-text-subtle">
-            <p><strong className="text-text-light">Nombre:</strong> {resultado.comprador.nombre} {resultado.comprador.apellidos || ''}</p>
+            <p><strong className="text-text-primary">Nombre:</strong> {resultado.comprador.nombre} {resultado.comprador.apellidos || ''}</p>
             <p><strong>Teléfono:</strong> {resultado.comprador.telefono}</p>
             <p><strong>Email:</strong> {resultado.comprador.email || 'No proporcionado'}</p>
             <p><strong>ID de Compra:</strong> {resultado.idCompra || 'N/A'}</p>
           </div>
           {resultado.estado === 'comprado' && (
             <div className="mt-4 flex gap-4">
-              <button onClick={notificarGanadorWhatsApp} className="bg-success text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700">Felicitar por WhatsApp</button>
+              <button onClick={notificarGanadorWhatsApp} className="btn bg-success text-white hover:bg-green-700">Felicitar por WhatsApp</button>
             </div>
           )}
         </div>
@@ -90,7 +92,6 @@ const BuscadorGanador = ({ todasLasRifas, loadingRifas }) => {
 }
 
 function GestionarGanadoresPage() {
-  // ... (toda la lógica del componente sin cambios)
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [todasLasRifas, setTodasLasRifas] = useState([]);
   const [loadingRifas, setLoadingRifas] = useState(true);
@@ -205,10 +206,10 @@ function GestionarGanadoresPage() {
       setIsSubmitting(false);
     }
   };
-
+  // REPARACIÓN: Se eliminan clases de color del div principal.
   return (
-    <div className="p-4 max-w-7xl mx-auto bg-background-dark text-text-light min-h-screen">
-      <Link to="/admin" className="text-accent-start hover:underline mb-8 inline-block">
+    <div className="p-4 max-w-7xl mx-auto min-h-screen">
+      <Link to="/admin" className="text-accent-primary hover:underline mb-8 inline-block">
         ← Volver al Panel Principal
       </Link>
       <div className="text-center mb-8">
@@ -221,19 +222,19 @@ function GestionarGanadoresPage() {
       <BuscadorGanador todasLasRifas={todasLasRifas} loadingRifas={loadingRifas} />
       
       <div className="flex justify-center my-8">
-        <button onClick={() => setIsFormVisible(!isFormVisible)} className="bg-background-light border border-border-color text-text-light font-bold py-2 px-6 rounded-lg hover:bg-border-color/50 transition-colors">
+        <button onClick={() => setIsFormVisible(!isFormVisible)} className="btn btn-secondary">
           {isFormVisible ? 'Ocultar Formulario de Galería' : '+ Registrar Ganador para Galería'}
         </button>
       </div>
 
       {isFormVisible && (
         <form onSubmit={handleSubmitGanador} className="bg-background-light rounded-xl shadow-lg p-6 mb-8 animate-fade-in border border-border-color">
-          <h2 className="text-2xl font-bold text-text-light mb-6">Registrar Ganador para Galería</h2>
+          <h2 className="text-2xl font-bold mb-6">Registrar Ganador para Galería</h2>
           {(error || mensaje) && <div className="mb-4"><Alerta mensaje={error || mensaje} tipo={error ? 'error' : 'exito'} onClose={() => { setError(''); setMensaje(''); }} /></div>}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-text-subtle mb-1">1. Selecciona el Sorteo</label>
-              <select value={selectedRifaId} onChange={(e) => setSelectedRifaId(e.target.value)} className="w-full bg-background-dark border-border-color rounded-md shadow-sm" disabled={loadingRifas}>
+              <select value={selectedRifaId} onChange={(e) => setSelectedRifaId(e.target.value)} className="input-field" disabled={loadingRifas}>
                 <option value="">{loadingRifas ? "Cargando..." : "-- Elige un sorteo --"}</option>
                 {todasLasRifas.map(rifa => (<option key={rifa.id} value={rifa.id}>{rifa.nombre}</option>))}
               </select>
@@ -242,23 +243,23 @@ function GestionarGanadoresPage() {
               <div className="animate-fade-in">
                 <label className="block text-sm font-medium text-text-subtle mb-1">2. Introduce el Número de Boleto Ganador</label>
                 <div className="flex gap-2">
-                  <input type="number" value={numeroGanador} onChange={(e) => setNumeroGanador(e.target.value)} placeholder="Ej. 00123" className="flex-grow bg-background-dark border-border-color rounded-md shadow-sm" />
-                  <button type="button" onClick={handleBuscarGanadorEnFormulario} disabled={isSearching} className="bg-accent-start text-white font-semibold px-4 py-2 rounded-md hover:opacity-90 disabled:opacity-50">{isSearching ? 'Buscando...' : 'Buscar Comprador'}</button>
+                  <input type="number" value={numeroGanador} onChange={(e) => setNumeroGanador(e.target.value)} placeholder="Ej. 00123" className="input-field flex-grow" />
+                  <button type="button" onClick={handleBuscarGanadorEnFormulario} disabled={isSearching} className="btn btn-primary disabled:opacity-50">{isSearching ? 'Buscando...' : 'Buscar'}</button>
                 </div>
               </div>
             )}
             {datosGanador && (
               <div className="animate-fade-in border-t border-border-color pt-6 mt-6 space-y-4">
                 <div className="bg-success/10 p-4 rounded-lg"><p className="font-bold text-green-300">Ganador Encontrado:</p><p><strong>Nombre:</strong> {datosGanador.nombre}</p><p><strong>Teléfono:</strong> {datosGanador.telefono}</p></div>
-                <div><label className="block text-sm font-medium text-text-subtle mb-1">3. Testimonio del Ganador (Opcional)</label><textarea value={testimonio} onChange={(e) => setTestimonio(e.target.value)} rows="3" className="w-full bg-background-dark border-border-color rounded-md shadow-sm" placeholder="Ej. ¡Increíble!"></textarea></div>
-                <div><label className="block text-sm font-medium text-text-subtle mb-1">4. Foto del Ganador (Obligatoria)</label><input type="file" accept="image/*" onChange={handleFotoChange} required className="block w-full text-sm text-text-subtle file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent-start/10 file:text-accent-start hover:file:bg-accent-start/20"/>{fotoPreview && <img src={fotoPreview} alt="Vista previa" className="mt-4 rounded-lg h-32 w-auto"/>}</div>
-                <div><label className="block text-sm font-medium text-text-subtle mb-1">5. Video del Ganador (Opcional)</label><input type="file" accept="video/*" onChange={handleVideoChange} className="block w-full text-sm text-text-subtle file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent-start/10 file:text-accent-start hover:file:bg-accent-start/20"/>{videoFile && <p className="text-xs text-text-subtle mt-1">Video: <span className="font-medium">{videoFile.name}</span></p>}</div>
+                <div><label className="block text-sm font-medium text-text-subtle mb-1">3. Testimonio del Ganador (Opcional)</label><textarea value={testimonio} onChange={(e) => setTestimonio(e.target.value)} rows="3" className="input-field" placeholder="Ej. ¡Increíble!"></textarea></div>
+                <div><label className="block text-sm font-medium text-text-subtle mb-1">4. Foto del Ganador (Obligatoria)</label><input type="file" accept="image/*" onChange={handleFotoChange} required className="block w-full text-sm text-text-subtle file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent-primary/10 file:text-accent-primary hover:file:bg-accent-primary/20"/>{fotoPreview && <img src={fotoPreview} alt="Vista previa" className="mt-4 rounded-lg h-32 w-auto"/>}</div>
+                <div><label className="block text-sm font-medium text-text-subtle mb-1">5. Video del Ganador (Opcional)</label><input type="file" accept="video/*" onChange={handleVideoChange} className="block w-full text-sm text-text-subtle file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent-primary/10 file:text-accent-primary hover:file:bg-accent-primary/20"/>{videoFile && <p className="text-xs text-text-subtle mt-1">Video: <span className="font-medium">{videoFile.name}</span></p>}</div>
               </div>
             )}
           </div>
           <div className="flex items-center gap-4 mt-8 border-t border-border-color pt-6">
-            <button type="submit" disabled={isSubmitting || !datosGanador} className="bg-gradient-to-r from-accent-start to-accent-end text-white font-bold px-6 py-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? 'Guardando...' : 'Guardar Ganador'}</button>
-            <button type="button" onClick={() => setIsFormVisible(false)} className="bg-border-color text-text-light px-6 py-2 rounded-lg hover:bg-opacity-50">Cancelar</button>
+            <button type="submit" disabled={isSubmitting || !datosGanador} className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? 'Guardando...' : 'Guardar Ganador'}</button>
+            <button type="button" onClick={() => setIsFormVisible(false)} className="btn btn-secondary">Cancelar</button>
           </div>
         </form>
       )}

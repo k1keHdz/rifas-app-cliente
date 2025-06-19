@@ -18,12 +18,13 @@ const TarjetaResultado = ({ resultado }) => {
   
   if (resultado.estado === 'disponible') {
     return (
-      <div className="bg-background-light rounded-xl shadow-lg p-6 text-center border-t-8 border-accent-start animate-fade-in">
-        <TicketIcon className="w-10 h-10 text-accent-start mx-auto mb-4" />
-        <h3 className="text-xl font-bold text-text-light">{resultado.nombreRifa}</h3>
+      <div className="bg-background-light rounded-xl shadow-lg p-6 text-center border-t-8 border-accent-primary animate-fade-in">
+        <TicketIcon className="w-10 h-10 text-accent-primary mx-auto mb-4" />
+        <h3 className="text-xl font-bold">{resultado.nombreRifa}</h3>
         <p className="text-sm text-text-subtle mb-4">Boleto Número:</p>
-        <p className="text-5xl font-mono font-bold text-accent-start tracking-wider mb-4">{String(resultado.numeroBuscado).padStart(5, '0')}</p>
-        <p className="font-semibold text-lg text-text-light mb-4">¡Este boleto está disponible!</p>
+        {/* REPARACIÓN: Se elimina text-accent-start. El color ahora lo hereda del padre. */}
+        <p className="text-5xl font-mono font-bold tracking-wider mb-4">{String(resultado.numeroBuscado).padStart(5, '0')}</p>
+        <p className="font-semibold text-lg mb-4">¡Este boleto está disponible!</p>
         <Link to={`/rifa/${resultado.rifaId}`} state={{ boletoSeleccionado: resultado.numeroBuscado }} className="inline-block w-full text-center bg-gradient-to-r from-accent-start to-accent-end text-white font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-opacity">
           ¡Lo quiero!
         </Link>
@@ -39,7 +40,7 @@ const TarjetaResultado = ({ resultado }) => {
           onClick={() => setIsOpen(!isOpen)}
         >
           <div className="flex-1 pr-4">
-            <p className="font-bold text-text-light">{resultado.nombreRifa}</p>
+            <p className="font-bold">{resultado.nombreRifa}</p>
             <p className="text-sm text-text-subtle">{resultado.cantidad} boleto(s)</p>
           </div>
           <div className="flex items-center gap-4">
@@ -51,9 +52,10 @@ const TarjetaResultado = ({ resultado }) => {
         </button>
         {isOpen && (
           <div className="border-t border-border-color p-4 bg-background-dark">
-            <p className="font-semibold text-text-light mb-2">Números:</p>
+            <p className="font-semibold mb-2">Números:</p>
             <div className="flex flex-wrap gap-2 mb-3">
-              {resultado.numeros.map(n => <span key={n} className="bg-accent-start/20 text-accent-start px-3 py-1 rounded-full font-mono text-sm">{String(n).padStart(5, '0')}</span>)}
+              {/* REPARACIÓN: Se usa el color de acento de forma controlada. Se asegura contraste con `text-accent-primary`. */}
+              {resultado.numeros.map(n => <span key={n} className="bg-accent-primary/20 text-accent-primary px-3 py-1 rounded-full font-mono text-sm">{String(n).padStart(5, '0')}</span>)}
             </div>
             {resultado.estado === 'apartado' && resultado.fechaExpiracion && (
               <div className="flex justify-center mt-3">
@@ -78,9 +80,10 @@ const TarjetaResultado = ({ resultado }) => {
         <div className="p-6 flex flex-col justify-between flex-1">
           <div>
             <p className={`text-sm font-bold uppercase tracking-wide ${esPagado ? 'text-success' : 'text-warning'}`}>{esPagado ? 'Pagado' : 'Apartado'}</p>
-            <h3 className="text-2xl font-bold text-text-light mt-1">{resultado.nombreRifa}</h3>
+            {/* REPARACIÓN: Se eliminan clases de color. */}
+            <h3 className="text-2xl font-bold mt-1">{resultado.nombreRifa}</h3>
             <p className="text-text-subtle">Boleto Número:</p>
-            <p className="text-5xl font-mono font-bold text-text-light tracking-wider my-2">{String(resultado.numeroBuscado).padStart(5, '0')}</p>
+            <p className="text-5xl font-mono font-bold tracking-wider my-2">{String(resultado.numeroBuscado).padStart(5, '0')}</p>
           </div>
           <div className="text-sm space-y-2 border-t border-border-color mt-4 pt-4 text-text-subtle">
             <p><strong>Comprador:</strong> {nombreParcial}</p>
@@ -95,7 +98,6 @@ const TarjetaResultado = ({ resultado }) => {
     </div>
   );
 };
-
 
 function VerificadorBoletosPage() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -170,11 +172,11 @@ function VerificadorBoletosPage() {
     };
 
     return (
-        <div className="bg-background-dark min-h-screen text-text-light">
+        <div className="bg-background-dark min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="max-w-3xl mx-auto">
                     <div className="text-center mb-10">
-                        <h1 className="text-4xl font-extrabold text-text-light sm:text-5xl tracking-tight">Verificador de Boletos</h1>
+                        <h1 className="text-4xl font-extrabold sm:text-5xl tracking-tight">Verificador de Boletos</h1>
                         <p className="mt-4 text-xl text-text-subtle">Consulta el estado de tu participación.</p>
                     </div>
 
@@ -182,11 +184,12 @@ function VerificadorBoletosPage() {
                         <form onSubmit={handleSearch} className="space-y-4">
                             <div>
                                 <label htmlFor="searchType" className="sr-only">Tipo de búsqueda</label>
+                                {/* REPARACIÓN: Se usa la clase .input-field para consistencia. */}
                                 <select 
                                     id="searchType"
                                     value={searchType}
                                     onChange={(e) => setSearchType(e.target.value)}
-                                    className="w-full bg-background-dark text-text-light border-border-color rounded-md shadow-sm focus:ring-accent-start focus:border-accent-start"
+                                    className="input-field"
                                 >
                                     <option value="telefono">Buscar por mi Teléfono</option>
                                     <option value="boleto">Buscar por No. de Boleto</option>
@@ -201,7 +204,7 @@ function VerificadorBoletosPage() {
                                         value={selectedRifaId}
                                         onChange={(e) => setSelectedRifaId(e.target.value)}
                                         required
-                                        className="w-full bg-background-dark text-text-light border-border-color rounded-md shadow-sm focus:ring-accent-start focus:border-accent-start"
+                                        className="input-field"
                                     >
                                         <option value="">-- Selecciona el Sorteo --</option>
                                         {rifasActivas.map(rifa => (
@@ -220,14 +223,14 @@ function VerificadorBoletosPage() {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder={searchType === 'telefono' ? 'Tu número de teléfono...' : 'El número de tu boleto...'}
                                     required
-                                    className="w-full text-lg bg-background-dark text-text-light border-border-color rounded-md shadow-sm focus:ring-accent-start focus:border-accent-start"
+                                    className="input-field text-lg" // Mantenemos text-lg para un input más grande
                                 />
                             </div>
 
                             <button 
                                 type="submit"
                                 disabled={buscando}
-                                className="w-full flex items-center justify-center bg-gradient-to-r from-accent-start to-accent-end text-white font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-opacity transform hover:scale-105 disabled:opacity-50"
+                                className="w-full flex items-center justify-center btn btn-primary disabled:opacity-50"
                             >
                                 <SearchIcon />
                                 {buscando ? 'Buscando...' : 'Verificar'}
@@ -238,14 +241,14 @@ function VerificadorBoletosPage() {
 
                     {busquedaRealizada && (
                         <div className="mt-12">
-                            <h2 className="text-3xl font-bold text-center mb-8 text-text-light">Resultados</h2>
+                            <h2 className="text-3xl font-bold text-center mb-8">Resultados</h2>
                             <div className="space-y-6">
                             {resultados.length > 0 ? (
                                 resultados.map(res => <TarjetaResultado key={res.id} resultado={res} />)
                             ) : (
                                 <div className="bg-background-light rounded-xl shadow-lg p-8 text-center text-text-subtle border border-border-color">
                                     <TicketIcon className="w-10 h-10 text-border-color mx-auto mb-4" />
-                                    <p className="font-bold text-text-light">No se Encontraron Resultados</p>
+                                    <p className="font-bold">No se Encontraron Resultados</p>
                                     <p className="text-sm mt-2">Asegúrate de que los datos sean correctos.</p>
                                 </div>
                             )}
