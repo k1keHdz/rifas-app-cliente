@@ -1,10 +1,11 @@
 // src/components/Alerta.js
 function Alerta({ mensaje, tipo = "info", onClose }) {
-  // --- INICIO DE MEJORA: Paleta de colores para tema oscuro ---
+  // REPARACIÓN: Se usan las variables de color semánticas del tema.
+  // Ahora, si cambias el color 'success' en theme.css, estas alertas se actualizarán automáticamente.
   const estilos = {
-    exito: "bg-success/10 text-green-300 border-success/30",
-    error: "bg-danger/10 text-red-300 border-danger/30",
-    info: "bg-background-light text-text-subtle border-border-color",
+    exito: "bg-success/10 text-success border-success/30",
+    error: "bg-danger/10 text-danger border-danger/30",
+    info: "bg-background-light text-text-primary border-border-color", // Usa el color de texto principal para máxima legibilidad.
   };
 
   const iconos = {
@@ -12,7 +13,6 @@ function Alerta({ mensaje, tipo = "info", onClose }) {
     error: "❌",
     info: "ℹ️",
   };
-  // --- FIN DE MEJORA ---
 
   return (
     <div
@@ -24,7 +24,8 @@ function Alerta({ mensaje, tipo = "info", onClose }) {
       {onClose && (
         <button
           onClick={onClose}
-          className="absolute top-1 right-1 text-lg text-text-subtle hover:text-text-light p-1"
+          // REPARACIÓN: Se eliminan las clases de color. Ahora el botón hereda el color y tiene una opacidad en el hover.
+          className="absolute top-1 right-1 text-lg p-1 opacity-70 hover:opacity-100"
           aria-label="Cerrar alerta"
         >
           &times;

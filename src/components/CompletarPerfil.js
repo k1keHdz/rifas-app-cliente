@@ -94,4 +94,4 @@ function CompletarPerfil() {
   );
 }
 
-export default CompletarPerfil;
+export default CompletarPerfil; 

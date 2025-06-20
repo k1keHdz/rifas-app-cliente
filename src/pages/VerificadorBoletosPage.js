@@ -261,4 +261,4 @@ function VerificadorBoletosPage() {
     );
 }
 
-export default VerificadorBoletosPage;
+export default VerificadorBoletosPage; 

@@ -68,4 +68,4 @@ function RifasList({ onDeleteRifa }) {
   );
 }
 
-export default RifasList;
+export default RifasList; 

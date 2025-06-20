@@ -73,4 +73,4 @@ const BuscadorBoletos = ({
   );
 };
 
-export default BuscadorBoletos;
+export default BuscadorBoletos; 

@@ -52,4 +52,4 @@ function GraficaVentas({ datosGrafico = [], graficoRef, modo, setModo }) {
   );
 }
 
-export default GraficaVentas;
+export default GraficaVentas; 

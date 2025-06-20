@@ -90,4 +90,4 @@ function ComoParticiparPage() {
     );
 }
 
-export default ComoParticiparPage;
+export default ComoParticiparPage; 

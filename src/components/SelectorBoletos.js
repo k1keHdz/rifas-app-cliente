@@ -59,4 +59,4 @@ const SelectorBoletos = ({
   );
 };
 
-export default React.memo(SelectorBoletos);
+export default React.memo(SelectorBoletos); 

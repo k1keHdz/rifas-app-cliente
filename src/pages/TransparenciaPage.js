@@ -35,4 +35,4 @@ function TransparenciaPage() {
   );
 }
 
-export default TransparenciaPage;
+export default TransparenciaPage; 

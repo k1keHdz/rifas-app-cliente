@@ -3,14 +3,18 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-// CAMBIO: El componente ahora acepta una prop opcional 'rolRequerido'
 function RutaProtegida({ children, rolRequerido }) {
-  // Obtenemos todos los datos del contexto
   const { currentUser, userData, cargandoAuth } = useAuth();
 
-  // Si todavía estamos verificando la autenticación, mostramos un mensaje de carga
+  // Si todavía estamos verificando la autenticación, mostramos un mensaje de carga.
   if (cargandoAuth) {
-    return <p className="text-center mt-20">Verificando acceso...</p>;
+    // MEJORA: Se envuelve el mensaje en un div que ocupa toda la pantalla
+    // con el color de fondo del tema, para una carga más suave.
+    return (
+        <div className="bg-background-dark min-h-screen flex items-center justify-center">
+            <p className="text-center text-lg text-text-subtle">Verificando acceso...</p>
+        </div>
+    );
   }
 
   // Si NO hay ningún usuario logueado, siempre lo redirigimos a la página de login.
@@ -26,8 +30,7 @@ function RutaProtegida({ children, rolRequerido }) {
     }
   }
   
-  // Si pasó todas las verificaciones (está logueado y, si se requiere, tiene el rol correcto),
-  // le damos acceso al contenido de la ruta.
+  // Si pasó todas las verificaciones, le damos acceso al contenido de la ruta.
   return children;
 }
 

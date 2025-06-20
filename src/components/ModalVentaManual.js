@@ -192,4 +192,4 @@ function ModalVentaManual({ rifa, onClose }) {
   );
 }
 
-export default ModalVentaManual;
+export default ModalVentaManual; 

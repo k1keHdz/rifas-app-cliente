@@ -42,4 +42,4 @@ function ListaRifasMinimalista() {
   );
 }
 
-export default ListaRifasMinimalista;
+export default ListaRifasMinimalista; 

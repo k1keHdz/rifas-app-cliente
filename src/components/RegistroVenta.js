@@ -9,18 +9,22 @@ import Alerta from "./Alerta";
 function RegistroVenta({ rifa }) {
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [correo, setCorreo] = useState(""); // 1. AÑADIMOS ESTADO PARA EL CORREO
+  const [correo, setCorreo] = useState("");
   const [numerosInput, setNumerosInput] = useState("");
   const { mensaje, tipo, mostrarAlerta, cerrarAlerta } = useAlerta();
 
   if (!rifa) {
-    return <p className="text-center text-gray-500 mt-4">Cargando información de la rifa...</p>;
+    return <p className="text-center text-text-subtle mt-4">Cargando información de la rifa...</p>;
   }
 
   if (rifa.estado !== "activa") {
     return (
-      <div className="bg-yellow-100 text-yellow-800 p-4 rounded mt-6 text-center">
-        ⚠️ Solo puedes registrar ventas cuando la rifa esté <strong>activa</strong>.
+      // REPARACIÓN: Se usa el componente Alerta con el tipo 'warning'.
+      <div className="mt-6">
+          <Alerta 
+            tipo="warning" 
+            mensaje="Solo puedes registrar ventas cuando la rifa esté activa." 
+          />
       </div>
     );
   }
@@ -51,11 +55,10 @@ function RegistroVenta({ rifa }) {
       });
 
       const ventaRef = doc(collection(db, "rifas", rifa.id, "ventas"));
-      // 3. AÑADIMOS EL CORREO AL DOCUMENTO QUE SE GUARDA
       batch.set(ventaRef, {
         nombre,
         telefono,
-        correo: correo || "", // Guardamos el correo, o un string vacío si no se llenó
+        correo: correo || "",
         numeros: numerosArray,
         cantidad: numerosArray.length,
         fecha: Timestamp.now(),
@@ -66,7 +69,7 @@ function RegistroVenta({ rifa }) {
       mostrarAlerta("Venta manual registrada con éxito.", "exito");
       setNombre("");
       setTelefono("");
-      setCorreo(""); // Limpiamos también el campo de correo
+      setCorreo("");
       setNumerosInput("");
 
     } catch (error) {
@@ -76,8 +79,10 @@ function RegistroVenta({ rifa }) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md mt-6 border">
-      <h2 className="text-xl font-bold mb-4 text-gray-800">Registrar Venta Manual</h2>
+    // REPARACIÓN: Se usan clases del tema para el contenedor.
+    <div className="bg-background-light p-6 rounded-lg shadow-md mt-6 border border-border-color">
+      {/* REPARACIÓN: Se elimina el color fijo del título. */}
+      <h2 className="text-xl font-bold mb-4">Registrar Venta Manual</h2>
       
       <div className="mb-4">
         {mensaje && <Alerta mensaje={mensaje} tipo={tipo} onClose={cerrarAlerta} />}
@@ -86,33 +91,34 @@ function RegistroVenta({ rifa }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Nombre del Comprador</label>
-            <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Juan Pérez" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required />
+            {/* REPARACIÓN: Se eliminan clases de color y se usa .input-field. */}
+            <label className="block text-sm font-medium text-text-subtle">Nombre del Comprador</label>
+            <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Juan Pérez" className="input-field mt-1" required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Teléfono</label>
-            <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Ej: 5512345678" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required />
+            <label className="block text-sm font-medium text-text-subtle">Teléfono</label>
+            <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Ej: 5512345678" className="input-field mt-1" required />
           </div>
         </div>
         
-        {/* 2. AÑADIMOS EL CAMPO DE CORREO (opcional) */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Correo Electrónico (Opcional)</label>
+          <label className="block text-sm font-medium text-text-subtle">Correo Electrónico (Opcional)</label>
           <input
             type="email"
             value={correo}
             onChange={(e) => setCorreo(e.target.value)}
             placeholder="Ej: juan@correo.com"
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            className="input-field mt-1"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Números de Boleto</label>
-          <input type="text" value={numerosInput} onChange={(e) => setNumerosInput(e.target.value)} placeholder="Escribe los números separados por coma. Ej: 5, 23, 112" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required />
+          <label className="block text-sm font-medium text-text-subtle">Números de Boleto</label>
+          <input type="text" value={numerosInput} onChange={(e) => setNumerosInput(e.target.value)} placeholder="Escribe los números separados por coma. Ej: 5, 23, 112" className="input-field mt-1" required />
         </div>
         <div className="text-right">
-          <button type="submit" className="w-full sm:w-auto bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors font-semibold shadow">
+          {/* REPARACIÓN: Se usan las clases de botón del tema. */}
+          <button type="submit" className="w-full sm:w-auto btn bg-success text-white hover:bg-green-700">
             Registrar Venta
           </button>
         </div>

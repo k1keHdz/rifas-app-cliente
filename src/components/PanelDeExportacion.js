@@ -157,4 +157,4 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
   );
 }
 
-export default PanelDeExportacion;
+export default PanelDeExportacion; 

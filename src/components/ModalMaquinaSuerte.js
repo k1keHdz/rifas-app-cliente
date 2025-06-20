@@ -88,4 +88,4 @@ const ModalMaquinaSuerte = ({ totalBoletos, boletosOcupados, onCerrar, onSelecci
   );
 };
 
-export default ModalMaquinaSuerte;
+export default ModalMaquinaSuerte; 

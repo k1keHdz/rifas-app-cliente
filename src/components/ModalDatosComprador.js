@@ -95,4 +95,4 @@ function ModalDatosComprador({ onCerrar, onConfirmar, datosIniciales = {} }) {
   );
 }
 
-export default ModalDatosComprador;
+export default ModalDatosComprador; 

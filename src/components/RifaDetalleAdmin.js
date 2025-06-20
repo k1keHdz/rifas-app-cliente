@@ -277,4 +277,4 @@ function RifaDetalleAdmin() {
   );
 }
 
-export default RifaDetalleAdmin;
+export default RifaDetalleAdmin; 

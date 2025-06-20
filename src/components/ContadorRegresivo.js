@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 
 // Pequeño componente de ícono de reloj
 const RelojIcon = () => (
+  // REPARACIÓN: Se elimina la clase de color. Heredará el color del texto del padre.
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2">
     <circle cx="12" cy="12" r="10"></circle>
     <polyline points="12 6 12 12 16 14"></polyline>
@@ -17,9 +18,6 @@ function ContadorRegresivo({ fechaExpiracion }) {
   useEffect(() => {
     if (!fechaExpiracion) return;
 
-    // ==================================================================
-    // INICIO DE CORRECCIÓN: Declaramos 'intervalo' aquí
-    // ==================================================================
     let intervalo;
 
     const calcularTiempo = () => {
@@ -30,7 +28,6 @@ function ContadorRegresivo({ fechaExpiracion }) {
       if (diferencia <= 0) {
         setExpirado(true);
         setTiempoRestante(null);
-        // Ahora 'intervalo' sí existe en este scope y podemos limpiarlo
         if (intervalo) clearInterval(intervalo); 
         return;
       }
@@ -44,32 +41,26 @@ function ContadorRegresivo({ fechaExpiracion }) {
       });
     };
 
-    // Calculamos el tiempo una vez al inicio para que no haya un parpadeo
     calcularTiempo();
-
-    // Asignamos el setInterval a nuestra variable ya declarada
     intervalo = setInterval(calcularTiempo, 1000);
 
-    // La función de limpieza se ejecuta cuando el componente se desmonta
     return () => clearInterval(intervalo);
-    // ==================================================================
-    // FIN DE CORRECCIÓN
-    // ==================================================================
   }, [fechaExpiracion]);
 
   if (expirado) {
     return (
-      <div className="flex items-center text-sm font-semibold text-red-600 bg-red-100 px-3 py-1 rounded-full">
+      // REPARACIÓN: Se usan las clases semánticas del tema para el estado de error/expirado.
+      <div className="flex items-center text-sm font-semibold text-danger bg-danger/10 px-3 py-1 rounded-full">
         <RelojIcon />
         Tiempo Expirado
       </div>
     );
   }
 
-  // Mostramos un 'cargando' sutil mientras se calcula el primer valor
   if (!tiempoRestante) {
     return (
-        <div className="flex items-center text-sm font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+        // REPARACIÓN: Se usan clases neutrales para el estado de carga.
+        <div className="flex items-center text-sm font-semibold text-text-subtle bg-background-light px-3 py-1 rounded-full">
             <RelojIcon />
             Calculando...
         </div>
@@ -77,7 +68,8 @@ function ContadorRegresivo({ fechaExpiracion }) {
   }
 
   return (
-    <div className="flex items-center text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
+    // REPARACIÓN: Se usan las clases semánticas del tema para el estado de advertencia/activo.
+    <div className="flex items-center text-sm font-semibold text-warning bg-warning/10 px-3 py-1 rounded-full">
       <RelojIcon />
       Expira en: {String(tiempoRestante.horas).padStart(2, '0')}:{String(tiempoRestante.minutos).padStart(2, '0')}:{String(tiempoRestante.segundos).padStart(2, '0')}
     </div>

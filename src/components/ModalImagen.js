@@ -110,4 +110,4 @@ export default function ModalImagen({ imagenes = [], indexInicial = 0, onClose }
       </div>
     </div>
   );
-}
+} 

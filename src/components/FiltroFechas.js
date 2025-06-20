@@ -26,4 +26,4 @@ function FiltroFechas({ fechaDesde, setFechaDesde, fechaHasta, setFechaHasta }) 
   );
 }
 
-export default FiltroFechas;
+export default FiltroFechas; 

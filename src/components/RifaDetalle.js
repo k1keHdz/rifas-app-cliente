@@ -270,4 +270,4 @@ function RifaDetalle() {
   );
 }
 
-export default RifaDetalle;
+export default RifaDetalle; 

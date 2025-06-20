@@ -131,4 +131,4 @@ function HistorialVentas({
   );
 }
 
-export default HistorialVentas;
+export default HistorialVentas; 

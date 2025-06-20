@@ -267,4 +267,4 @@ function GestionarGanadoresPage() {
   );
 }
 
-export default GestionarGanadoresPage;
+export default GestionarGanadoresPage; 

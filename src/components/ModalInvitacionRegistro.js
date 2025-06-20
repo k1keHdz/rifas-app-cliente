@@ -49,4 +49,4 @@ function ModalInvitacionRegistro({ onClose, onContinueAsGuest }) {
   );
 }
 
-export default ModalInvitacionRegistro;
+export default ModalInvitacionRegistro; 

@@ -22,4 +22,4 @@ function SeleccionarRifaHistorial() {
   );
 }
 
-export default SeleccionarRifaHistorial;
+export default SeleccionarRifaHistorial; 

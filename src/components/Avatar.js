@@ -2,34 +2,49 @@
 import React from 'react';
 
 /**
- * Genera un color de fondo consistente y legible a partir de un string.
+ * Genera un color de fondo consistente a partir de un string.
  * @param {string} str - El string de entrada, como un nombre de usuario.
  * @returns {string} Un color hexadecimal.
  */
 const stringToColor = (str) => {
-  if (!str || str.length === 0) return '#a0aec0'; // Tailwind's gray-400
+  if (!str || str.length === 0) return '#a0aec0'; // Color por defecto
 
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  // Generar un color que no sea demasiado oscuro para que el texto blanco sea legible
   let color = '#';
   for (let i = 0; i < 3; i++) {
     const value = (hash >> (i * 8)) & 0xFF;
-    // Aseguramos que el componente de color sea al menos 100 para evitar colores muy oscuros
-    const adjustedValue = Math.min(Math.max(value, 100), 200); 
-    color += ('00' + adjustedValue.toString(16)).substr(-2);
+    color += ('00' + value.toString(16)).substr(-2);
   }
   return color;
 };
 
 /**
+ * REPARACIÓN: Nueva función para obtener un color de texto de alto contraste.
+ * Determina si el texto sobre un color de fondo debe ser oscuro o claro.
+ * @param {string} hexColor - El color de fondo en formato hexadecimal (ej. "#RRGGBB").
+ * @returns {string} La clase de Tailwind para el color del texto ('text-black' o 'text-white').
+ */
+const getContrastColor = (hexColor) => {
+    if (!hexColor) return 'text-white';
+    // Quita el '#' si está presente
+    const hex = hexColor.replace('#', '');
+    // Convierte a RGB
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    // Fórmula para calcular la "luminancia" percibida
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    // Si el fondo es claro (YIQ >= 128), usa texto negro. De lo contrario, usa texto blanco.
+    return (yiq >= 128) ? 'text-black' : 'text-white';
+};
+
+
+/**
  * Componente reutilizable para mostrar un avatar de usuario.
- * Muestra la imagen del usuario si está disponible (photoURL).
- * De lo contrario, muestra un círculo de color con la inicial del nombre.
- * @param {{photoURL: string, name: string, className: string}} props
  */
 const Avatar = ({ photoURL, name, className }) => {
   // Si se proporciona una photoURL válida, se renderiza la imagen.
@@ -46,11 +61,13 @@ const Avatar = ({ photoURL, name, className }) => {
   // Si no, se renderiza el avatar con la inicial.
   const initial = name ? name.charAt(0).toUpperCase() : '?';
   const avatarColor = stringToColor(name);
+  // REPARACIÓN: Se determina dinámicamente el color del texto para garantizar el contraste.
+  const textColorClass = getContrastColor(avatarColor);
 
-  // El tamaño del texto se hereda del className (ej. text-2xl) para ser flexible.
   return (
     <div
-      className={`${className} flex items-center justify-center text-white font-bold uppercase`}
+      // REPARACIÓN: Se elimina 'text-white' y se usa la clase de color dinámica.
+      className={`${className} flex items-center justify-center ${textColorClass} font-bold uppercase`}
       style={{ backgroundColor: avatarColor }}
       title={name}
     >
