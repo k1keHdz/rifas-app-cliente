@@ -28,7 +28,7 @@ function RifaDetalle() {
   const [datosPerfil, setDatosPerfil] = useState({});
   const [filtroDisponibles, setFiltroDisponibles] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [boletosPorPagina] = useState(500);
+  const [boletosPorPagina] = useState(5000);
   const [mostrarModalDatos, setMostrarModalDatos] = useState(false);
   const [mostrarModalSuerte, setMostrarModalSuerte] = useState(false);
   const [imagenIndex, setImagenIndex] = useState(0);

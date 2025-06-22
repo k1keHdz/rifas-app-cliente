@@ -6,6 +6,8 @@ import { db } from '../firebase/firebaseConfig';
 import { RIFAS_ESTADOS } from '../constants/rifas';
 import { Link } from 'react-router-dom';
 import ContadorRegresivo from '../components/ContadorRegresivo';
+// Se importa la función de formato
+import { formatTicketNumber } from '../utils/rifaHelper';
 
 // --- ÍCONOS ---
 const SearchIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
@@ -15,17 +17,17 @@ const ChevronDownIcon = ({ isOpen }) => ( <svg xmlns="http://www.w3.org/2000/svg
 // --- SUB-COMPONENTE PARA MOSTRAR RESULTADOS ---
 const TarjetaResultado = ({ resultado }) => {
   const [isOpen, setIsOpen] = useState(resultado.type === 'boleto' ? true : false);
-  
+  const totalBoletos = resultado.totalBoletos || 100; // Fallback por si acaso
+
   if (resultado.estado === 'disponible') {
     return (
-      <div className="bg-background-light rounded-xl shadow-lg p-6 text-center border-t-8 border-accent-primary animate-fade-in">
-        <TicketIcon className="w-10 h-10 text-accent-primary mx-auto mb-4" />
+      <div className="bg-background-light rounded-xl shadow-lg p-6 text-center border-t-8 border-green-500 animate-fade-in">
+        <TicketIcon className="w-10 h-10 text-green-500 mx-auto mb-4" />
         <h3 className="text-xl font-bold">{resultado.nombreRifa}</h3>
         <p className="text-sm text-text-subtle mb-4">Boleto Número:</p>
-        {/* REPARACIÓN: Se elimina text-accent-start. El color ahora lo hereda del padre. */}
-        <p className="text-5xl font-mono font-bold tracking-wider mb-4">{String(resultado.numeroBuscado).padStart(5, '0')}</p>
-        <p className="font-semibold text-lg mb-4">¡Este boleto está disponible!</p>
-        <Link to={`/rifa/${resultado.rifaId}`} state={{ boletoSeleccionado: resultado.numeroBuscado }} className="inline-block w-full text-center bg-gradient-to-r from-accent-start to-accent-end text-white font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-opacity">
+        <p className="text-5xl font-mono font-bold tracking-wider mb-4">{formatTicketNumber(resultado.numeroBuscado, totalBoletos)}</p>
+        <p className="font-semibold text-lg mb-4 text-green-600">¡Este boleto está disponible!</p>
+        <Link to={`/rifa/${resultado.rifaId}`} state={{ boletoSeleccionado: resultado.numeroBuscado }} className="inline-block w-full text-center bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors">
           ¡Lo quiero!
         </Link>
       </div>
@@ -44,7 +46,7 @@ const TarjetaResultado = ({ resultado }) => {
             <p className="text-sm text-text-subtle">{resultado.cantidad} boleto(s)</p>
           </div>
           <div className="flex items-center gap-4">
-            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${resultado.estado === 'comprado' ? 'bg-success/20 text-green-300' : 'bg-warning/20 text-yellow-300'}`}>
+            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${resultado.estado === 'comprado' ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}>
               {resultado.estado === 'comprado' ? 'Pagado' : 'Apartado'}
             </span>
             <ChevronDownIcon isOpen={isOpen} />
@@ -54,8 +56,7 @@ const TarjetaResultado = ({ resultado }) => {
           <div className="border-t border-border-color p-4 bg-background-dark">
             <p className="font-semibold mb-2">Números:</p>
             <div className="flex flex-wrap gap-2 mb-3">
-              {/* REPARACIÓN: Se usa el color de acento de forma controlada. Se asegura contraste con `text-accent-primary`. */}
-              {resultado.numeros.map(n => <span key={n} className="bg-accent-primary/20 text-accent-primary px-3 py-1 rounded-full font-mono text-sm">{String(n).padStart(5, '0')}</span>)}
+              {resultado.numeros.map(n => <span key={n} className="bg-accent-primary/20 text-accent-primary px-3 py-1 rounded-full font-mono text-sm">{formatTicketNumber(n, totalBoletos)}</span>)}
             </div>
             {resultado.estado === 'apartado' && resultado.fechaExpiracion && (
               <div className="flex justify-center mt-3">
@@ -80,10 +81,9 @@ const TarjetaResultado = ({ resultado }) => {
         <div className="p-6 flex flex-col justify-between flex-1">
           <div>
             <p className={`text-sm font-bold uppercase tracking-wide ${esPagado ? 'text-success' : 'text-warning'}`}>{esPagado ? 'Pagado' : 'Apartado'}</p>
-            {/* REPARACIÓN: Se eliminan clases de color. */}
             <h3 className="text-2xl font-bold mt-1">{resultado.nombreRifa}</h3>
             <p className="text-text-subtle">Boleto Número:</p>
-            <p className="text-5xl font-mono font-bold tracking-wider my-2">{String(resultado.numeroBuscado).padStart(5, '0')}</p>
+            <p className="text-5xl font-mono font-bold tracking-wider my-2">{formatTicketNumber(resultado.numeroBuscado, totalBoletos)}</p>
           </div>
           <div className="text-sm space-y-2 border-t border-border-color mt-4 pt-4 text-text-subtle">
             <p><strong>Comprador:</strong> {nombreParcial}</p>
@@ -110,7 +110,7 @@ function VerificadorBoletosPage() {
     const [busquedaRealizada, setBusquedaRealizada] = useState(false);
 
     useEffect(() => {
-        const q = query(collection(db, "rifas"), where("estado", "==", RIFAS_ESTADOS.ACTIVA), orderBy("fechaCreacion", "desc"));
+        const q = query(collection(db, "rifas"), where("estado", "in", [RIFAS_ESTADOS.ACTIVA, RIFAS_ESTADOS.FINALIZADA]), orderBy("fechaCreacion", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
         setRifasActivas(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         });
@@ -137,7 +137,8 @@ function VerificadorBoletosPage() {
                         id: docSnap.id, 
                         type: 'telefono', 
                         ...venta,
-                        imagenRifa: rifaSnap.exists() ? rifaSnap.data().imagenes[0] : null,
+                        totalBoletos: rifaSnap.exists() ? rifaSnap.data().boletos : 100,
+                        imagenRifa: rifaSnap.exists() ? (rifaSnap.data().imagenes?.[0] || null) : null,
                     };
                 }));
             } else {
@@ -150,13 +151,14 @@ function VerificadorBoletosPage() {
                 const rifaSeleccionada = rifasActivas.find(r => r.id === selectedRifaId);
                 
                 if (querySnapshot.empty) {
-                    data = [{ id: 'disponible', estado: 'disponible', numeroBuscado: numeroBoleto, rifaId: selectedRifaId, nombreRifa: rifaSeleccionada.nombre, imagenRifa: rifaSeleccionada.imagenes?.[0] || null }];
+                    data = [{ id: 'disponible', estado: 'disponible', numeroBuscado: numeroBoleto, rifaId: selectedRifaId, nombreRifa: rifaSeleccionada.nombre, totalBoletos: rifaSeleccionada.boletos, imagenRifa: rifaSeleccionada.imagenes?.[0] || null }];
                 } else {
                     data = querySnapshot.docs.map(doc => ({ 
                         id: doc.id, 
                         type: 'boleto',
                         ...doc.data(),
                         numeroBuscado: numeroBoleto,
+                        totalBoletos: rifaSeleccionada.boletos,
                         imagenRifa: rifaSeleccionada.imagenes?.[0] || null
                     }));
                 }
@@ -184,7 +186,6 @@ function VerificadorBoletosPage() {
                         <form onSubmit={handleSearch} className="space-y-4">
                             <div>
                                 <label htmlFor="searchType" className="sr-only">Tipo de búsqueda</label>
-                                {/* REPARACIÓN: Se usa la clase .input-field para consistencia. */}
                                 <select 
                                     id="searchType"
                                     value={searchType}
@@ -223,7 +224,7 @@ function VerificadorBoletosPage() {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder={searchType === 'telefono' ? 'Tu número de teléfono...' : 'El número de tu boleto...'}
                                     required
-                                    className="input-field text-lg" // Mantenemos text-lg para un input más grande
+                                    className="input-field text-lg"
                                 />
                             </div>
 
@@ -261,4 +262,4 @@ function VerificadorBoletosPage() {
     );
 }
 
-export default VerificadorBoletosPage; 
+export default VerificadorBoletosPage;

@@ -5,9 +5,7 @@ import emailjs from '@emailjs/browser';
 import Alerta from '../components/Alerta';
 import EMAIL_CONFIG from '../emailjsConfig';
 
-// =================================================================================================
-// INICIO DE LA MODIFICACIÓN: Importación y definición de iconos profesionales
-// =================================================================================================
+// Importación y definición de iconos profesionales
 import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaTelegramPlane } from 'react-icons/fa';
 
 // Componente para los iconos con fondo de color
@@ -16,9 +14,6 @@ const SocialButton = ({ href, title, icon: Icon, className }) => (
         <Icon size={24} />
     </a>
 );
-// =================================================================================================
-// FIN DE LA MODIFICACIÓN
-// =================================================================================================
 
 
 function ContactoPage() {
@@ -46,7 +41,14 @@ function ContactoPage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await emailjs.send(EMAIL_CONFIG.serviceID, EMAIL_CONFIG.templateID, formData, EMAIL_CONFIG.publicKey);
+            // =================================================================================================
+            // INICIO DE LA CORRECIÓN: Se usa el ID de plantilla correcto para el formulario de contacto.
+            // =================================================================================================
+            await emailjs.send(EMAIL_CONFIG.serviceID, EMAIL_CONFIG.contactTemplateID, formData, EMAIL_CONFIG.publicKey);
+            // =================================================================================================
+            // FIN DE LA CORRECIÓN
+            // =================================================================================================
+            
             setFeedback({ msg: '¡Mensaje enviado con éxito! Te responderemos pronto.', type: 'exito' });
             setFormData({ from_name: '', from_email: '', message: '' });
         } catch (error) {

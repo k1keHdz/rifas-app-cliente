@@ -27,46 +27,54 @@ import ComoParticiparPage from "./pages/ComoParticiparPage";
 import GestionarGanadoresPage from "./pages/admin/GestionarGanadoresPage";
 import GanadoresPage from "./pages/GanadoresPage";
 import ContactoPage from "./pages/ContactoPage";
+import ClientesPage from "./pages/admin/ClientesPage";
 
 
 function App() {
-  return (
-    <AuthProvider>
-      <RifasProvider>
-        <Router>
-          <Navbar />
-          <main>
-            <Routes>
-              {/* --- Rutas Públicas --- */}
-              <Route path="/" element={<Home />} />
-              <Route path="/rifa/:id" element={<RifaDetalle />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/registro" element={<Registro />} />
-              <Route path="/verificador" element={<VerificadorBoletosPage />} />
-              <Route path="/como-participar" element={<ComoParticiparPage />} />
-              <Route path="/contacto" element={<ContactoPage />} />
+    return (
+        <AuthProvider>
+            <RifasProvider>
+                <Router>
+                    <Navbar />
+                    <main>
+                        <Routes>
+                            {/* --- Rutas Públicas --- */}
+                            <Route path="/" element={<Home />} />
+                            <Route path="/rifa/:id" element={<RifaDetalle />} />
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/registro" element={<Registro />} />
+                            <Route path="/verificador" element={<VerificadorBoletosPage />} />
+                            <Route path="/como-participar" element={<ComoParticiparPage />} />
+                            <Route path="/contacto" element={<ContactoPage />} />
 
-              {FEATURES.showGanadoresPage && (
-                <Route path="/ganadores" element={<GanadoresPage />} />
-              )}
+                            {FEATURES.showGanadoresPage && (
+                                <Route path="/ganadores" element={<GanadoresPage />} />
+                            )}
 
-              {/* --- Rutas Protegidas --- */}
-              <Route path="/admin" element={<RutaProtegida rolRequerido="admin"><AdminDashboard /></RutaProtegida>} />
-              <Route path="/admin/gestionar-rifas" element={<RutaProtegida rolRequerido="admin"><GestionarRifasPage /></RutaProtegida>} />
-              <Route path="/admin/historial-ventas" element={<RutaProtegida rolRequerido="admin"><SeleccionarRifaHistorial /></RutaProtegida>} />
-              <Route path="/admin/rifa/:id" element={<RutaProtegida rolRequerido="admin"><RifaDetalleAdmin /></RutaProtegida>} />
-              <Route path="/admin/ganadores" element={<RutaProtegida rolRequerido="admin"><GestionarGanadoresPage /></RutaProtegida>} />
-              <Route path="/completar-perfil" element={<RutaProtegida><CompletarPerfil /></RutaProtegida>} />
-              <Route path="/perfil" element={<RutaProtegida><MiPerfil /></RutaProtegida>} />
-              <Route path="/nosotros" element={<NosotrosPage />} />
-              <Route path="/transparencia" element={<TransparenciaPage />} />
-            </Routes>
-          </main>
-          <Footer />
-        </Router>
-      </RifasProvider>
-    </AuthProvider>
-  );
+                            {/* --- Rutas Protegidas --- */}
+                            <Route path="/admin" element={<RutaProtegida rolRequerido="admin"><AdminDashboard /></RutaProtegida>} />
+                            <Route path="/admin/gestionar-rifas" element={<RutaProtegida rolRequerido="admin"><GestionarRifasPage /></RutaProtegida>} />
+                            <Route path="/admin/historial-ventas" element={<RutaProtegida rolRequerido="admin"><SeleccionarRifaHistorial /></RutaProtegida>} />
+                            <Route path="/admin/clientes" element={<RutaProtegida rolRequerido="admin"><ClientesPage /></RutaProtegida>} />
+                            {/* ================================================================================================= */}
+                            {/* INICIO DE LA CORRECIÓN: Se corrige el error de tipeo en la etiqueta RifaDetalleAdmin.     */}
+                            {/* ================================================================================================= */}
+                            <Route path="/admin/rifa/:id" element={<RutaProtegida rolRequerido="admin"><RifaDetalleAdmin /></RutaProtegida>} />
+                            {/* ================================================================================================= */}
+                            {/* FIN DE LA CORRECIÓN                                                                             */}
+                            {/* ================================================================================================= */}
+                            <Route path="/admin/ganadores" element={<RutaProtegida rolRequerido="admin"><GestionarGanadoresPage /></RutaProtegida>} />
+                            <Route path="/completar-perfil" element={<RutaProtegida><CompletarPerfil /></RutaProtegida>} />
+                            <Route path="/perfil" element={<RutaProtegida><MiPerfil /></RutaProtegida>} />
+                            <Route path="/nosotros" element={<NosotrosPage />} />
+                            <Route path="/transparencia" element={<TransparenciaPage />} />
+                        </Routes>
+                    </main>
+                    <Footer />
+                </Router>
+            </RifasProvider>
+        </AuthProvider>
+    );
 }
 
 export default App;
