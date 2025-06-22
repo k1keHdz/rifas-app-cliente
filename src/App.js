@@ -5,13 +5,14 @@ import NosotrosPage from "./pages/NosotrosPage";
 import TransparenciaPage from "./pages/TransparenciaPage";
 import { RifasProvider } from "./context/RifasContext";
 import { AuthProvider } from "./context/AuthContext";
+import { FEATURES } from './config/features';
+
 
 // Componentes y Páginas
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Login from "./components/Login";
 import Registro from "./components/Registro";
-// import RifasPublic from "./components/RifasPublic"; <-- Eliminado
 import RifaDetalle from "./components/RifaDetalle";
 import RifaDetalleAdmin from "./components/RifaDetalleAdmin";
 import RutaProtegida from "./components/RutaProtegida";
@@ -38,14 +39,16 @@ function App() {
             <Routes>
               {/* --- Rutas Públicas --- */}
               <Route path="/" element={<Home />} />
-              {/* <Route path="/rifas" element={<RifasPublic />} /> <-- RUTA ELIMINADA */}
               <Route path="/rifa/:id" element={<RifaDetalle />} />
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Registro />} />
               <Route path="/verificador" element={<VerificadorBoletosPage />} />
               <Route path="/como-participar" element={<ComoParticiparPage />} />
-              <Route path="/ganadores" element={<GanadoresPage />} />
               <Route path="/contacto" element={<ContactoPage />} />
+
+              {FEATURES.showGanadoresPage && (
+                <Route path="/ganadores" element={<GanadoresPage />} />
+              )}
 
               {/* --- Rutas Protegidas --- */}
               <Route path="/admin" element={<RutaProtegida rolRequerido="admin"><AdminDashboard /></RutaProtegida>} />

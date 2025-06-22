@@ -1,10 +1,7 @@
 // src/utils/rifaHelper.js
 
 /**
- * Añade ceros a la izquierda a un número de boleto basado en el total de boletos del sorteo.
- * @param {number|string} number - El número del boleto a formatear.
- * @param {number|string} totalTickets - El número total de boletos en el sorteo.
- * @returns {string} - El número de boleto formateado con ceros a la izquierda.
+ * Añade ceros a la izquierda a un número de boleto.
  */
 export const formatTicketNumber = (number, totalTickets) => {
   if (!totalTickets || Number(totalTickets) <= 0) {
@@ -15,18 +12,49 @@ export const formatTicketNumber = (number, totalTickets) => {
 };
 
 /**
- * Genera el texto descriptivo de la condición del sorteo.
+ * Genera el texto descriptivo de la condición del sorteo, en modo detallado o resumido.
  * @param {object} rifa - El objeto de la rifa.
+ * @param {string} mode - El modo de texto ('detallado' o 'resumido'). Por defecto es 'detallado'.
  * @returns {string} - El texto descriptivo.
  */
-export const getDrawConditionText = (rifa) => {
-  const { tipoRifa, porcentajeVenta, fechaCierre } = rifa;
+export const getDrawConditionText = (rifa, mode = 'detallado') => {
+  if (!rifa) return 'Condición no definida.';
 
-  // --- INICIO DE CORRECCIÓN: Nueva lógica de texto ---
+  const { tipoRifa, porcentajeVenta, fechaCierre } = rifa;
+  
+  const formatDate = (timestamp, short = false) => {
+      if (!timestamp?.toDate) return '';
+      const date = timestamp.toDate();
+      if (short) {
+          return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+      }
+      return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  const detailedDate = formatDate(fechaCierre);
+  const shortDate = formatDate(fechaCierre, true);
+
+  if (mode === 'resumido') {
+    switch (tipoRifa) {
+      case 'fechaConCondicion':
+        return `Fecha: ${shortDate} (si se vende ${porcentajeVenta}%)`;
+      case 'porcentaje':
+        return `Meta: ${porcentajeVenta}% de venta`;
+      case 'fecha':
+        return `Fecha del sorteo: ${shortDate}`;
+      default: // combinado
+         if (fechaCierre && porcentajeVenta) {
+            return `Fecha: ${shortDate} o al ${porcentajeVenta}%`;
+         }
+         return 'Sorteo por definir';
+    }
+  }
+
+  // Modo detallado (default)
   switch (tipoRifa) {
     case 'fechaConCondicion':
-      if (fechaCierre?.toDate && porcentajeVenta) {
-        return `Se sortea el ${fechaCierre.toDate().toLocaleDateString('es-MX')} si se alcanza el ${porcentajeVenta}% de venta. De lo contrario, se pospondrá hasta alcanzar la meta.`;
+      if (detailedDate && porcentajeVenta) {
+        return `Se sortea el ${detailedDate} si se alcanza el ${porcentajeVenta}% de venta. De lo contrario, se pospondrá hasta alcanzar la meta.`;
       }
       break;
     case 'porcentaje':
@@ -35,18 +63,16 @@ export const getDrawConditionText = (rifa) => {
       }
       break;
     case 'fecha':
-      if (fechaCierre?.toDate) {
-        return `Se realiza el ${fechaCierre.toDate().toLocaleDateString('es-MX')} (fecha fija).`;
+      if (detailedDate) {
+        return `Se realiza el ${detailedDate} (fecha fija).`;
       }
       break;
     default:
-      // Si el tipo es combinado pero falta algún dato, se muestra esto.
-      if (fechaCierre?.toDate && porcentajeVenta) {
-         return `Se sortea al alcanzar el ${porcentajeVenta}% o en la fecha ${fechaCierre.toDate().toLocaleDateString('es-MX')}, lo que ocurra primero.`;
+      if (detailedDate && porcentajeVenta) {
+        return `Se sortea al alcanzar el ${porcentajeVenta}% o en la fecha ${detailedDate}, lo que ocurra primero.`;
       }
       break;
   }
-  // --- FIN DE CORRECCIÓN ---
   
   return 'Condición de sorteo no definida.';
 };
@@ -54,8 +80,6 @@ export const getDrawConditionText = (rifa) => {
 
 /**
  * Calcula los contadores de boletos.
- * @param {object} rifa - El objeto de la rifa.
- * @returns {object} - Un objeto con total, vendidos, disponibles y porcentaje.
  */
 export const getTicketCounts = (rifa) => {
   const total = Number(rifa.boletos || 0);

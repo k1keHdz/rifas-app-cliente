@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getAuth, signOut } from "firebase/auth";
 import Avatar from "./Avatar";
+import { FEATURES } from '../config/features';
 
 // --- Iconos SVG para la UI ---
 const MenuIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>;
@@ -34,8 +35,6 @@ function Navbar() {
     setIsMenuOpen(false);
   };
 
-  // REPARACIÓN: Se ha eliminado la clase `text-text-light` del nav. El color del texto será heredado del `body`
-  // para garantizar el contraste en CUALQUIER tema (claro u oscuro).
   return (
     <nav className="bg-background-dark shadow-md sticky top-0 z-40 border-b border-border-color">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,9 +51,13 @@ function Navbar() {
 
           {/* Menú de Escritorio */}
           <div className="hidden md:flex items-center space-x-1">
-            {/* REPARACIÓN: Se eliminan las clases `text-text-subtle` y `hover:text-text-light`. Los links ahora heredan el color principal y el hover es manejado por el fondo. */}
+            <Link to="/" className="text-accent-primary font-bold px-3 py-2 rounded-md text-sm hover:bg-background-light">Inicio</Link>
             <Link to="/como-participar" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Cómo participar</Link>
-            <Link to="/ganadores" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Ganadores</Link>
+            
+            {FEATURES.showGanadoresPage && (
+                <Link to="/ganadores" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Ganadores</Link>
+            )}
+
             <Link to="/transparencia" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Transparencia</Link>
             <Link to="/nosotros" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Nosotros</Link>
             <Link to="/verificador" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Verificar Boleto</Link>
@@ -107,9 +110,13 @@ function Navbar() {
       {isMenuOpen && (
         <div className="md:hidden bg-background-light">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {/* REPARACIÓN: Se eliminan las clases de color de los links móviles. Ahora son legibles en cualquier tema. */}
+            <Link to="/" onClick={handleLinkClick} className="text-accent-primary font-bold hover:bg-border-color block px-3 py-2 rounded-md text-base">Inicio</Link>
             <Link to="/como-participar" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Cómo participar</Link>
-            <Link to="/ganadores" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Ganadores</Link>
+            
+            {FEATURES.showGanadoresPage && (
+                <Link to="/ganadores" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Ganadores</Link>
+            )}
+
             <Link to="/verificador" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Verificar Boleto</Link>
             <Link to="/transparencia" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Transparencia</Link>
             <Link to="/nosotros" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Nosotros</Link>
@@ -159,4 +166,4 @@ function Navbar() {
   );
 }
 
-export default Navbar; 
+export default Navbar;

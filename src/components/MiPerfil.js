@@ -11,20 +11,26 @@ import ContadorRegresivo from './ContadorRegresivo';
 import Avatar from './Avatar';
 import Alerta from './Alerta';
 
-// --- Iconos ---
+// =================================================================================================
+// INICIO DE LA MODIFICACIÓN: Importación de iconos desde la librería profesional 'react-icons'
+// =================================================================================================
+import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaTelegramPlane } from 'react-icons/fa';
+
+// --- Iconos de Navegación (sin cambios) ---
 const HistorialIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>;
 const DatosIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 const SeguridadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
 const ChevronDownIcon = ({ isOpen }) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-5 h-5 text-text-subtle transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6"/></svg>);
 const PrivacyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2 flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 
-const SocialIcon = ({ href, title, children }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" title={title} className="text-text-subtle hover:text-accent-primary transition-all duration-300 transform hover:scale-110">
-        {children}
+
+// Componente SocialIcon rediseñado para usar los iconos de la librería
+const SocialIcon = ({ href, title, icon: Icon, className }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" title={title} className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg transition-transform duration-300 transform hover:scale-110 ${className}`}>
+        <Icon size={22} />
     </a>
 );
-const WhatsAppIcon = () => <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8"><path d="M11.999 2C6.486 2 2 6.486 2 12c0 1.63.393 3.183 1.11 4.576L2 22l5.424-1.11a9.944 9.944 0 0 0 4.575 1.11c5.513 0 9.999-4.486 9.999-9.999S17.512 2 11.999 2zM12 3.667c4.603 0 8.333 3.73 8.333 8.333S16.602 20.333 12 20.333a8.283 8.283 0 0 1-4.223-1.157l-.3-.18-3.122.64.65-3.05-.197-.314A8.282 8.282 0 0 1 3.667 12c0-4.603 3.73-8.333 8.333-8.333zm4.568 11.233c-.24-.12-.823-.406-1.012-.456s-.327-.076-.465.076c-.138.152-.38.456-.465.532-.086.076-.172.086-.31.01s-.58-.216-1.106-.682c-.407-.363-.678-.813-.756-.949s-.065-.216 0-.348c.058-.112.138-.282.207-.38.07-.107.094-.18.138-.3s.022-.227-.022-.317c-.044-.09-.465-1.114-.638-1.525-.172-.41-.345-.355-.465-.355h-.402c-.138 0-.35.044-.532.18s-.696.678-.696 1.652c0 .973.714 1.914.81 2.04.1.125 1.4 2.24 3.39 3.003.49.193.877.308 1.18.393.42.118.804.102 1.1-.015.328-.12.823-.5.94-.678s.216-.402.152-.465c-.065-.064-.24-.12-.48-.24z" fill="currentColor"/></svg>;
-const TelegramIcon = () => <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zM18 7.898l-1.834 8.572c-.18.834-.683 1.034-1.35.638l-2.658-1.954-1.284 1.238c-.14.14-.258.258-.518.258l.18-2.722 4.88-4.426c.21-.18-.048-.288-.327-.12L8.214 13.39l-2.61-.813c-.85-.267-.87-1.04.18-1.538l9.648-3.74c.73-.284 1.37.18 1.116 1.15z" fill="currentColor"/></svg>;
+
 
 function MiPerfil() {
   const { currentUser, userData } = useAuth();
@@ -47,6 +53,9 @@ function MiPerfil() {
 
   const tuNumeroDeWhatsApp = '527773367064';
   const tuUsuarioDeTelegram = 'tu_usuario_tg';
+  const tuPaginaDeFacebook = 'https://facebook.com/tu_pagina';
+  const tuUsuarioDeInstagram = 'https://instagram.com/tu_usuario';
+  const tuUsuarioDeTikTok = 'https://tiktok.com/@tu_usuario';
   
   const displayName = userData?.nombre || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Usuario';
   const photo = userData?.photoURL || currentUser?.photoURL;
@@ -86,6 +95,7 @@ function MiPerfil() {
         id: ventaDoc.id,
       }));
       setMisCompras(comprasData);
+      setCargandoCompras(false);
     }, (error) => {
       console.error("Error al obtener historial de compras:", error);
       setError("No se pudo cargar el historial de compras.");
@@ -97,7 +107,6 @@ function MiPerfil() {
 
   useEffect(() => {
     if (misCompras.length === 0) {
-        setCargandoCompras(false);
         return;
     }
 
@@ -105,28 +114,29 @@ function MiPerfil() {
         const rifaIds = [...new Set(misCompras.map(c => c.rifaId))];
         const nuevosTotales = {};
         
-        for (const rifaId of rifaIds) {
-            if (!totalesRifas[rifaId]) {
-                try {
-                    const rifaRef = doc(db, 'rifas', rifaId);
-                    const rifaSnap = await getDoc(rifaRef);
-                    if (rifaSnap.exists()) {
-                        nuevosTotales[rifaId] = rifaSnap.data().boletos;
-                    }
-                } catch (error) {
-                    console.error(`Error al cargar datos del sorteo ${rifaId}:`, error);
-                }
+        const promises = rifaIds.map(async (rifaId) => {
+          if (!totalesRifas[rifaId]) {
+            try {
+              const rifaRef = doc(db, 'rifas', rifaId);
+              const rifaSnap = await getDoc(rifaRef);
+              if (rifaSnap.exists()) {
+                nuevosTotales[rifaId] = rifaSnap.data().boletos;
+              }
+            } catch (error) {
+              console.error(`Error al cargar datos del sorteo ${rifaId}:`, error);
             }
-        }
+          }
+        });
         
+        await Promise.all(promises);
+
         if (Object.keys(nuevosTotales).length > 0) {
             setTotalesRifas(prev => ({ ...prev, ...nuevosTotales }));
         }
-        setCargandoCompras(false);
     };
 
     fetchRifaData();
-  }, [misCompras, totalesRifas]);
+  }, [misCompras]);
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
@@ -297,9 +307,12 @@ function MiPerfil() {
                                 </p>
                                 <div className="text-center mt-6">
                                   <p className="text-sm font-semibold mb-2">¿Necesitas ayuda con tu compra?</p>
-                                  <div className="flex justify-center items-center space-x-6 text-text-subtle">
-                                    <SocialIcon href={`https://wa.me/${tuNumeroDeWhatsApp}?text=${generarMensajeSoporte(compra)}`} title="Contactar por WhatsApp"><WhatsAppIcon/></SocialIcon>
-                                    <SocialIcon href={`https://t.me/${tuUsuarioDeTelegram}`} title="Contactar por Telegram"><TelegramIcon/></SocialIcon>
+                                  <div className="flex justify-center items-center space-x-4">
+                                      <SocialIcon href={`https://wa.me/${tuNumeroDeWhatsApp}?text=${generarMensajeSoporte(compra)}`} title="Contactar por WhatsApp" icon={FaWhatsapp} className="bg-[#25D366]"/>
+                                      <SocialIcon href={tuPaginaDeFacebook} title="Visita nuestro Facebook" icon={FaFacebook} className="bg-[#1877F2]"/>
+                                      <SocialIcon href={tuUsuarioDeInstagram} title="Síguenos en Instagram" icon={FaInstagram} className="bg-gradient-to-br from-yellow-400 via-red-500 to-purple-600"/>
+                                      <SocialIcon href={tuUsuarioDeTikTok} title="Encuéntranos en TikTok" icon={FaTiktok} className="bg-black"/>
+                                      <SocialIcon href={`https://t.me/${tuUsuarioDeTelegram}`} title="Contactar por Telegram" icon={FaTelegramPlane} className="bg-[#24A1DE]"/>
                                   </div>
                                 </div>
                               </div>
@@ -373,4 +386,4 @@ function MiPerfil() {
   );
 }
 
-export default MiPerfil; 
+export default MiPerfil;

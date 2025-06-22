@@ -10,9 +10,9 @@ const SelectorBoletos = ({
   rangoInicio,
   rangoFin,
   totalBoletos,
-  numerosFiltrados 
+  numerosFiltrados
 }) => {
-  
+
   const numerosAMostrar = numerosFiltrados || Array.from({ length: rangoFin - rangoInicio }, (_, i) => rangoInicio + i);
 
   return (
@@ -27,19 +27,24 @@ const SelectorBoletos = ({
             }
 
             const estaSeleccionado = boletosSeleccionados.includes(numeroBoleto);
-            let colorClasses = 'bg-background-light text-text-subtle border-border-color hover:bg-border-color/50';
+            let colorClasses = '';
 
+            // LÓGICA DE COLOR CORREGIDA CON CLASES FIJAS E INDEPENDIENTES DEL TEMA
             if (estaSeleccionado) {
-              // REPARACIÓN: Se usa bg-accent-primary y el texto sobre acento para consistencia.
-              colorClasses = 'bg-accent-primary text-text-on-accent border-accent-primary scale-110 shadow-lg';
+              // Estado: Seleccionado (Verde Fijo)
+              colorClasses = 'bg-green-500 text-white border-green-600 scale-110 shadow-lg';
             } else if (estaOcupado) {
               const estado = boletosOcupados.get(numeroBoleto);
-              // REPARACIÓN: Se usan los colores semánticos del tema para claridad.
               if (estado === 'apartado') {
-                colorClasses = 'bg-warning text-text-dark border-warning cursor-not-allowed opacity-70';
+                // Estado: Apartado (Amarillo Fijo)
+                colorClasses = 'bg-yellow-400 text-black border-yellow-500 cursor-not-allowed opacity-80';
               } else {
-                colorClasses = 'bg-danger text-white border-danger cursor-not-allowed opacity-70';
+                // Estado: Pagado (Rojo Fijo)
+                colorClasses = 'bg-red-600 text-white border-red-700 cursor-not-allowed opacity-80';
               }
+            } else {
+              // Estado: Disponible (Blanco Fijo)
+              colorClasses = 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100';
             }
             
             return (
@@ -59,4 +64,4 @@ const SelectorBoletos = ({
   );
 };
 
-export default React.memo(SelectorBoletos); 
+export default React.memo(SelectorBoletos);

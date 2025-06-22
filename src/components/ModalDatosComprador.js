@@ -35,11 +35,16 @@ function ModalDatosComprador({ onCerrar, onConfirmar, datosIniciales = {} }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onCerrar}>
-      {/* REPARACIÓN: Se eliminan clases de color del contenedor principal. */}
+    // ===============================================================================================
+    // INICIO DE LA MODIFICACIÓN: Se elimina el onClick={onCerrar} del div principal.
+    // ===============================================================================================
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in">
+    {/* =============================================================================================== */}
+    {/* FIN DE LA MODIFICACIÓN                                                                          */}
+    {/* =============================================================================================== */}
       <div className="bg-background-light border border-border-color rounded-lg shadow-xl max-w-lg w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onCerrar} className="absolute top-3 right-3 text-text-subtle hover:opacity-75 text-2xl">
-          &times;
+        <button onClick={onCerrar} className="absolute top-3 right-3 text-text-subtle hover:text-danger rounded-full p-1 transition-colors z-20">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
         <h2 className="text-xl font-bold text-center mb-4">Confirma tus Datos</h2>
         <p className="text-center text-sm text-text-subtle mb-6">
@@ -95,4 +100,4 @@ function ModalDatosComprador({ onCerrar, onConfirmar, datosIniciales = {} }) {
   );
 }
 
-export default ModalDatosComprador; 
+export default ModalDatosComprador;

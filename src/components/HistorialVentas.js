@@ -18,7 +18,6 @@ function HistorialVentas({
 
   return (
     <div className="overflow-x-auto bg-background-light p-4 rounded-lg shadow mt-6 border border-border-color">
-      {/* REPARACIÓN: Se elimina text-text-light. */}
       <h2 className="text-xl font-bold mb-4">Historial de Ventas y Apartados</h2>
       {ventasFiltradas.length === 0 ? (
         <p className="text-center text-text-subtle py-8">No hay ventas que coincidan con los filtros actuales.</p>
@@ -26,7 +25,6 @@ function HistorialVentas({
         <table className="min-w-full text-left">
           <thead className="bg-background-dark">
             <tr>
-              {/* REPARACIÓN: Se elimina text-text-subtle de los encabezados. */}
               <th className="px-4 py-2 border-b border-border-color font-semibold text-sm">ID Compra</th>
               <th className="px-4 py-2 border-b border-border-color font-semibold text-sm">Fecha</th>
               <th className="px-4 py-2 border-b border-border-color font-semibold text-sm">Comprador</th>
@@ -44,7 +42,6 @@ function HistorialVentas({
               
               return (
                 <tr key={venta.id} className="hover:bg-border-color/20 text-sm">
-                  {/* REPARACIÓN: Se usa text-accent-primary para el ID para darle un toque interactivo. */}
                   <td className="px-4 py-2 align-top font-mono text-xs font-bold text-accent-primary/80">
                     {venta.idCompra || '-'}
                   </td>
@@ -65,7 +62,6 @@ function HistorialVentas({
                     {venta.cantidad}
                   </td>
                   <td className="px-4 py-2 align-top">
-                    {/* REPARACIÓN: Se usan los colores semánticos del tema. */}
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                       esComprado ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'
                     }`}>
@@ -119,7 +115,13 @@ function HistorialVentas({
           {mostrarTotal && (
             <tfoot>
               <tr className="bg-background-dark font-bold">
-                <td colSpan="5" className="px-4 py-2 border-t border-border-color text-right text-text-subtle">Total de Boletos (en esta vista)</td>
+                {/* =============================================================================================== */}
+                {/* INICIO DE LA MODIFICACIÓN: Se corrige el colSpan de 5 a 4 para alinear el total.             */}
+                {/* =============================================================================================== */}
+                <td colSpan="4" className="px-4 py-2 border-t border-border-color text-right text-text-subtle">Total de Boletos (en esta vista)</td>
+                {/* =============================================================================================== */}
+                {/* FIN DE LA MODIFICACIÓN                                                                          */}
+                {/* =============================================================================================== */}
                 <td className="px-4 py-2 border-t border-border-color text-center">{totalBoletosSum}</td>
                 <td colSpan="2" className="px-4 py-2 border-t border-border-color"></td>
               </tr>
@@ -131,4 +133,4 @@ function HistorialVentas({
   );
 }
 
-export default HistorialVentas; 
+export default HistorialVentas;

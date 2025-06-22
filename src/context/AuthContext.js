@@ -1,7 +1,7 @@
 // src/context/AuthContext.js
 import React, { useState, useEffect, useContext } from 'react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'; // Importamos setDoc y serverTimestamp
+import { doc, onSnapshot } from 'firebase/firestore'; // Ya no necesitamos setDoc ni serverTimestamp aquí
 import { db } from '../firebase/firebaseConfig';
 
 const AuthContext = React.createContext();
@@ -13,52 +13,42 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [cargandoAuth, setLoading] = useState(true); // Renombrado para más claridad
 
   useEffect(() => {
     const auth = getAuth();
-    // onAuthStateChanged se dispara al iniciar sesión o cerrar sesión.
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
 
       if (user) {
         // Si hay un usuario, escuchamos su documento en Firestore.
         const userRef = doc(db, 'usuarios', user.uid);
-        const unsubscribeFirestore = onSnapshot(userRef, async (docSnap) => {
+        const unsubscribeFirestore = onSnapshot(userRef, (docSnap) => {
+          
+          // ===============================================================================================
+          // INICIO DE LA MODIFICACIÓN: Se elimina el bloque "else" que recreaba los perfiles.
+          // ===============================================================================================
           if (docSnap.exists()) {
             // Si el documento ya existe, simplemente lo cargamos en el estado.
             setUserData({ uid: user.uid, ...docSnap.data() });
           } else {
-            // ¡NUEVO! Si el documento NO existe, es un usuario nuevo (ej. primer login con Google).
-            // Lo creamos en Firestore con la información del proveedor de autenticación.
-            console.log("Nuevo usuario detectado, creando perfil en Firestore...");
-            const newUserData = {
-              uid: user.uid,
-              email: user.email,
-              nombre: user.displayName || '', // Tomado de Google o vacío
-              apellidos: '', // Google no proporciona apellidos por defecto
-              telefono: user.phoneNumber || '',
-              photoURL: user.photoURL || '', // Tomado de Google o vacío
-              rol: 'cliente',
-              fechaCreacion: serverTimestamp(), // Fecha de creación en el servidor
-            };
-
-            try {
-              // Usamos setDoc para crear el documento de forma segura.
-              await setDoc(userRef, newUserData);
-              // Actualizamos el estado local para una respuesta inmediata.
-              setUserData(newUserData);
-            } catch (error) {
-              console.error("Error al crear documento de usuario:", error);
-            }
+            // Si el documento NO existe (porque fue borrado o es un login social sin perfil),
+            // simplemente dejamos userData como null. No hacemos nada.
+            setUserData(null);
+            console.log(`Perfil para usuario ${user.uid} no encontrado en Firestore. Esto es normal si fue eliminado.`);
           }
+          // ===============================================================================================
+          // FIN DE LA MODIFICACIÓN
+          // ===============================================================================================
+
           setLoading(false);
         }, (error) => {
           console.error("Error con el listener de Firestore:", error);
+          setUserData(null);
           setLoading(false);
         });
 
-        return () => unsubscribeFirestore(); // Limpiamos el listener de Firestore al salir.
+        return () => unsubscribeFirestore();
 
       } else {
         // No hay usuario, limpiamos todo.
@@ -67,14 +57,14 @@ export function AuthProvider({ children }) {
       }
     });
 
-    return () => unsubscribeAuth(); // Limpiamos el listener de Auth al desmontar.
+    return () => unsubscribeAuth();
   }, []);
 
-  const value = { currentUser, userData, loading };
+  const value = { currentUser, userData, cargandoAuth };
   
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {!cargandoAuth && children}
     </AuthContext.Provider>
   );
 }

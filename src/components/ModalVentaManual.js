@@ -8,8 +8,10 @@ import Alerta from './Alerta';
 import { nanoid } from 'nanoid';
 import BuscadorBoletos from './BuscadorBoletos';
 import { formatTicketNumber } from '../utils/rifaHelper';
+import emailjs from '@emailjs/browser';
+import EMAIL_CONFIG from '../emailjsConfig';
 
-function SelectorDeBoletosInterno({ numeros, boletosOcupados, boletosSeleccionados, onToggleBoleto, paddingLength, totalBoletos }) {
+function SelectorDeBoletosInterno({ numeros, boletosOcupados, boletosSeleccionados, onToggleBoleto, totalBoletos }) {
   return (
     <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1.5 w-max mx-auto p-1">
       {numeros.map(numeroBoleto => {
@@ -37,6 +39,8 @@ function ModalVentaManual({ rifa, onClose }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [boletosPorPagina] = useState(200);
   const [cantidadAleatoria, setCantidadAleatoria] = useState(5);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState('');
 
   const paddingLength = useMemo(() => String(rifa.boletos - 1).length, [rifa.boletos]);
   const totalPaginas = useMemo(() => Math.ceil(rifa.boletos / boletosPorPagina), [rifa.boletos, boletosPorPagina]);
@@ -57,6 +61,36 @@ function ModalVentaManual({ rifa, onClose }) {
     mensaje += `Aquí tienes el resumen de tu compra:\n*Tus números:* ${boletosTexto}\n*Estado:* Pagado\n\n`;
     mensaje += `¡Te deseamos mucha suerte!`;
     return encodeURIComponent(mensaje);
+  };
+
+  const handleNotificarEmail = async (venta) => {
+    if (!venta.comprador.email) {
+        setFeedbackMsg({ text: 'No se proporcionó un correo para este comprador.', type: 'error' });
+        return;
+    }
+    
+    setIsSendingEmail(true);
+    setFeedbackMsg('');
+
+    try {
+      const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
+      const templateParams = {
+        to_email: venta.comprador.email,
+        to_name: `${venta.comprador.nombre} ${venta.comprador.apellidos || ''}`,
+        raffle_name: venta.nombreRifa,
+        ticket_numbers: boletosTexto,
+        id_compra: venta.idCompra
+      };
+
+      await emailjs.send(EMAIL_CONFIG.serviceID, EMAIL_CONFIG.templateID, templateParams, EMAIL_CONFIG.publicKey);
+      setFeedbackMsg({ text: 'Correo enviado exitosamente.', type: 'exito' });
+
+    } catch (error) {
+      console.error("Fallo al enviar el correo (EmailJS):", error);
+      setFeedbackMsg({ text: 'Error al enviar el correo. Revisa la consola.', type: 'error' });
+    } finally {
+        setIsSendingEmail(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -98,8 +132,16 @@ function ModalVentaManual({ rifa, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-2 sm:p-4 animate-fade-in" onClick={onClose}>
-      <div className="bg-background-light border border-border-color rounded-xl shadow-2xl p-4 sm:p-6 max-w-3xl w-full max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-2 sm:p-4 animate-fade-in">
+      <div className="bg-background-light border border-border-color rounded-xl shadow-2xl p-4 sm:p-6 max-w-3xl w-full max-h-[95vh] flex flex-col relative" onClick={(e) => e.stopPropagation()}>
+        <button 
+          onClick={onClose} 
+          className="absolute top-2 right-2 p-2 text-text-subtle hover:text-danger rounded-full transition-colors z-20"
+          aria-label="Cerrar modal"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        
         {step === 1 && (
           <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
             <div className='flex-shrink-0'>
@@ -108,56 +150,56 @@ function ModalVentaManual({ rifa, onClose }) {
             </div>
 
             <div className='flex-grow min-h-0 overflow-y-auto pr-2 space-y-4'>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input name="nombre" value={comprador.nombre} onChange={handleChange} placeholder="Nombre(s) del Comprador*" required className="input-field"/>
-                  <input name="apellidos" value={comprador.apellidos} onChange={handleChange} placeholder="Apellidos del Comprador*" required className="input-field"/>
-                  <input name="telefono" value={comprador.telefono} onChange={handleChange} placeholder="Teléfono del Comprador*" required className="input-field"/>
-                  <input name="email" type="email" value={comprador.email} onChange={handleChange} placeholder="Email (para comprobante)" className="input-field"/>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input name="nombre" value={comprador.nombre} onChange={handleChange} placeholder="Nombre(s) del Comprador*" required className="input-field"/>
+                <input name="apellidos" value={comprador.apellidos} onChange={handleChange} placeholder="Apellidos del Comprador*" required className="input-field"/>
+                <input name="telefono" value={comprador.telefono} onChange={handleChange} placeholder="Teléfono del Comprador*" required className="input-field"/>
+                <input name="email" type="email" value={comprador.email} onChange={handleChange} placeholder="Email (para comprobante)" className="input-field"/>
+              </div>
+              
+              <div className="p-3 border border-border-color rounded-lg bg-background-dark space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-text-subtle mb-1">Buscador de Boleto Específico</label>
+                  <BuscadorBoletos
+                    totalBoletos={rifa.boletos}
+                    boletosOcupados={boletosOcupados}
+                    boletosSeleccionados={boletosSeleccionados}
+                    onSelectBoleto={seleccionarBoleto}
+                    paddingLength={paddingLength}
+                  />
                 </div>
-                
-                <div className="p-3 border border-border-color rounded-lg bg-background-dark space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-text-subtle mb-1">Buscador de Boleto Específico</label>
-                    <BuscadorBoletos
-                      totalBoletos={rifa.boletos}
-                      boletosOcupados={boletosOcupados}
-                      boletosSeleccionados={boletosSeleccionados}
-                      onSelectBoleto={seleccionarBoleto}
-                      paddingLength={paddingLength}
+                <div>
+                  <label htmlFor="cantidad-aleatoria" className="block text-sm font-medium text-text-subtle mb-1">Máquina de la Suerte</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="cantidad-aleatoria" type="number" value={cantidadAleatoria}
+                      onChange={(e) => setCantidadAleatoria(Number(e.target.value))}
+                      className="input-field w-24 p-2" min="1"
                     />
-                  </div>
-                  <div>
-                    <label htmlFor="cantidad-aleatoria" className="block text-sm font-medium text-text-subtle mb-1">Máquina de la Suerte</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="cantidad-aleatoria" type="number" value={cantidadAleatoria}
-                        onChange={(e) => setCantidadAleatoria(Number(e.target.value))}
-                        className="input-field w-24 p-2" min="1"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => agregarMultiplesBoletos(cantidadAleatoria, rifa.boletos)}
-                        className="btn btn-primary flex-1 py-2"
-                      >
-                        Generar Boletos
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => agregarMultiplesBoletos(cantidadAleatoria, rifa.boletos)}
+                      className="btn btn-primary flex-1 py-2"
+                    >
+                      Generar Boletos
+                    </button>
                   </div>
                 </div>
+              </div>
 
-                {boletosSeleccionados.length > 0 && (
-                  <div className="p-3 border border-border-color rounded-lg bg-background-dark">
-                    <p className="font-bold text-sm mb-2">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p>
-                    <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-                      {boletosSeleccionados.sort((a,b) => a-b).map(n => <span key={n} className="bg-success/20 text-success px-2 py-0.5 rounded-full font-mono text-xs cursor-pointer" onClick={() => toggleBoleto(n)} title="Clic para quitar">{formatTicketNumber(n, rifa.boletos)}</span>)}
-                    </div>
-                    <button type="button" onClick={limpiarSeleccion} className="mt-2 text-danger/80 text-xs hover:underline">Limpiar selección</button>
+              {boletosSeleccionados.length > 0 && (
+                <div className="p-3 border border-border-color rounded-lg bg-background-dark">
+                  <p className="font-bold text-sm mb-2">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p>
+                  <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                    {boletosSeleccionados.sort((a,b) => a-b).map(n => <span key={n} className="bg-success/20 text-success px-2 py-0.5 rounded-full font-mono text-xs cursor-pointer" onClick={() => toggleBoleto(n)} title="Clic para quitar">{formatTicketNumber(n, rifa.boletos)}</span>)}
                   </div>
-                )}
-                
-                <div className="border border-border-color p-2 rounded-lg bg-background-dark">
-                  <SelectorDeBoletosInterno numeros={numerosParaMostrar} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onToggleBoleto={toggleBoleto} paddingLength={paddingLength} totalBoletos={rifa.boletos} />
+                  <button type="button" onClick={limpiarSeleccion} className="mt-2 text-danger/80 text-xs hover:underline">Limpiar selección</button>
                 </div>
+              )}
+              
+              <div className="border border-border-color p-2 rounded-lg bg-background-dark">
+                <SelectorDeBoletosInterno numeros={numerosParaMostrar} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onToggleBoleto={toggleBoleto} paddingLength={paddingLength} totalBoletos={rifa.boletos} />
+              </div>
             </div>
             
             <div className='flex-shrink-0'>
@@ -180,10 +222,25 @@ function ModalVentaManual({ rifa, onClose }) {
           <div className="text-center animate-fade-in">
             <h2 className="text-2xl font-bold text-success mb-4">¡Venta Registrada con Éxito!</h2>
             <p className="mb-6 text-text-subtle">La venta ha sido guardada. Ahora puedes enviar un comprobante al cliente.</p>
+            
+            {feedbackMsg && (
+                <div className="my-4">
+                    <Alerta mensaje={feedbackMsg.text} tipo={feedbackMsg.type} onClose={() => setFeedbackMsg('')} />
+                </div>
+            )}
+
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <a href={`https://wa.me/52${ventaRealizada.comprador.telefono}?text=${generarMensajeWhatsApp(ventaRealizada)}`} target="_blank" rel="noopener noreferrer" className="btn bg-green-500 text-white hover:bg-green-600 w-full text-center">Enviar por WhatsApp</a>
-              <button disabled className="btn btn-secondary cursor-not-allowed w-full">Enviar por Correo (Próximamente)</button>
+              
+              <button 
+                onClick={() => handleNotificarEmail(ventaRealizada)}
+                disabled={isSendingEmail || !ventaRealizada.comprador.email} 
+                className="btn btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSendingEmail ? 'Enviando...' : 'Enviar por Correo'}
+              </button>
             </div>
+            
             <button onClick={onClose} className="mt-8 text-sm text-text-subtle hover:underline">Finalizar y Cerrar</button>
           </div>
         )}
@@ -192,4 +249,4 @@ function ModalVentaManual({ rifa, onClose }) {
   );
 }
 
-export default ModalVentaManual; 
+export default ModalVentaManual;
