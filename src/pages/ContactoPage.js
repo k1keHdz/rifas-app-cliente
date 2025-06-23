@@ -1,14 +1,12 @@
 // src/pages/ContactoPage.js
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react'; // 1. Importamos useRef
 import emailjs from '@emailjs/browser';
 import Alerta from '../components/Alerta';
 import EMAIL_CONFIG from '../emailjsConfig';
 
-// Importación y definición de iconos profesionales
 import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaTelegramPlane } from 'react-icons/fa';
 
-// Componente para los iconos con fondo de color
 const SocialButton = ({ href, title, icon: Icon, className }) => (
     <a href={href} target="_blank" rel="noopener noreferrer" title={title} className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-transform duration-300 transform hover:scale-110 ${className}`}>
         <Icon size={24} />
@@ -17,11 +15,7 @@ const SocialButton = ({ href, title, icon: Icon, className }) => (
 
 
 function ContactoPage() {
-    const [formData, setFormData] = useState({
-        from_name: '',
-        from_email: '',
-        message: '',
-    });
+    const form = useRef(); // 2. Creamos una referencia para el formulario
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedback, setFeedback] = useState({ msg: '', type: '' });
     
@@ -33,27 +27,27 @@ function ContactoPage() {
         tiktok: 'https://tiktok.com/@tu_usuario_real'
     };
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Previene que la página se recargue
         setIsSubmitting(true);
+        setFeedback({ msg: '', type: '' });
+
         try {
-            // =================================================================================================
-            // INICIO DE LA CORRECIÓN: Se usa el ID de plantilla correcto para el formulario de contacto.
-            // =================================================================================================
-            await emailjs.send(EMAIL_CONFIG.serviceID, EMAIL_CONFIG.contactTemplateID, formData, EMAIL_CONFIG.publicKey);
-            // =================================================================================================
-            // FIN DE LA CORRECIÓN
-            // =================================================================================================
-            
+            // 3. Usamos emailjs.sendForm, el método más robusto y recomendado.
+            // Pasa el Service ID, el Template ID correcto, la referencia al formulario y la Public Key.
+            await emailjs.sendForm(
+                process.env.REACT_APP_EMAILJS_SERVICE_ID, 
+                process.env.REACT_APP_EMAILJS_CONTACT_TEMPLATE_ID, 
+                form.current, 
+                process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+            );
+
             setFeedback({ msg: '¡Mensaje enviado con éxito! Te responderemos pronto.', type: 'exito' });
-            setFormData({ from_name: '', from_email: '', message: '' });
+            form.current.reset(); // 4. Reseteamos el formulario.
+            
         } catch (error) {
-            console.error('FAILED...', error);
-            setFeedback({ msg: 'Hubo un error al enviar el mensaje. Inténtalo de nuevo.', type: 'error' });
+            console.error('ERROR AL ENVIAR EL CORREO:', error);
+            setFeedback({ msg: 'Hubo un error al enviar el mensaje. Verifica tus claves y la configuración de EmailJS.', type: 'error' });
         } finally {
             setIsSubmitting(false);
         }
@@ -71,27 +65,28 @@ function ContactoPage() {
                     </div>
                     
                     <div className="mt-12 bg-background-light border border-border-color p-6 sm:p-8 rounded-2xl shadow-lg">
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* 5. Asignamos la referencia al elemento form */}
+                        <form ref={form} onSubmit={handleSubmit} className="space-y-6">
                             <div>
                                 <label htmlFor="from_name" className="block text-sm font-medium">Tu Nombre</label>
                                 <div className="mt-1">
-                                    <input type="text" name="from_name" id="from_name" value={formData.from_name} onChange={handleChange} required className="input-field" />
+                                    <input type="text" name="from_name" id="from_name" required className="input-field" />
                                 </div>
                             </div>
                             <div>
                                 <label htmlFor="from_email" className="block text-sm font-medium">Tu Correo Electrónico</label>
                                 <div className="mt-1">
-                                    <input type="email" name="from_email" id="from_email" value={formData.from_email} onChange={handleChange} required className="input-field" />
+                                    <input type="email" name="from_email" id="from_email" required className="input-field" />
                                 </div>
                             </div>
                             <div>
                                 <label htmlFor="message" className="block text-sm font-medium">Mensaje</label>
                                 <div className="mt-1">
-                                    <textarea id="message" name="message" rows={4} value={formData.message} onChange={handleChange} required className="input-field"></textarea>
+                                    <textarea id="message" name="message" rows={4} required className="input-field"></textarea>
                                 </div>
                             </div>
                             
-                            {feedback.msg && <Alerta mensaje={feedback.msg} tipo={feedback.type} onClose={() => setFeedback({msg: '', type: ''})} />}
+                            {feedback.msg && <Alerta mensaje={feedback.msg} tipo={feedback.type} onClose={() => setFeedback({ msg: '', type: '' })} />}
 
                             <div>
                                 <button type="submit" disabled={isSubmitting} className="w-full btn btn-primary disabled:opacity-50">
