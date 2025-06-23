@@ -1,10 +1,8 @@
-// src/pages/ContactoPage.js
+// src/pages/ContactoPage.js (Versión Final y Limpia)
 
-import React, { useState, useRef } from 'react'; // 1. Importamos useRef
+import React, { useState, useRef } from 'react';
 import emailjs from '@emailjs/browser';
 import Alerta from '../components/Alerta';
-import EMAIL_CONFIG from '../emailjsConfig';
-
 import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaTelegramPlane } from 'react-icons/fa';
 
 const SocialButton = ({ href, title, icon: Icon, className }) => (
@@ -13,9 +11,8 @@ const SocialButton = ({ href, title, icon: Icon, className }) => (
     </a>
 );
 
-
 function ContactoPage() {
-    const form = useRef(); // 2. Creamos una referencia para el formulario
+    const form = useRef();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedback, setFeedback] = useState({ msg: '', type: '' });
     
@@ -28,23 +25,27 @@ function ContactoPage() {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault(); // Previene que la página se recargue
+        e.preventDefault();
         setIsSubmitting(true);
         setFeedback({ msg: '', type: '' });
 
+        // Validamos que las variables de entorno existan antes de intentar el envío
+        if (!process.env.REACT_APP_EMAILJS_SERVICE_ID || !process.env.REACT_APP_EMAILJS_CONTACT_TEMPLATE_ID || !process.env.REACT_APP_EMAILJS_PUBLIC_KEY) {
+            console.error("Una o más variables de entorno de EmailJS no están definidas.");
+            setFeedback({ msg: 'Error de configuración del servicio de correo.', type: 'error' });
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
-            // 3. Usamos emailjs.sendForm, el método más robusto y recomendado.
-            // Pasa el Service ID, el Template ID correcto, la referencia al formulario y la Public Key.
             await emailjs.sendForm(
                 process.env.REACT_APP_EMAILJS_SERVICE_ID, 
                 process.env.REACT_APP_EMAILJS_CONTACT_TEMPLATE_ID, 
                 form.current, 
                 process.env.REACT_APP_EMAILJS_PUBLIC_KEY
             );
-
             setFeedback({ msg: '¡Mensaje enviado con éxito! Te responderemos pronto.', type: 'exito' });
-            form.current.reset(); // 4. Reseteamos el formulario.
-            
+            form.current.reset();
         } catch (error) {
             console.error('ERROR AL ENVIAR EL CORREO:', error);
             setFeedback({ msg: 'Hubo un error al enviar el mensaje. Verifica tus claves y la configuración de EmailJS.', type: 'error' });
@@ -65,7 +66,6 @@ function ContactoPage() {
                     </div>
                     
                     <div className="mt-12 bg-background-light border border-border-color p-6 sm:p-8 rounded-2xl shadow-lg">
-                        {/* 5. Asignamos la referencia al elemento form */}
                         <form ref={form} onSubmit={handleSubmit} className="space-y-6">
                             <div>
                                 <label htmlFor="from_name" className="block text-sm font-medium">Tu Nombre</label>
@@ -109,7 +109,6 @@ function ContactoPage() {
                             <SocialButton href={socialLinks.telegram} title="Telegram" icon={FaTelegramPlane} className="bg-[#24A1DE]"/>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
