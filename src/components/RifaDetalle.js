@@ -1,12 +1,11 @@
 // src/components/RifaDetalle.js
 
-import React, { useEffect, useState, useMemo, useRef } from "react"; // 1. Se añade useRef
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
-import { doc, getDoc, collection, addDoc, serverTimestamp, Timestamp, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { useAuth } from '../context/AuthContext';
 import { useBoletos } from "../hooks/useBoletos";
-import { nanoid } from 'nanoid';
 import ModalImagen from "../components/ModalImagen";
 import SelectorBoletos from "../components/SelectorBoletos";
 import ModalMaquinaSuerte from "../components/ModalMaquinaSuerte";
@@ -15,14 +14,14 @@ import ModalDatosComprador from "../components/ModalDatosComprador";
 import { getDrawConditionText, formatTicketNumber } from "../utils/rifaHelper";
 import ModalInvitacionRegistro from "../components/ModalInvitacionRegistro";
 import { usePurchaseCooldown } from '../hooks/usePurchaseCooldown';
-import { FEATURES } from '../config/features';
 import Alerta from "../components/Alerta";
 import ModalCooldown from "../components/ModalCooldown";
-
+import { useConfig } from "../context/ConfigContext";
 
 function RifaDetalle() {
     const { id } = useParams();
     const { currentUser } = useAuth();
+    const { config, cargandoConfig } = useConfig();
     const [rifa, setRifa] = useState(null);
     const [cargandoRifa, setCargandoRifa] = useState(true);
     const [datosPerfil, setDatosPerfil] = useState({});
@@ -41,35 +40,19 @@ function RifaDetalle() {
         boletosOcupados, boletosSeleccionados, cargandoBoletos, toggleBoleto, 
         seleccionarBoleto, limpiarSeleccion, agregarBoletosEspecificos,
     } = useBoletos(id);
-
-    const { checkCooldown, setCooldown } = usePurchaseCooldown();
-    
+    const { checkCooldown } = usePurchaseCooldown();
     const location = useLocation();
-    
-    // =================================================================================================
-    // INICIO DE LA CORRECIÓN: Se usa useRef para evitar el bucle de selección automática.
-    // =================================================================================================
-    const selectionProcessed = useRef(false); // 2. Creamos una referencia para controlar la ejecución
+    const selectionProcessed = useRef(false);
 
     useEffect(() => {
-        // Solo actuar si:
-        // 1. Hay un boleto en el estado de la navegación.
-        // 2. NO hemos procesado ya esta selección inicial.
-        // 3. Los boletos ya terminaron de cargar.
         if (location.state?.boletoSeleccionado && !selectionProcessed.current && !cargandoBoletos) {
             const numero = Number(location.state.boletoSeleccionado);
-            
             if (!boletosOcupados.has(numero)) {
                 seleccionarBoleto(numero);
             }
-            
-            // 3. Marcamos la selección como procesada para que este código no se vuelva a ejecutar.
             selectionProcessed.current = true;
         }
     }, [location.state, cargandoBoletos, boletosOcupados, seleccionarBoleto]);
-    // =================================================================================================
-    // FIN DE LA CORRECIÓN
-    // =================================================================================================
 
     useEffect(() => {
         setCargandoRifa(true);
@@ -100,12 +83,15 @@ function RifaDetalle() {
             return; 
         }
 
-        if (FEATURES.cooldownActivado) {
-            const { isOnCooldown, timeLeft } = await checkCooldown(currentUser, datosPerfil);
-            if (isOnCooldown) {
-                setCooldownInfo({ show: true, timeLeft: timeLeft });
-                return;
-            }
+        if (cargandoConfig || !config) {
+            setAlertaGeneral("Cargando configuración, por favor espera un momento...");
+            return;
+        }
+
+        const { isOnCooldown, timeLeft } = await checkCooldown(config, currentUser, datosPerfil);
+        if (isOnCooldown) {
+            setCooldownInfo({ show: true, timeLeft: timeLeft });
+            return;
         }
 
         if (currentUser) {
@@ -120,57 +106,14 @@ function RifaDetalle() {
         setMostrarModalDatos(true);
     }
     
-    const confirmarApartado = async (datosDelFormulario) => {
-        const boletosYaComprados = boletosSeleccionados.filter(b => boletosOcupados.has(b));
-        if (boletosYaComprados.length > 0) {
-            setAlertaGeneral(`¡Error! El/los boleto(s) ${boletosYaComprados.join(', ')} ya fue(ron) comprado(s) mientras elegías. La página se recargará.`);
-            setTimeout(() => window.location.reload(), 3000);
-            return;
-        }
-        try {
-            const DOCE_HORAS_EN_MS = 12 * 60 * 60 * 1000;
-            const idCompra = nanoid(8).toUpperCase();
-            const ventaData = {
-                idCompra,
-                comprador: datosDelFormulario,
-                numeros: boletosSeleccionados,
-                cantidad: boletosSeleccionados.length,
-                estado: 'apartado',
-                fechaApartado: serverTimestamp(),
-                fechaExpiracion: Timestamp.fromDate(new Date(Date.now() + DOCE_HORAS_EN_MS)),
-                userId: currentUser ? currentUser.uid : null,
-                rifaId: id,
-                nombreRifa: rifa.nombre,
-                imagenRifa: (rifa.imagenes && rifa.imagenes[0]) || null,
-                precioBoleto: rifa.precio,
-            };
-
-            await addDoc(collection(db, "rifas", id, "ventas"), ventaData);
-            
-            await setCooldown(currentUser);
-
-            setMostrarModalDatos(false);
-            const tuNumeroDeWhatsApp = '527773367064';
-            const nombreSorteo = rifa.nombre;
-            const boletosTexto = boletosSeleccionados.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
-            const totalAPagar = rifa.precio * boletosSeleccionados.length;
-            const nombreCliente = `${datosDelFormulario.nombre} ${datosDelFormulario.apellidos || ''}`;
-            let mensaje = `¡Hola! 👋 Quiero apartar mis boletos para el sorteo "${nombreSorteo}".\n\n*ID de Compra: ${idCompra}*\n\nMis números seleccionados son: *${boletosTexto}*.\nTotal a pagar: *$${totalAPagar.toLocaleString('es-MX')}*.\nMi nombre es: ${nombreCliente}.\n\nQuedo a la espera de las instrucciones para realizar el pago. ¡Tengo 12 horas para completarlo! Gracias.`;
-            const waUrl = `https://wa.me/${tuNumeroDeWhatsApp}?text=${encodeURIComponent(mensaje)}`;
-            window.open(waUrl, '_blank');
-            limpiarSeleccion();
-        } catch (error) {
-            console.error("Error al apartar boletos:", error);
-            setAlertaGeneral("Ocurrió un error al intentar apartar los boletos.");
-        }
-    };
+    // La función confirmarApartado ya no es necesaria aquí, se ha movido al modal.
 
     const cambiarImagen = (direccion) => {
         if (!rifa?.imagenes || rifa.imagenes.length < 2) return;
         setImagenIndex((prev) => (prev + direccion + rifa.imagenes.length) % rifa.imagenes.length);
     };
 
-    if (cargandoRifa) return <div className="text-center py-40">Cargando sorteo...</div>;
+    if (cargandoRifa || cargandoConfig) return <div className="text-center py-40">Cargando sorteo...</div>;
     if (!rifa) return <div className="p-4 text-center"><p>Sorteo no encontrado.</p></div>;
     
     const boletosVendidos = rifa.boletosVendidos || 0;
@@ -190,6 +133,7 @@ function RifaDetalle() {
                     </div>
                 )}
                 <div className="bg-background-light border border-border-color rounded-lg shadow-lg p-6">
+                    {/* ... (el resto del JSX de RifaDetalle se mantiene exactamente igual) ... */}
                     <div className="md:flex md:gap-8 items-start">
                         <div className="md:w-1/2">
                             {imagenActual && (
@@ -275,7 +219,15 @@ function RifaDetalle() {
                 </div>
             </div>
             
-            {mostrarModalDatos && <ModalDatosComprador onCerrar={() => setMostrarModalDatos(false)} onConfirmar={confirmarApartado} datosIniciales={datosPerfil} />}
+            {/* Ahora el modal recibe más información para poder funcionar de forma autónoma */}
+            {mostrarModalDatos && <ModalDatosComprador 
+                onCerrar={() => setMostrarModalDatos(false)} 
+                datosIniciales={datosPerfil}
+                rifa={rifa}
+                boletosSeleccionados={boletosSeleccionados}
+                boletosOcupados={boletosOcupados}
+                limpiarSeleccion={limpiarSeleccion}
+            />}
             {mostrarModalSuerte && 
                 <ModalMaquinaSuerte 
                     totalBoletos={rifa.boletos} 

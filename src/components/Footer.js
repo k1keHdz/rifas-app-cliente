@@ -2,31 +2,28 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-
-// =================================================================================================
-// INICIO DE LA MODIFICACIÓN: Importación desde 'react-icons' y estilo simple
-// =================================================================================================
+import { useConfig } from '../context/ConfigContext'; // 1. Importamos el hook de configuración
 import { FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa';
 
-// Componente para los iconos del footer (sin fondo, heredan color)
 const FooterSocialIcon = ({ href, title, icon: Icon }) => (
     <a href={href} target="_blank" rel="noopener noreferrer" title={title} className="text-gray-400 hover:text-white transition-colors duration-300">
         <span className="sr-only">{title}</span>
         <Icon className="h-6 w-6" />
     </a>
 );
-// =================================================================================================
-// FIN DE LA MODIFICACIÓN
-// =================================================================================================
 
 
 function Footer() {
-    // --- URLs de Redes Sociales (Reemplaza con tus enlaces reales) ---
+    const { config } = useConfig(); // 2. Usamos el hook para obtener la configuración
+
     const socialLinks = {
         facebook: 'https://facebook.com/tu_pagina_real',
         instagram: 'https://instagram.com/tu_usuario_real',
         tiktok: 'https://tiktok.com/@tu_usuario_real'
     };
+
+    // 3. Definimos el logo a usar, con un respaldo
+    const logoToShow = config?.logoURL || "https://i.imgur.com/a9A1Jps.png";
 
     return (
         <footer className="bg-background-dark">
@@ -34,7 +31,7 @@ function Footer() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 
                     <div className="col-span-2 md:col-span-1">
-                        <img src="https://i.imgur.com/a9A1Jps.png" alt="Logo Sorteos App" className="h-12 w-auto mb-2"/>
+                        <img src={logoToShow} alt="Logo Sorteos App" className="h-12 w-auto mb-2"/>
                         <p className="mt-2 text-sm text-text-subtle">
                             Participa en nuestros sorteos y sé el próximo en ganar premios increíbles.
                         </p>
@@ -44,7 +41,10 @@ function Footer() {
                         <h3 className="text-sm font-semibold text-text-subtle tracking-wider uppercase">Navegación</h3>
                         <ul className="mt-4 space-y-2">
                             <li><Link to="/" className="text-base hover:opacity-75">Inicio</Link></li>
-                            <li><Link to="/ganadores" className="text-base hover:opacity-75">Ganadores</Link></li>
+                            {/* El enlace a ganadores también respeta la configuración */}
+                            {config?.showGanadoresPage && (
+                                <li><Link to="/ganadores" className="text-base hover:opacity-75">Ganadores</Link></li>
+                            )}
                             <li><Link to="/como-participar" className="text-base hover:opacity-75">Cómo Participar</Link></li>
                             <li><Link to="/verificador" className="text-base hover:opacity-75">Verificar Boleto</Link></li>
                         </ul>

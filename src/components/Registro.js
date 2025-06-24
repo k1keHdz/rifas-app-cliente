@@ -6,30 +6,25 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import Alerta from './Alerta';
-// =================================================================================================
-// INICIO DE LA MODIFICACIÓN: Importamos los iconos de "ojo"
-// =================================================================================================
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-// =================================================================================================
-// FIN DE LA MODIFICACIÓN
-// =================================================================================================
 
 function Registro() {
     const [nombre, setNombre] = useState('');
     const [apellidos, setApellidos] = useState('');
     const [telefono, setTelefono] = useState('');
+    // =================================================================================================
+    // INICIO DE LA MODIFICACIÓN: Se añade el estado para 'estado' de residencia
+    // =================================================================================================
+    const [estado, setEstado] = useState('');
+    // =================================================================================================
+    // FIN DE LA MODIFICACIÓN
+    // =================================================================================================
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
-    // =================================================================================================
-    // INICIO DE LA MODIFICACIÓN: Nuevos estados para controlar la visibilidad de ambas contraseñas
-    // =================================================================================================
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    // =================================================================================================
-    // FIN DE LA MODIFICACIÓN
-    // =================================================================================================
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -51,13 +46,20 @@ function Registro() {
             const user = userCredential.user;
             const userRef = doc(db, 'usuarios', user.uid);
             
+            // =================================================================================================
+            // INICIO DE LA MODIFICACIÓN: Se añade el campo 'estado' al documento del usuario
+            // =================================================================================================
             await setDoc(userRef, {
                 nombre: nombre,
                 apellidos: apellidos,
                 telefono: telefono,
+                estado: estado,
                 email: email,
                 rol: 'cliente',
             });
+            // =================================================================================================
+            // FIN DE LA MODIFICACIÓN
+            // =================================================================================================
             
             navigate('/perfil');
 
@@ -95,13 +97,20 @@ function Registro() {
                         <label className="block text-sm font-medium">Teléfono</label>
                         <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} required className="input-field mt-1"/>
                     </div>
+                    {/* ================================================================================================= */}
+                    {/* INICIO DE LA MODIFICACIÓN: Se añade el campo de 'Estado' al formulario                        */}
+                    {/* ================================================================================================= */}
+                    <div>
+                        <label className="block text-sm font-medium">Estado de Residencia</label>
+                        <input type="text" value={estado} onChange={(e) => setEstado(e.target.value)} required placeholder="Ej. Jalisco" className="input-field mt-1"/>
+                    </div>
+                    {/* ================================================================================================= */}
+                    {/* FIN DE LA MODIFICACIÓN                                                                          */}
+                    {/* ================================================================================================= */}
                     <div>
                         <label className="block text-sm font-medium">Correo Electrónico</label>
                         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="input-field mt-1"/>
                     </div>
-                    {/* ================================================================================================= */}
-                    {/* INICIO DE LA MODIFICACIÓN: Campos de contraseña con botón de visibilidad                     */}
-                    {/* ================================================================================================= */}
                     <div>
                         <label className="block text-sm font-medium">Contraseña</label>
                         <div className="relative mt-1">
@@ -142,9 +151,6 @@ function Registro() {
                             </button>
                         </div>
                     </div>
-                    {/* ================================================================================================= */}
-                    {/* FIN DE LA MODIFICACIÓN                                                                          */}
-                    {/* ================================================================================================= */}
                     
                     {error && <Alerta mensaje={error} tipo="error" onClose={() => setError('')} />}
 

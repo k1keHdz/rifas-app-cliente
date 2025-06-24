@@ -3,9 +3,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useConfig } from "../context/ConfigContext"; // 1. Importamos el hook de configuración
 import { getAuth, signOut } from "firebase/auth";
 import Avatar from "./Avatar";
-import { FEATURES } from '../config/features';
 
 // --- Iconos SVG para la UI ---
 const MenuIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>;
@@ -14,156 +14,160 @@ const LogoutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" heig
 
 
 function Navbar() {
-  const { currentUser, userData } = useAuth();
-  const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { currentUser, userData } = useAuth();
+    const { config } = useConfig(); // 2. Usamos el hook para obtener la configuración
+    const navigate = useNavigate();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const displayName = userData?.nombre || currentUser?.email?.split('@')[0] || 'Usuario';
+    const displayName = userData?.nombre || currentUser?.email?.split('@')[0] || 'Usuario';
 
-  const handleLogout = async () => {
-    const auth = getAuth();
-    try {
-      await signOut(auth);
-      setIsMenuOpen(false);
-      navigate('/');
-    } catch (error) {
-      console.error("Error al cerrar sesión", error);
-    }
-  };
+    const handleLogout = async () => {
+        const auth = getAuth();
+        try {
+            await signOut(auth);
+            setIsMenuOpen(false);
+            navigate('/');
+        } catch (error) {
+            console.error("Error al cerrar sesión", error);
+        }
+    };
 
-  const handleLinkClick = () => {
-    setIsMenuOpen(false);
-  };
+    const handleLinkClick = () => {
+        setIsMenuOpen(false);
+    };
 
-  return (
-    <nav className="bg-background-dark shadow-md sticky top-0 z-40 border-b border-border-color">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex-shrink-0">
-            <Link to="/" onClick={handleLinkClick} className="flex items-center">
-              <img 
-                src="https://i.imgur.com/a9A1Jps.png" 
-                alt="Logo Sorteos App" 
-                className="h-12 w-auto"
-              />
-            </Link>
-          </div>
+    // 3. Definimos el logo a usar, con un respaldo por si no hay nada en la BD
+    const logoToShow = config?.logoURL || "https://i.imgur.com/a9A1Jps.png";
 
-          {/* Menú de Escritorio */}
-          <div className="hidden md:flex items-center space-x-1">
-            <Link to="/" className="text-accent-primary font-bold px-3 py-2 rounded-md text-sm hover:bg-background-light">Inicio</Link>
-            <Link to="/como-participar" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Cómo participar</Link>
-            
-            {FEATURES.showGanadoresPage && (
-                <Link to="/ganadores" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Ganadores</Link>
-            )}
-
-            <Link to="/transparencia" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Transparencia</Link>
-            <Link to="/nosotros" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Nosotros</Link>
-            <Link to="/verificador" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Verificar Boleto</Link>
-            <Link to="/contacto" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Contacto</Link>
-            
-            {currentUser && userData?.rol === 'admin' && (
-              <Link to="/admin" className="px-3 py-2 rounded-md text-sm font-bold hover:bg-background-light">Admin</Link>
-            )}
-            
-            {/* --- SECCIÓN DE USUARIO (ESCRITORIO) --- */}
-            <div className="flex items-center space-x-4 ml-4">
-              {currentUser ? (
-                <div className="flex items-center space-x-4">
-                  {userData?.rol !== 'admin' && (
-                    <Link to="/perfil" title="Mi Perfil">
-                      <Avatar
-                        className="h-9 w-9 rounded-full object-cover border-2 border-transparent hover:border-accent-end text-lg"
-                        photoURL={currentUser.photoURL}
-                        name={displayName}
-                      />
-                    </Link>
-                  )}
-                  <button 
-                    onClick={handleLogout} 
-                    className="flex items-center hover:bg-background-light px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
-                    title="Cerrar Sesión"
-                  >
-                    <LogoutIcon/>
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <Link to="/login" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Iniciar Sesión</Link>
-                  <Link to="/registro" className="bg-accent-start text-white font-semibold px-3 py-1 rounded-md text-sm hover:bg-accent-end transition-colors">Regístrate</Link>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Botón de Menú Móvil */}
-          <div className="md:hidden flex items-center">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="inline-flex items-center justify-center p-2 rounded-md hover:bg-background-light focus:outline-none">
-              {isMenuOpen ? <CloseIcon /> : <MenuIcon />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Panel de Menú Móvil */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-background-light">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link to="/" onClick={handleLinkClick} className="text-accent-primary font-bold hover:bg-border-color block px-3 py-2 rounded-md text-base">Inicio</Link>
-            <Link to="/como-participar" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Cómo participar</Link>
-            
-            {FEATURES.showGanadoresPage && (
-                <Link to="/ganadores" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Ganadores</Link>
-            )}
-
-            <Link to="/verificador" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Verificar Boleto</Link>
-            <Link to="/transparencia" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Transparencia</Link>
-            <Link to="/nosotros" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Nosotros</Link>
-            <Link to="/contacto" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Contacto</Link>
-            {currentUser && userData?.rol === 'admin' && (
-              <Link to="/admin" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Admin</Link>
-            )}
-          </div>
-          <div className="pt-4 pb-3 border-t border-border-color">
-            {currentUser ? (
-              <div>
-                <div className="flex items-center justify-between px-5 mb-3">
-                  <div className="flex items-center">
+    return (
+        <nav className="bg-background-dark shadow-md sticky top-0 z-40 border-b border-border-color">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16">
                     <div className="flex-shrink-0">
-                      <Avatar
-                        className="h-10 w-10 rounded-full object-cover text-xl"
-                        photoURL={currentUser.photoURL}
-                        name={displayName}
-                      />
+                        <Link to="/" onClick={handleLinkClick} className="flex items-center">
+                            <img 
+                                src={logoToShow} // 4. Usamos la variable del logo
+                                alt="Logo Sorteos App" 
+                                className="h-12 w-auto"
+                            />
+                        </Link>
                     </div>
-                    <div className="ml-3">
-                      <div className="text-base font-medium leading-none">{userData?.nombre || 'Bienvenido'}</div>
-                      <div className="text-sm font-medium leading-none text-text-subtle mt-1">{currentUser.email}</div>
+
+                    {/* Menú de Escritorio */}
+                    <div className="hidden md:flex items-center space-x-1">
+                        <Link to="/" className="text-accent-primary font-bold px-3 py-2 rounded-md text-sm hover:bg-background-light">Inicio</Link>
+                        <Link to="/como-participar" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Cómo participar</Link>
+                        
+                        {config?.showGanadoresPage && (
+                            <Link to="/ganadores" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Ganadores</Link>
+                        )}
+
+                        <Link to="/transparencia" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Transparencia</Link>
+                        <Link to="/nosotros" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Nosotros</Link>
+                        <Link to="/verificador" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Verificar Boleto</Link>
+                        <Link to="/contacto" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Contacto</Link>
+                        
+                        {currentUser && userData?.rol === 'admin' && (
+                            <Link to="/admin" className="px-3 py-2 rounded-md text-sm font-bold hover:bg-background-light">Admin</Link>
+                        )}
+                        
+                        {/* --- SECCIÓN DE USUARIO (ESCRITORIO) --- */}
+                        <div className="flex items-center space-x-4 ml-4">
+                            {currentUser ? (
+                                <div className="flex items-center space-x-4">
+                                    {userData?.rol !== 'admin' && (
+                                        <Link to="/perfil" title="Mi Perfil">
+                                            <Avatar
+                                                className="h-9 w-9 rounded-full object-cover border-2 border-transparent hover:border-accent-end text-lg"
+                                                photoURL={currentUser.photoURL}
+                                                name={displayName}
+                                            />
+                                        </Link>
+                                    )}
+                                    <button 
+                                        onClick={handleLogout} 
+                                        className="flex items-center hover:bg-background-light px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                                        title="Cerrar Sesión"
+                                    >
+                                        <LogoutIcon/>
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <Link to="/login" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Iniciar Sesión</Link>
+                                    <Link to="/registro" className="bg-accent-start text-white font-semibold px-3 py-1 rounded-md text-sm hover:bg-accent-end transition-colors">Regístrate</Link>
+                                </>
+                            )}
+                        </div>
                     </div>
-                  </div>
+
+                    {/* Botón de Menú Móvil */}
+                    <div className="md:hidden flex items-center">
+                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="inline-flex items-center justify-center p-2 rounded-md hover:bg-background-light focus:outline-none">
+                            {isMenuOpen ? <CloseIcon /> : <MenuIcon />}
+                        </button>
+                    </div>
                 </div>
-                <div className="mt-3 px-2 space-y-1">
-                  {userData && userData.rol !== 'admin' && (
-                    <Link to="/perfil" onClick={handleLinkClick} className="block px-3 py-2 rounded-md text-base font-medium hover:bg-border-color">Mi Perfil</Link>
-                  )}
-                  <button onClick={handleLogout} className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-border-color">
-                    <LogoutIcon />
-                    Cerrar Sesión
-                  </button>
+            </div>
+
+            {/* Panel de Menú Móvil */}
+            {isMenuOpen && (
+                <div className="md:hidden bg-background-light">
+                    <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                        <Link to="/" onClick={handleLinkClick} className="text-accent-primary font-bold hover:bg-border-color block px-3 py-2 rounded-md text-base">Inicio</Link>
+                        <Link to="/como-participar" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Cómo participar</Link>
+                        
+                        {config?.showGanadoresPage && (
+                            <Link to="/ganadores" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Ganadores</Link>
+                        )}
+
+                        <Link to="/verificador" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Verificar Boleto</Link>
+                        <Link to="/transparencia" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Transparencia</Link>
+                        <Link to="/nosotros" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Nosotros</Link>
+                        <Link to="/contacto" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Contacto</Link>
+                        {currentUser && userData?.rol === 'admin' && (
+                            <Link to="/admin" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Admin</Link>
+                        )}
+                    </div>
+                    <div className="pt-4 pb-3 border-t border-border-color">
+                        {currentUser ? (
+                            <div>
+                                <div className="flex items-center justify-between px-5 mb-3">
+                                    <div className="flex items-center">
+                                        <div className="flex-shrink-0">
+                                            <Avatar
+                                                className="h-10 w-10 rounded-full object-cover text-xl"
+                                                photoURL={currentUser.photoURL}
+                                                name={displayName}
+                                            />
+                                        </div>
+                                        <div className="ml-3">
+                                            <div className="text-base font-medium leading-none">{userData?.nombre || 'Bienvenido'}</div>
+                                            <div className="text-sm font-medium leading-none text-text-subtle mt-1">{currentUser.email}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-3 px-2 space-y-1">
+                                    {userData && userData.rol !== 'admin' && (
+                                        <Link to="/perfil" onClick={handleLinkClick} className="block px-3 py-2 rounded-md text-base font-medium hover:bg-border-color">Mi Perfil</Link>
+                                    )}
+                                    <button onClick={handleLogout} className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-border-color">
+                                        <LogoutIcon />
+                                        Cerrar Sesión
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="px-2 space-y-1">
+                                <Link to="/login" onClick={handleLinkClick} className="block px-3 py-2 rounded-md text-base font-medium hover:bg-border-color">Iniciar Sesión</Link>
+                                <Link to="/registro" onClick={handleLinkClick} className="block px-3 py-2 rounded-md text-base font-medium hover:bg-border-color">Regístrate</Link>
+                            </div>
+                        )}
+                    </div>
                 </div>
-              </div>
-            ) : (
-              <div className="px-2 space-y-1">
-                <Link to="/login" onClick={handleLinkClick} className="block px-3 py-2 rounded-md text-base font-medium hover:bg-border-color">Iniciar Sesión</Link>
-                <Link to="/registro" onClick={handleLinkClick} className="block px-3 py-2 rounded-md text-base font-medium hover:bg-border-color">Regístrate</Link>
-              </div>
             )}
-          </div>
-        </div>
-      )}
-    </nav>
-  );
+        </nav>
+    );
 }
 
 export default Navbar;
