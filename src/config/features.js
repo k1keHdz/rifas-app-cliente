@@ -16,7 +16,7 @@ export const FEATURES = {
     
     // Para activar el tiempo de espera entre compras, cambia este valor a 'true'.
     // Para desactivar el tiempo de espera entre compras, cambia este valor a 'false'.
-    cooldownActivado: false,
+    cooldownActivado: true,
 
     // Define el tiempo de espera en minutos.
     cooldownMinutos: 5,

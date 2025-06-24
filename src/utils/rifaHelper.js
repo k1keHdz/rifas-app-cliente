@@ -54,7 +54,7 @@ export const getDrawConditionText = (rifa, mode = 'detallado') => {
   switch (tipoRifa) {
     case 'fechaConCondicion':
       if (detailedDate && porcentajeVenta) {
-        return `Se sortea el ${detailedDate} si se alcanza el ${porcentajeVenta}% de venta. De lo contrario, se pospondrá hasta alcanzar la meta.`;
+        return `Se sortea el ${detailedDate} si se alcanza el ${porcentajeVenta}% de boletos vendidos. De lo contrario, se pospondrá hasta alcanzar la meta.`;
       }
       break;
     case 'porcentaje':
