@@ -1,11 +1,11 @@
 // src/pages/admin/ClientesPage.js
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { collectionGroup, query, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { db } from '../../firebase/firebaseConfig';
-import { FaFileCsv, FaSearch, FaUserFriends, FaSpinner } from 'react-icons/fa';
+import { FaFileCsv, FaSearch, FaUserFriends, FaSpinner, FaSync } from 'react-icons/fa';
 
-// Componente para una tarjeta de estadísticas
 const StatCard = ({ title, value, icon }) => (
     <div className="bg-background-light p-4 rounded-lg shadow-md flex items-center border border-border-color">
         <div className="p-3 mr-4 text-accent-primary bg-accent-primary/10 rounded-full">
@@ -18,96 +18,73 @@ const StatCard = ({ title, value, icon }) => (
     </div>
 );
 
+
 function ClientesPage() {
     const [clientes, setClientes] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [recalculando, setRecalculando] = useState(false);
+    const [mensajeRecalculo, setMensajeRecalculo] = useState('');
 
     useEffect(() => {
-        const fetchClientes = async () => {
-            setCargando(true);
-            try {
-                // =================================================================================================
-                // INICIO DE LA CORRECIÓN: Se elimina el `orderBy` para evitar el error de índice.
-                // La ordenación se hará en el cliente después de procesar los datos.
-                // =================================================================================================
-                const ventasQuery = query(collectionGroup(db, 'ventas'));
-                // =================================================================================================
-                // FIN DE LA CORRECIÓN
-                // =================================================================================================
-                const ventasSnapshot = await getDocs(ventasQuery);
+        setCargando(true);
+        const clientesRef = collection(db, 'clientes');
+        const q = query(clientesRef, orderBy('ultimaActualizacion', 'desc'));
 
-                const clientesMap = new Map();
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const clientesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setClientes(clientesData);
+            setCargando(false);
+        }, (error) => {
+            console.error("Error al cargar la base de datos de clientes:", error);
+            setCargando(false);
+        });
 
-                ventasSnapshot.forEach(doc => {
-                    const venta = doc.data();
-                    const telefono = venta.comprador?.telefono; // Usar optional chaining por seguridad
-
-                    if (!telefono) return; 
-
-                    if (!clientesMap.has(telefono)) {
-                        clientesMap.set(telefono, {
-                            nombre: venta.comprador.nombre,
-                            apellidos: venta.comprador.apellidos || '',
-                            telefono: telefono,
-                            email: venta.comprador.email || '',
-                            fechaPrimerCompra: venta.fechaApartado?.toDate(),
-                            totalBoletos: venta.cantidad || 0,
-                        });
-                    } else {
-                        const clienteExistente = clientesMap.get(telefono);
-                        clienteExistente.totalBoletos += venta.cantidad || 0;
-
-                        // Actualizar fecha de primera compra si la nueva es más antigua
-                        const nuevaFecha = venta.fechaApartado?.toDate();
-                        if (nuevaFecha && nuevaFecha < clienteExistente.fechaPrimerCompra) {
-                            clienteExistente.fechaPrimerCompra = nuevaFecha;
-                        }
-
-                        // Opcional: actualizar nombre y email al más reciente
-                        clienteExistente.nombre = venta.comprador.nombre;
-                        clienteExistente.apellidos = venta.comprador.apellidos || '';
-                        clienteExistente.email = venta.comprador.email || '';
-                    }
-                });
-                
-                // Convertir el mapa a un array y ordenar por total de boletos
-                const clientesArray = Array.from(clientesMap.values()).sort((a, b) => b.totalBoletos - a.totalBoletos);
-                setClientes(clientesArray);
-
-            } catch (error) {
-                console.error("Error al obtener la base de datos de clientes:", error);
-            } finally {
-                setCargando(false);
-            }
-        };
-
-        fetchClientes();
+        return () => unsubscribe();
     }, []);
+    
+    const handleRecalcular = async () => {
+        if (!window.confirm("¿Estás seguro? Esto procesará todas las ventas existentes para construir o actualizar la base de datos de clientes. Es una operación intensiva que solo debe ejecutarse una vez o si notas inconsistencias.")) {
+            return;
+        }
+        setRecalculando(true);
+        setMensajeRecalculo('');
+        try {
+            const functions = getFunctions();
+            const recalcular = httpsCallable(functions, 'recalcularClientes');
+            const result = await recalcular();
+            setMensajeRecalculo(result.data.message);
+        } catch (error) {
+            console.error("Error al recalcular clientes:", error);
+            setMensajeRecalculo("Error: " + error.message);
+        } finally {
+            setRecalculando(false);
+        }
+    };
 
-    // Memoizar los resultados filtrados para optimizar el rendimiento
     const clientesFiltrados = useMemo(() => {
         if (!searchTerm) return clientes;
         const lowercasedFilter = searchTerm.toLowerCase();
         return clientes.filter(cliente =>
             cliente.nombre.toLowerCase().includes(lowercasedFilter) ||
             (cliente.apellidos && cliente.apellidos.toLowerCase().includes(lowercasedFilter)) ||
-            cliente.telefono.includes(lowercasedFilter)
+            cliente.telefono.includes(lowercasedFilter) ||
+            (cliente.estado && cliente.estado.toLowerCase().includes(lowercasedFilter))
         );
     }, [searchTerm, clientes]);
 
     const totalBoletosVendidos = useMemo(() => {
-        return clientes.reduce((acc, cliente) => acc + cliente.totalBoletos, 0);
+        return clientes.reduce((acc, cliente) => acc + (cliente.totalBoletos || 0), 0);
     }, [clientes]);
     
-    // Función para exportar los datos a CSV
     const exportarCSV = () => {
-        const headers = ["Nombre Completo", "Teléfono", "Email", "Fecha Primera Compra", "Total Boletos Comprados"];
+        const headers = ["Nombre Completo", "Teléfono", "Email", "Estado", "Fecha Primera Compra", "Total Boletos Comprados"];
         const rows = clientesFiltrados.map(cliente => [
             `"${cliente.nombre} ${cliente.apellidos}"`,
             `"${cliente.telefono}"`,
-            `"${cliente.email}"`,
-            `"${cliente.fechaPrimerCompra ? cliente.fechaPrimerCompra.toLocaleDateString('es-MX') : 'N/A'}"`,
+            `"${cliente.email || 'N/A'}"`,
+            `"${cliente.estado || 'N/A'}"`,
+            `"${cliente.fechaPrimeraCompra ? new Date(cliente.fechaPrimeraCompra.seconds * 1000).toLocaleDateString('es-MX') : 'N/A'}"`,
             cliente.totalBoletos
         ].join(','));
 
@@ -126,38 +103,47 @@ function ClientesPage() {
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold">Base de Datos de Clientes</h1>
-                    <p className="text-text-subtle mt-1">Aquí puedes ver y gestionar la información de todos tus participantes.</p>
+                    <p className="text-text-subtle mt-1">Esta lista se actualiza automáticamente con cada nueva venta.</p>
                 </div>
                 
-                {/* Tarjetas de Estadísticas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     <StatCard title="Clientes Únicos" value={clientes.length} icon={<FaUserFriends size={22} />} />
-                    <StatCard title="Total Boletos Vendidos" value={totalBoletosVendidos} icon={<FaFileCsv size={22} />} />
+                    <StatCard title="Total Boletos Comprados" value={totalBoletosVendidos} icon={<FaFileCsv size={22} />} />
                 </div>
 
                 <div className="bg-background-light p-6 rounded-lg shadow-lg border border-border-color">
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
-                        <div className="relative w-full sm:w-auto">
+                        <div className="relative w-full sm:max-w-xs">
                             <FaSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-text-subtle" />
                             <input
                                 type="text"
-                                placeholder="Buscar por nombre o teléfono..."
+                                placeholder="Buscar por nombre, teléfono..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="input-field w-full pl-10"
                             />
                         </div>
-                        <button
-                            onClick={exportarCSV}
-                            className="btn btn-primary w-full sm:w-auto flex items-center justify-center"
-                            disabled={cargando || clientesFiltrados.length === 0}
-                        >
-                            <FaFileCsv className="mr-2" />
-                            Exportar a CSV
-                        </button>
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                           <button
+                                onClick={handleRecalcular}
+                                className="btn btn-secondary flex-1 sm:flex-initial flex items-center justify-center"
+                                disabled={recalculando}
+                            >
+                                <FaSync className={`mr-2 ${recalculando ? 'animate-spin' : ''}`} />
+                                {recalculando ? "Procesando..." : "Recalcular BD"}
+                            </button>
+                            <button
+                                onClick={exportarCSV}
+                                className="btn btn-primary flex-1 sm:flex-initial flex items-center justify-center"
+                                disabled={cargando || clientesFiltrados.length === 0}
+                            >
+                                <FaFileCsv className="mr-2" />
+                                Exportar a CSV
+                            </button>
+                        </div>
                     </div>
-
-                    {/* Contenedor de la tabla con scroll horizontal en móviles */}
+                    {mensajeRecalculo && <p className="text-center text-sm my-2 p-2 bg-background-dark rounded-md">{mensajeRecalculo}</p>}
+                    
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left text-text-subtle">
                             <thead className="text-xs uppercase bg-background-dark">
@@ -165,6 +151,7 @@ function ClientesPage() {
                                     <th scope="col" className="px-6 py-3">Nombre Completo</th>
                                     <th scope="col" className="px-6 py-3">Teléfono</th>
                                     <th scope="col" className="px-6 py-3">Email</th>
+                                    <th scope="col" className="px-6 py-3">Estado</th>
                                     <th scope="col" className="px-6 py-3">Primera Compra</th>
                                     <th scope="col" className="px-6 py-3 text-right">Total Boletos</th>
                                 </tr>
@@ -172,7 +159,7 @@ function ClientesPage() {
                             <tbody>
                                 {cargando ? (
                                     <tr>
-                                        <td colSpan="5" className="text-center py-10">
+                                        <td colSpan="6" className="text-center py-10">
                                             <div className="flex justify-center items-center">
                                                 <FaSpinner className="animate-spin mr-3 h-5 w-5" />
                                                 Cargando clientes...
@@ -187,13 +174,14 @@ function ClientesPage() {
                                             </th>
                                             <td className="px-6 py-4">{cliente.telefono}</td>
                                             <td className="px-6 py-4">{cliente.email || 'N/A'}</td>
-                                            <td className="px-6 py-4">{cliente.fechaPrimerCompra ? cliente.fechaPrimerCompra.toLocaleDateString('es-MX') : 'N/A'}</td>
+                                            <td className="px-6 py-4">{cliente.estado || 'N/A'}</td>
+                                            <td className="px-6 py-4">{cliente.fechaPrimeraCompra ? new Date(cliente.fechaPrimeraCompra.seconds * 1000).toLocaleDateString('es-MX') : 'N/A'}</td>
                                             <td className="px-6 py-4 text-right font-bold">{cliente.totalBoletos}</td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="5" className="text-center py-10">No se encontraron clientes que hayan realizado compras.</td>
+                                        <td colSpan="6" className="text-center py-10">No se encontraron clientes. Puedes usar el botón "Recalcular BD" para poblar los datos por primera vez.</td>
                                     </tr>
                                 )}
                             </tbody>

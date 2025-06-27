@@ -13,7 +13,7 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
     const calcularEstadisticas = () => {
         const vendidosCount = rifa.boletosVendidos || 0;
         const apartadosArr = ventasFiltradas.filter(v => v.estado === 'apartado');
-        const apartadosCount = apartadosArr.reduce((sum, v) => sum + v.cantidad, 0);
+        const apartadosCount = apartadosArr.reduce((sum, v) => sum + (v.cantidad || 0), 0);
         const disponiblesCount = rifa.boletos - vendidosCount - apartadosCount;
         const vendidosDinero = vendidosCount * rifa.precio;
         const apartadosDinero = apartadosCount * rifa.precio;
@@ -25,7 +25,7 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
             alert("No hay datos del sorteo para generar el informe.");
             return;
         }
-
+        
         const doc = new jsPDF('p', 'mm', 'a4');
         const hoy = new Date().toLocaleDateString('es-MX');
         const stats = calcularEstadisticas();
@@ -68,19 +68,17 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
             doc.setFontSize(16);
             doc.text("Listado Detallado de Participantes", 15, 20);
             
-            // =================================================================================================
-            // INICIO DE LA CORRECIÓN PDF: Convertimos la lista de boletos en una cadena segura
-            // =================================================================================================
-            const bodyData = ventasFiltradas.map(v => {
+            const head = [['Nombre', 'Teléfono', 'Email', 'Estado', 'Números', 'Cant.', 'Precio', 'Total', 'Estado Compra']];
+            const body = ventasFiltradas.map(v => {
                 const estadoTexto = v.estado === 'comprado' ? 'Pagado' : 'Apartado';
-                // Truncamos la lista de números si es muy larga para evitar problemas de renderizado en el PDF
                 const numerosTexto = v.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
-                const numerosDisplay = numerosTexto.length > 80 ? numerosTexto.substring(0, 80) + '...' : numerosTexto;
+                const numerosDisplay = numerosTexto.length > 60 ? numerosTexto.substring(0, 60) + '...' : numerosTexto;
 
                 return [
                     v.comprador.nombre,
                     v.comprador.telefono,
                     v.comprador.email || 'N/A',
+                    v.comprador.estado || 'N/A',
                     numerosDisplay,
                     v.cantidad,
                     `$${v.precioBoleto || rifa.precio}`,
@@ -91,30 +89,34 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
             
             autoTable(doc, {
                 startY: 30,
-                head: [['Nombre', 'Teléfono', 'Email', 'Números', 'Cant.', 'Precio', 'Total', 'Estado']],
-                body: bodyData,
+                head: head,
+                body: body,
                 theme: 'grid',
                 didDrawCell: (data) => {
-                    // Verificación de seguridad para evitar errores al colorear celdas
-                    if (data.section === 'body' && data.column.index === 7 && data.cell.text && data.cell.text[0]) {
-                        const texto = data.cell.text[0];
-                        if (texto === 'Pagado') {
-                            doc.setFillColor(34, 197, 94); // success
-                        } else if (texto === 'Apartado') {
-                            doc.setFillColor(234, 179, 8); // warning
+                    // =================================================================================================
+                    // INICIO DE LA CORRECCIÓN PDF: Se añade una validación robusta antes de dibujar la celda.
+                    // =================================================================================================
+                    if (data.section === 'body' && data.column.index === 8 && data.cell.text && data.cell.text[0]) {
+                        const texto = data.cell.text[0].trim();
+                        if (texto) { // Solo proceder si hay texto
+                            if (texto === 'Pagado') {
+                                doc.setFillColor(34, 197, 94); // success
+                            } else if (texto === 'Apartado') {
+                                doc.setFillColor(234, 179, 8); // warning
+                            }
+                            doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
+                            doc.setTextColor(255, 255, 255);
+                            doc.text(texto, data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2, {
+                                align: 'center',
+                                baseline: 'middle'
+                            });
                         }
-                        doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
-                        doc.setTextColor(255, 255, 255);
-                        doc.text(texto, data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2, {
-                            align: 'center',
-                            baseline: 'middle'
-                        });
                     }
+                    // =================================================================================================
+                    // FIN DE LA CORRECIÓN PDF
+                    // =================================================================================================
                 },
             });
-            // =================================================================================================
-            // FIN DE LA CORRECIÓN PDF
-            // =================================================================================================
         }
 
         doc.save(`Reporte_PDF_${rifa.nombre.replace(/ /g, '_')}.pdf`);
@@ -148,11 +150,12 @@ function PanelDeExportacion({ rifa, ventasFiltradas = [], graficoRef }) {
                 'Nombre': v.comprador.nombre,
                 'Teléfono': v.comprador.telefono,
                 'Email': v.comprador.email || 'N/A',
+                'Estado de Residencia': v.comprador.estado || 'N/A',
                 'Números': numerosDisplay,
                 'Cantidad': v.cantidad,
                 'Precio Boleto': v.precioBoleto || rifa.precio,
                 'Total Pagado': (v.cantidad || 0) * (v.precioBoleto || rifa.precio),
-                'Estado': v.estado === 'comprado' ? 'Pagado' : 'Apartado',
+                'Estado Compra': v.estado === 'comprado' ? 'Pagado' : 'Apartado',
                 'Fecha': v.fechaApartado?.toDate().toLocaleString('es-MX') || 'N/A',
             }
         });

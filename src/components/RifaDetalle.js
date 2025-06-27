@@ -1,27 +1,35 @@
 // src/components/RifaDetalle.js
 
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
-import { doc, getDoc, collection, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { useAuth } from '../context/AuthContext';
 import { useBoletos } from "../hooks/useBoletos";
+import { useConfig } from "../context/ConfigContext";
+import ModalDatosComprador from "../components/ModalDatosComprador";
 import ModalImagen from "../components/ModalImagen";
 import SelectorBoletos from "../components/SelectorBoletos";
 import ModalMaquinaSuerte from "../components/ModalMaquinaSuerte";
 import BuscadorBoletos from "../components/BuscadorBoletos";
-import ModalDatosComprador from "../components/ModalDatosComprador";
 import { getDrawConditionText, formatTicketNumber } from "../utils/rifaHelper";
 import ModalInvitacionRegistro from "../components/ModalInvitacionRegistro";
-import { usePurchaseCooldown } from '../hooks/usePurchaseCooldown';
 import Alerta from "../components/Alerta";
 import ModalCooldown from "../components/ModalCooldown";
-import { useConfig } from "../context/ConfigContext";
 
 function RifaDetalle() {
-    const { id } = useParams();
-    const { currentUser } = useAuth();
+    const { id: rifaId } = useParams();
+    const { currentUser, userData } = useAuth();
     const { config, cargandoConfig } = useConfig();
+    
+    const { 
+        boletosSeleccionados, setBoletosSeleccionados, toggleBoleto, limpiarSeleccion,
+        agregarBoletosEspecificos 
+    } = useBoletos();
+
+    const [boletosOcupados, setBoletosOcupados] = useState(new Map());
+    const [cargandoBoletos, setCargandoBoletos] = useState(true);
+
     const [rifa, setRifa] = useState(null);
     const [cargandoRifa, setCargandoRifa] = useState(true);
     const [datosPerfil, setDatosPerfil] = useState({});
@@ -35,35 +43,55 @@ function RifaDetalle() {
     const [showInvitationModal, setShowInvitationModal] = useState(false);
     const [cooldownInfo, setCooldownInfo] = useState({ show: false, timeLeft: '' });
     const [alertaGeneral, setAlertaGeneral] = useState('');
-
-    const {
-        boletosOcupados, boletosSeleccionados, cargandoBoletos, toggleBoleto, 
-        seleccionarBoleto, limpiarSeleccion, agregarBoletosEspecificos,
-    } = useBoletos(id);
-    const { checkCooldown } = usePurchaseCooldown();
+    
     const location = useLocation();
     const selectionProcessed = useRef(false);
 
     useEffect(() => {
+        if (!rifaId) return;
+
+        setCargandoBoletos(true);
+        const ventasRef = collection(db, 'rifas', rifaId, 'ventas');
+        const q = query(ventasRef, where("estado", "in", ["comprado", "apartado"]));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const ocupados = new Map();
+            snapshot.forEach((doc) => {
+                const venta = doc.data();
+                if (venta.numeros && venta.estado) {
+                    venta.numeros.forEach(num => ocupados.set(Number(num), venta.estado));
+                }
+            });
+            setBoletosOcupados(ocupados);
+            setCargandoBoletos(false);
+        }, (error) => {
+            console.error("[RifaDetalle] Error en listener de Firestore:", error);
+            setCargandoBoletos(false);
+        });
+
+        return () => unsubscribe();
+    }, [rifaId]);
+
+    useEffect(() => {
         if (location.state?.boletoSeleccionado && !selectionProcessed.current && !cargandoBoletos) {
             const numero = Number(location.state.boletoSeleccionado);
-            if (!boletosOcupados.has(numero)) {
-                seleccionarBoleto(numero);
+            if (!boletosOcupados.has(numero) && !boletosSeleccionados.includes(numero)) {
+                agregarBoletosEspecificos([numero]);
             }
             selectionProcessed.current = true;
         }
-    }, [location.state, cargandoBoletos, boletosOcupados, seleccionarBoleto]);
-
+    }, [location.state, cargandoBoletos, boletosOcupados, boletosSeleccionados, agregarBoletosEspecificos]);
+    
     useEffect(() => {
         setCargandoRifa(true);
-        const docRef = doc(db, "rifas", id);
+        const docRef = doc(db, "rifas", rifaId);
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) { setRifa({ id: docSnap.id, ...docSnap.data() }); } 
             else { setRifa(null); }
             setCargandoRifa(false);
         });
         return () => unsubscribe();
-    }, [id]);
+    }, [rifaId]);
 
     useEffect(() => {
         if (currentUser) {
@@ -82,18 +110,10 @@ function RifaDetalle() {
             setAlertaGeneral("Debes seleccionar al menos un boleto para continuar.");
             return; 
         }
-
         if (cargandoConfig || !config) {
             setAlertaGeneral("Cargando configuración, por favor espera un momento...");
             return;
         }
-
-        const { isOnCooldown, timeLeft } = await checkCooldown(config, currentUser, datosPerfil);
-        if (isOnCooldown) {
-            setCooldownInfo({ show: true, timeLeft: timeLeft });
-            return;
-        }
-
         if (currentUser) {
             setMostrarModalDatos(true);
         } else {
@@ -106,14 +126,12 @@ function RifaDetalle() {
         setMostrarModalDatos(true);
     }
     
-    // La función confirmarApartado ya no es necesaria aquí, se ha movido al modal.
-
     const cambiarImagen = (direccion) => {
         if (!rifa?.imagenes || rifa.imagenes.length < 2) return;
         setImagenIndex((prev) => (prev + direccion + rifa.imagenes.length) % rifa.imagenes.length);
     };
 
-    if (cargandoRifa || cargandoConfig) return <div className="text-center py-40">Cargando sorteo...</div>;
+    if (cargandoRifa || cargandoConfig || cargandoBoletos) return <div className="text-center py-40">Cargando sorteo...</div>;
     if (!rifa) return <div className="p-4 text-center"><p>Sorteo no encontrado.</p></div>;
     
     const boletosVendidos = rifa.boletosVendidos || 0;
@@ -133,7 +151,6 @@ function RifaDetalle() {
                     </div>
                 )}
                 <div className="bg-background-light border border-border-color rounded-lg shadow-lg p-6">
-                    {/* ... (el resto del JSX de RifaDetalle se mantiene exactamente igual) ... */}
                     <div className="md:flex md:gap-8 items-start">
                         <div className="md:w-1/2">
                             {imagenActual && (
@@ -180,12 +197,12 @@ function RifaDetalle() {
                         <div className="flex items-center gap-2"><div className="w-4 h-4 bg-green-500 border border-green-600 rounded-sm"></div><span className="text-text-subtle">Seleccionado</span></div>
                     </div>
                     <div className="flex flex-col items-center">
-                        <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={seleccionarBoleto} />
+                        <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={(num) => toggleBoleto(num, boletosOcupados)} />
                         {boletosSeleccionados.length > 0 && ( 
                             <div className="text-center my-4 p-4 bg-background-dark border border-border-color rounded-lg w-full max-w-lg animate-fade-in"> 
                                 <p className="font-bold mb-2">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> 
                                 <div className="flex justify-center flex-wrap gap-2 mb-2"> 
-                                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-success text-white rounded-md font-mono cursor-pointer hover:bg-danger" title="Haz clic para quitar">{formatTicketNumber(n, rifa.boletos)}</span> ))} 
+                                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n, boletosOcupados)} className="px-3 py-1 bg-success text-white rounded-md font-mono cursor-pointer hover:bg-danger" title="Haz clic para quitar">{formatTicketNumber(n, rifa.boletos)}</span> ))} 
                                 </div> 
                                 <p className="text-xs text-text-subtle italic my-2">Para eliminar un boleto, solo haz clic sobre él.</p> 
                                 <button onClick={limpiarSeleccion} className="mt-1 text-danger underline text-sm hover:text-red-400">Eliminar todos</button> 
@@ -209,7 +226,7 @@ function RifaDetalle() {
                                 totalBoletos={rifa.boletos}
                                 boletosOcupados={boletosOcupados} 
                                 boletosSeleccionados={boletosSeleccionados} 
-                                onToggleBoleto={toggleBoleto} 
+                                onToggleBoleto={(num) => toggleBoleto(num, boletosOcupados)} 
                                 filtroActivo={filtroDisponibles} 
                                 rangoInicio={rangoInicio} 
                                 rangoFin={rangoFin}
@@ -219,7 +236,6 @@ function RifaDetalle() {
                 </div>
             </div>
             
-            {/* Ahora el modal recibe más información para poder funcionar de forma autónoma */}
             {mostrarModalDatos && <ModalDatosComprador 
                 onCerrar={() => setMostrarModalDatos(false)} 
                 datosIniciales={datosPerfil}
@@ -231,7 +247,8 @@ function RifaDetalle() {
             {mostrarModalSuerte && 
                 <ModalMaquinaSuerte 
                     totalBoletos={rifa.boletos} 
-                    boletosOcupados={boletosOcupados} 
+                    boletosOcupados={boletosOcupados}
+                    boletosYaSeleccionados={boletosSeleccionados}
                     onCerrar={() => setMostrarModalSuerte(false)} 
                     onSeleccionar={(numeros) => { 
                         agregarBoletosEspecificos(numeros); 

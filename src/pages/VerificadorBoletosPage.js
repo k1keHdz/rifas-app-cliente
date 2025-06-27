@@ -6,7 +6,6 @@ import { db } from '../firebase/firebaseConfig';
 import { RIFAS_ESTADOS } from '../constants/rifas';
 import { Link } from 'react-router-dom';
 import ContadorRegresivo from '../components/ContadorRegresivo';
-// Se importa la función de formato
 import { formatTicketNumber } from '../utils/rifaHelper';
 
 // --- ÍCONOS ---
@@ -16,87 +15,93 @@ const ChevronDownIcon = ({ isOpen }) => ( <svg xmlns="http://www.w3.org/2000/svg
 
 // --- SUB-COMPONENTE PARA MOSTRAR RESULTADOS ---
 const TarjetaResultado = ({ resultado }) => {
-  const [isOpen, setIsOpen] = useState(resultado.type === 'boleto' ? true : false);
-  const totalBoletos = resultado.totalBoletos || 100; // Fallback por si acaso
+    const [isOpen, setIsOpen] = useState(resultado.type === 'boleto' ? true : false);
+    const totalBoletos = resultado.totalBoletos || 100;
 
-  if (resultado.estado === 'disponible') {
-    return (
-      <div className="bg-background-light rounded-xl shadow-lg p-6 text-center border-t-8 border-green-500 animate-fade-in">
-        <TicketIcon className="w-10 h-10 text-green-500 mx-auto mb-4" />
-        <h3 className="text-xl font-bold">{resultado.nombreRifa}</h3>
-        <p className="text-sm text-text-subtle mb-4">Boleto Número:</p>
-        <p className="text-5xl font-mono font-bold tracking-wider mb-4">{formatTicketNumber(resultado.numeroBuscado, totalBoletos)}</p>
-        <p className="font-semibold text-lg mb-4 text-green-600">¡Este boleto está disponible!</p>
-        <Link to={`/rifa/${resultado.rifaId}`} state={{ boletoSeleccionado: resultado.numeroBuscado }} className="inline-block w-full text-center bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors">
-          ¡Lo quiero!
-        </Link>
-      </div>
-    )
-  }
-
-  if (resultado.type === 'telefono') {
-    return (
-      <div className="border border-border-color rounded-lg overflow-hidden bg-background-light shadow-md animate-fade-in">
-        <button 
-          className="w-full flex justify-between items-center p-4 text-left hover:bg-border-color/50 transition-colors"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <div className="flex-1 pr-4">
-            <p className="font-bold">{resultado.nombreRifa}</p>
-            <p className="text-sm text-text-subtle">{resultado.cantidad} boleto(s)</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${resultado.estado === 'comprado' ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}>
-              {resultado.estado === 'comprado' ? 'Pagado' : 'Apartado'}
-            </span>
-            <ChevronDownIcon isOpen={isOpen} />
-          </div>
-        </button>
-        {isOpen && (
-          <div className="border-t border-border-color p-4 bg-background-dark">
-            <p className="font-semibold mb-2">Números:</p>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {resultado.numeros.map(n => <span key={n} className="bg-accent-primary/20 text-accent-primary px-3 py-1 rounded-full font-mono text-sm">{formatTicketNumber(n, totalBoletos)}</span>)}
+    if (resultado.estado === 'disponible') {
+        return (
+            <div className="bg-background-light rounded-xl shadow-lg p-6 text-center border-t-8 border-success animate-fade-in">
+                <TicketIcon className="w-10 h-10 text-success mx-auto mb-4" />
+                <h3 className="text-xl font-bold">{resultado.nombreRifa}</h3>
+                <p className="text-sm text-text-subtle mb-4">Boleto Número:</p>
+                <p className="text-5xl font-mono font-bold tracking-wider mb-4">{formatTicketNumber(resultado.numeroBuscado, totalBoletos)}</p>
+                <p className="font-semibold text-lg mb-4 text-success">¡Este boleto está disponible!</p>
+                <Link to={`/rifa/${resultado.rifaId}`} state={{ boletoSeleccionado: resultado.numeroBuscado }} className="inline-block w-full text-center bg-success text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors">
+                    ¡Lo quiero!
+                </Link>
             </div>
-            {resultado.estado === 'apartado' && resultado.fechaExpiracion && (
-              <div className="flex justify-center mt-3">
-                  <ContadorRegresivo fechaExpiracion={resultado.fechaExpiracion} />
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    )
-  }
+        )
+    }
 
-  const esPagado = resultado.estado === 'comprado';
-  const nombreParcial = `${resultado.comprador.nombre.split(' ')[0]} ****`;
+    if (resultado.type === 'telefono') {
+        return (
+            <div className="border border-border-color rounded-lg overflow-hidden bg-background-light shadow-md animate-fade-in">
+                <button 
+                    className="w-full flex justify-between items-center p-4 text-left hover:bg-border-color/50 transition-colors"
+                    onClick={() => setIsOpen(!isOpen)}
+                >
+                    <div className="flex-1 pr-4">
+                        <p className="font-bold">{resultado.nombreRifa}</p>
+                        <p className="text-sm text-text-subtle">{resultado.cantidad} boleto(s)</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${resultado.estado === 'comprado' ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}>
+                            {resultado.estado === 'comprado' ? 'Pagado' : 'Apartado'}
+                        </span>
+                        <ChevronDownIcon isOpen={isOpen} />
+                    </div>
+                </button>
+                {isOpen && (
+                    <div className="border-t border-border-color p-4 bg-background-dark">
+                        <p className="font-semibold mb-2">Números:</p>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            {resultado.numeros.map(n => <span key={n} className="bg-accent-primary/20 text-accent-primary px-3 py-1 rounded-full font-mono text-sm">{formatTicketNumber(n, totalBoletos)}</span>)}
+                        </div>
+                        {resultado.estado === 'apartado' && resultado.fechaExpiracion && (
+                            <div className="flex justify-center mt-3">
+                                <ContadorRegresivo fechaExpiracion={resultado.fechaExpiracion} />
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        )
+    }
 
-  return (
-    <div className={`bg-background-light rounded-xl shadow-lg overflow-hidden border-l-8 ${esPagado ? 'border-success' : 'border-warning'} animate-fade-in`}>
-      <div className="flex flex-col md:flex-row">
-        <div className="md:w-1/3 flex-shrink-0">
-          <img className="h-48 w-full object-cover md:h-full" src={resultado.imagenRifa || `https://placehold.co/400x400/1f2937/9ca3af?text=Sorteo`} alt={resultado.nombreRifa} />
+    const esPagado = resultado.estado === 'comprado';
+    const nombreParcial = `${resultado.comprador.nombre.split(' ')[0]} ****`;
+
+    return (
+        <div className={`bg-background-light rounded-xl shadow-lg overflow-hidden border-l-8 ${esPagado ? 'border-success' : 'border-warning'} animate-fade-in`}>
+            <div className="flex flex-col md:flex-row">
+                <div className="md:w-1/3 flex-shrink-0">
+                    <img className="h-48 w-full object-cover md:h-full" src={resultado.imagenRifa || `https://placehold.co/400x400/1f2937/9ca3af?text=Sorteo`} alt={resultado.nombreRifa} />
+                </div>
+                <div className="p-6 flex flex-col justify-between flex-1">
+                    <div>
+                        <p className={`text-sm font-bold uppercase tracking-wide ${esPagado ? 'text-success' : 'text-warning'}`}>{esPagado ? 'Pagado' : 'Apartado'}</p>
+                        <h3 className="text-2xl font-bold mt-1">{resultado.nombreRifa}</h3>
+                        <p className="text-text-subtle">Boleto Número:</p>
+                        <p className="text-5xl font-mono font-bold tracking-wider my-2">{formatTicketNumber(resultado.numeroBuscado, totalBoletos)}</p>
+                    </div>
+                    {/* ================================================================================================= */}
+                    {/* INICIO DE LA MODIFICACIÓN: Se añade el estado del comprador a la tarjeta de resultado          */}
+                    {/* ================================================================================================= */}
+                    <div className="text-sm space-y-2 border-t border-border-color mt-4 pt-4 text-text-subtle">
+                        <p><strong>Comprador:</strong> {nombreParcial} {resultado.comprador.estado ? `(${resultado.comprador.estado})` : ''}</p>
+                        {!esPagado && resultado.fechaExpiracion && (
+                            <div className="flex items-center pt-2">
+                                <strong className="mr-2">Expira:</strong> <ContadorRegresivo fechaExpiracion={resultado.fechaExpiracion} />
+                            </div>
+                        )}
+                    </div>
+                    {/* ================================================================================================= */}
+                    {/* FIN DE LA MODIFICACIÓN                                                                          */}
+                    {/* ================================================================================================= */}
+                </div>
+            </div>
         </div>
-        <div className="p-6 flex flex-col justify-between flex-1">
-          <div>
-            <p className={`text-sm font-bold uppercase tracking-wide ${esPagado ? 'text-success' : 'text-warning'}`}>{esPagado ? 'Pagado' : 'Apartado'}</p>
-            <h3 className="text-2xl font-bold mt-1">{resultado.nombreRifa}</h3>
-            <p className="text-text-subtle">Boleto Número:</p>
-            <p className="text-5xl font-mono font-bold tracking-wider my-2">{formatTicketNumber(resultado.numeroBuscado, totalBoletos)}</p>
-          </div>
-          <div className="text-sm space-y-2 border-t border-border-color mt-4 pt-4 text-text-subtle">
-            <p><strong>Comprador:</strong> {nombreParcial}</p>
-            {!esPagado && resultado.fechaExpiracion && (
-              <div className="flex items-center pt-2">
-                  <strong className="mr-2">Expira:</strong> <ContadorRegresivo fechaExpiracion={resultado.fechaExpiracion} />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 function VerificadorBoletosPage() {
@@ -110,9 +115,10 @@ function VerificadorBoletosPage() {
     const [busquedaRealizada, setBusquedaRealizada] = useState(false);
 
     useEffect(() => {
+        // En esta página, como es pública, mantenemos la lógica de obtener rifas para el selector.
         const q = query(collection(db, "rifas"), where("estado", "in", [RIFAS_ESTADOS.ACTIVA, RIFAS_ESTADOS.FINALIZADA]), orderBy("fechaCreacion", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
-        setRifasActivas(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            setRifasActivas(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         });
         return () => unsubscribe();
     }, []);

@@ -1,6 +1,6 @@
 // src/components/RifaDetalleAdmin.js
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { doc, collection, onSnapshot, query, orderBy, writeBatch, increment, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
@@ -12,6 +12,7 @@ import ModalVentaManual from "./ModalVentaManual";
 import PanelDeExportacion from "./PanelDeExportacion";
 import emailjs from '@emailjs/browser';
 import EMAIL_CONFIG from '../emailjsConfig';
+import { useBoletos } from "../hooks/useBoletos";
 
 // --- Íconos ---
 const VentasIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
@@ -19,262 +20,310 @@ const StatsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" heigh
 const AccionesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 
 function RifaDetalleAdmin() {
-  const { id: rifaId } = useParams();
-  const [rifa, setRifa] = useState(null);
-  const [ventas, setVentas] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [showModalVenta, setShowModalVenta] = useState(false);
-  const [activeTab, setActiveTab] = useState('ventas');
-  const [fechaInicio, setFechaInicio] = useState("");
-  const [fechaFin, setFechaFin] = useState("");
-  const [modoGrafica, setModoGrafica] = useState("dia");
-  const graficoRef = useRef(null);
-  const [filtroVentas, setFiltroVentas] = useState('todos');
-  const [searchTerm, setSearchTerm] = useState('');
+    const { id: rifaId } = useParams();
+    const [rifa, setRifa] = useState(null);
+    const [ventas, setVentas] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const [showModalVenta, setShowModalVenta] = useState(false);
+    const [activeTab, setActiveTab] = useState('ventas');
+    const [fechaInicio, setFechaInicio] = useState("");
+    const [fechaFin, setFechaFin] = useState("");
+    const [modoGrafica, setModoGrafica] = useState("dia");
+    const graficoRef = useRef(null);
+    const [filtroVentas, setFiltroVentas] = useState('todos');
+    const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    const docRef = doc(db, "rifas", rifaId);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) { setRifa({ id: docSnap.id, ...docSnap.data() }); } 
-      else { setRifa(null); }
-    });
-    return () => unsubscribe();
-  }, [rifaId]);
+    const { 
+        boletosSeleccionados: boletosVentaManual, 
+        setBoletosSeleccionados: setBoletosVentaManual,
+        agregarBoletosEspecificos: agregarBoletosVentaManual
+    } = useBoletos();
 
-  useEffect(() => {
-    if (!rifaId) { setCargando(false); return; };
-    const ventasRef = collection(db, "rifas", rifaId, "ventas");
-    const q = query(ventasRef, orderBy("fechaApartado", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setVentas(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setCargando(false);
-    }, (error) => {
-      console.error("Error al cargar ventas: ", error);
-      setCargando(false);
-    });
-    return () => unsubscribe();
-  }, [rifaId]);
-  
-  const handleConfirmarPago = async (venta) => {
-    if (!window.confirm(`¿Estás seguro de confirmar el pago para la compra ID: ${venta.idCompra || 'N/A'}?`)) { return; }
-    try {
-      const batch = writeBatch(db);
-      const ventaRef = doc(db, "rifas", rifaId, "ventas", venta.id);
-      batch.update(ventaRef, { estado: "comprado" });
-      const rifaRef = doc(db, "rifas", rifaId);
-      batch.update(rifaRef, { boletosVendidos: increment(venta.cantidad) });
-      await batch.commit();
-      alert("¡Pago confirmado con éxito en el sistema!");
-    } catch (error) {
-      console.error("Error CRÍTICO al confirmar el pago en Firestore:", error);
-      alert("Hubo un error CRÍTICO al confirmar el pago.");
-    }
-  };
+    useEffect(() => {
+        const docRef = doc(db, "rifas", rifaId);
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) { setRifa({ id: docSnap.id, ...docSnap.data() }); } 
+            else { setRifa(null); }
+        });
+        return () => unsubscribe();
+    }, [rifaId]);
 
-  const handleLiberarBoletos = async (ventaId, numeros) => {
-    const boletosTexto = numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
-    if (!window.confirm(`¿Estás seguro de liberar los boletos [${boletosTexto}]? Esta venta se eliminará permanentemente.`)) { return; }
-    try {
-      const ventaRef = doc(db, "rifas", rifaId, "ventas", ventaId);
-      await deleteDoc(ventaRef);
-      alert("¡Boletos liberados con éxito!");
-    } catch (error) {
-      console.error("Error al liberar los boletos:", error);
-      alert("Hubo un error al liberar los boletos.");
-    }
-  };
-  
-  const handleNotificarWhatsApp = (venta) => {
-    const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
-    let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para el sorteo "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Te deseamos mucha suerte en el sorteo!`;
-    const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensajeWhats)}`;
-    window.open(waUrl, '_blank');
-  };
-
-  const handleNotificarEmail = async (venta) => {
-    const emailValido = venta.comprador.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(venta.comprador.email);
-    if (!emailValido) { return alert(`El correo del cliente (${venta.comprador.email || 'No proporcionado'}) no es válido.`); }
-    if (!window.confirm(`¿Enviar el comprobante por correo a ${venta.comprador.email}?`)) return;
-    try {
-      const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
-      const templateParams = {
-        to_email: venta.comprador.email,
-        to_name: `${venta.comprador.nombre} ${venta.comprador.apellidos || ''}`,
-        raffle_name: venta.nombreRifa,
-        ticket_numbers: boletosTexto,
-        id_compra: venta.idCompra
-      };
-      await emailjs.send(EMAIL_CONFIG.serviceID, EMAIL_CONFIG.templateID, templateParams, EMAIL_CONFIG.publicKey);
-      alert("Correo de confirmación enviado exitosamente.");
-    } catch (error) {
-      console.error("Fallo al enviar el correo (EmailJS):", error);
-      alert(`AVISO: No se pudo enviar el correo.\nError: ${error.text || 'Revisa la consola y tu configuración de EmailJS.'}`);
-    }
-  };
-  
-  const handleEnviarRecordatorio = (venta) => {
-    const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
-    const nombreCliente = venta.comprador.nombre;
-    const nombreSorteo = venta.nombreRifa;
-    let mensaje = `¡Hola, ${nombreCliente}! 👋 Te escribimos de Sorteos App.\n\nNotamos que tu apartado para el sorteo "${nombreSorteo}" con los boletos *${boletosTexto}* ha expirado.\n\n¡No te preocupes! Aún podrías tener la oportunidad de participar. Contáctanos por este medio para ver si tus boletos siguen disponibles y ayudarte a completar la compra. ¡No te quedes fuera!`;
-    const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensaje)}`;
-    window.open(waUrl, '_blank');
-  };
-
-  const estadisticas = useMemo(() => {
-    if (!rifa || !ventas) return { apartadosCount: 0, vendidosCount: 0, disponiblesCount: 0, apartadosDinero: 0, vendidosDinero: 0 };
-    const vendidosCount = rifa.boletosVendidos || 0;
-    const apartadosArr = ventas.filter(v => v.estado === 'apartado');
-    const apartadosCount = apartadosArr.reduce((sum, v) => sum + (v.cantidad || 0), 0);
-    const disponiblesCount = rifa.boletos - vendidosCount - apartadosCount;
-    const vendidosDinero = vendidosCount * rifa.precio;
-    const apartadosDinero = apartadosCount * rifa.precio;
-    return { apartadosCount, vendidosCount, disponiblesCount, apartadosDinero, vendidosDinero };
-  }, [ventas, rifa]);
-
-  const ventasFiltradas = useMemo(() => {
-    if (!ventas) return [];
+    useEffect(() => {
+        if (!rifaId) { setCargando(false); return; };
+        const ventasRef = collection(db, "rifas", rifaId, "ventas");
+        const q = query(ventasRef, orderBy("fechaApartado", "desc"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setVentas(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            setCargando(false);
+        }, (error) => {
+            console.error("Error al cargar ventas: ", error);
+            setCargando(false);
+        });
+        return () => unsubscribe();
+    }, [rifaId]);
     
-    const terminoBusqueda = searchTerm.trim().toLowerCase();
+    const boletosOcupados = useMemo(() => {
+        const ocupados = new Map();
+        ventas.forEach(venta => {
+            if (venta.numeros && venta.estado) {
+                venta.numeros.forEach(num => {
+                    ocupados.set(Number(num), venta.estado);
+                });
+            }
+        });
+        return ocupados;
+    }, [ventas]);
 
-    return ventas
-      .filter(venta => {
-        if (!terminoBusqueda) return true;
-        const esBusquedaNumerica = !isNaN(Number(terminoBusqueda)) && terminoBusqueda !== '';
-        if (esBusquedaNumerica) {
-          return venta.numeros && venta.numeros.includes(parseInt(terminoBusqueda, 10));
-        } else {
-          return venta.idCompra && venta.idCompra.toLowerCase().includes(terminoBusqueda);
+    // =================================================================================================
+    // INICIO DE LA CORRECIÓN: Se corrige el nombre de la variable 'disponibles' a 'boletosDisponibles'.
+    // =================================================================================================
+    const handleAgregarMultiplesManual = useCallback((cantidad) => {
+        if (!rifa) return;
+        const todosLosNumeros = Array.from({ length: rifa.boletos }, (_, i) => i);
+        const boletosDisponibles = todosLosNumeros.filter(
+            num => !boletosOcupados.has(num) && !boletosVentaManual.includes(num)
+        );
+
+        if (boletosDisponibles.length < cantidad) {
+            alert(`¡No hay suficientes boletos disponibles! Solo quedan ${boletosDisponibles.length}.`);
+            return;
         }
-      })
-      .filter(v => {
-        const fechaVenta = v.fechaApartado?.toDate();
-        if (!fechaVenta) return true;
-        if (fechaInicio && new Date(fechaVenta) < new Date(fechaInicio)) return false;
-        if (fechaFin) {
-          const fin = new Date(fechaFin);
-          fin.setHours(23, 59, 59, 999);
-          if (fechaVenta > fin) return false;
+
+        for (let i = boletosDisponibles.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [boletosDisponibles[i], boletosDisponibles[j]] = [boletosDisponibles[j], boletosDisponibles[i]];
         }
-        return true;
-      })
-      .filter(v => {
-        if (filtroVentas === 'todos') return true;
-        if (filtroVentas === 'pagados') return v.estado === 'comprado';
-        if (filtroVentas === 'apartados') return v.estado === 'apartado';
-        if (filtroVentas === 'manual') return v.estado === 'comprado' && !v.userId;
-        return true;
-      });
-  }, [ventas, fechaInicio, fechaFin, filtroVentas, searchTerm]);
+        const nuevosBoletos = boletosDisponibles.slice(0, cantidad);
+        agregarBoletosVentaManual(nuevosBoletos);
+    }, [rifa, boletosOcupados, boletosVentaManual, agregarBoletosVentaManual]);
+    // =================================================================================================
+    // FIN DE LA CORRECIÓN
+    // =================================================================================================
 
-  const datosGrafico = useMemo(() => {
-    if (!ventasFiltradas) return [];
-    const agrupadas = ventasFiltradas.reduce((acc, venta) => {
-      const fecha = venta.fechaApartado?.toDate();
-      if (!fecha) return acc;
-      let clave;
-      if (modoGrafica === 'semana') {
-        const inicioSemana = new Date(fecha);
-        inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
-        clave = inicioSemana.toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' });
-      } else {
-        clave = fecha.toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' });
-      }
-      acc[clave] = (acc[clave] || 0) + Number(venta.cantidad || 0);
-      return acc;
-    }, {});
-    return Object.entries(agrupadas).map(([fecha, total]) => ({ fecha, total })).reverse();
-  }, [ventasFiltradas, modoGrafica]);
 
-  if (cargando) return <div className="text-center p-10">Cargando detalles del sorteo...</div>;
-  if (!rifa) return <div className="text-danger text-center p-10">No se encontró el sorteo.</div>;
-  
-  return (
-    <div className="p-4 max-w-7xl mx-auto min-h-screen">
-      <Link to="/admin/historial-ventas" className="text-accent-primary hover:underline mb-4 inline-block">← Volver a la selección de sorteos</Link>
-      
-      <div className="bg-background-light border border-border-color shadow-lg rounded-xl p-6 mb-6">
-        <h1 className="text-3xl font-bold mb-4">{rifa.nombre}</h1>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          {/* REPARACIÓN: Se usan los colores de texto correctos para cada estado. */}
-          <div className="p-2 rounded-lg bg-background-dark"><p className="text-xs text-text-subtle uppercase font-semibold">Boletos Totales</p><p className="text-2xl font-bold">{rifa.boletos}</p></div>
-          <div className="p-2 rounded-lg bg-success/10"><p className="text-xs text-success uppercase font-semibold">Vendidos</p><p className="text-xl font-bold text-success">{estadisticas.vendidosCount} <span className="text-sm font-normal">(${estadisticas.vendidosDinero.toLocaleString()})</span></p></div>
-          <div className="p-2 rounded-lg bg-warning/10"><p className="text-xs text-warning uppercase font-semibold">Apartados</p><p className="text-xl font-bold text-warning">{estadisticas.apartadosCount} <span className="text-sm font-normal">(${estadisticas.apartadosDinero.toLocaleString()})</span></p></div>
-          <div className="p-2 rounded-lg bg-accent-primary/10"><p className="text-xs text-accent-primary/80 uppercase font-semibold">Disponibles</p><p className="text-2xl font-bold text-accent-primary">{estadisticas.disponiblesCount}</p></div>
-        </div>
-      </div>
+    const handleConfirmarPago = async (venta) => {
+        if (!window.confirm(`¿Estás seguro de confirmar el pago para la compra ID: ${venta.idCompra || 'N/A'}?`)) { return; }
+        try {
+            const batch = writeBatch(db);
+            const ventaRef = doc(db, "rifas", rifaId, "ventas", venta.id);
+            batch.update(ventaRef, { estado: "comprado" });
+            const rifaRef = doc(db, "rifas", rifaId);
+            batch.update(rifaRef, { boletosVendidos: increment(venta.cantidad) });
+            await batch.commit();
+            alert("¡Pago confirmado con éxito en el sistema!");
+        } catch (error) {
+            console.error("Error CRÍTICO al confirmar el pago en Firestore:", error);
+            alert("Hubo un error CRÍTICO al confirmar el pago.");
+        }
+    };
 
-      <div className="border-b border-border-color mb-6">
-        <nav className="-mb-px flex space-x-2 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
-          <button onClick={() => setActiveTab('ventas')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'ventas' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><VentasIcon/> Historial de Ventas</button>
-          <button onClick={() => setActiveTab('stats')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'stats' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><StatsIcon/> Estadísticas</button>
-          <button onClick={() => setActiveTab('acciones')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'acciones' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><AccionesIcon/> Acciones</button>
-        </nav>
-      </div>
+    const handleLiberarBoletos = async (ventaId, numeros) => {
+        const boletosTexto = numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
+        if (!window.confirm(`¿Estás seguro de liberar los boletos [${boletosTexto}]? Esta venta se eliminará permanentemente.`)) { return; }
+        try {
+            const ventaRef = doc(db, "rifas", rifaId, "ventas", ventaId);
+            await deleteDoc(ventaRef);
+            alert("¡Boletos liberados con éxito!");
+        } catch (error) {
+            console.error("Error al liberar los boletos:", error);
+            alert("Hubo un error al liberar los boletos.");
+        }
+    };
+    
+    const handleNotificarWhatsApp = (venta) => {
+        const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
+        let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para el sorteo "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Te deseamos mucha suerte en el sorteo!`;
+        const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensajeWhats)}`;
+        window.open(waUrl, '_blank');
+    };
 
-      <div className="animate-fade-in mt-6">
-        {activeTab === 'ventas' && (
-          <div className="bg-background-light p-4 sm:p-6 rounded-xl shadow-lg border border-border-color">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-              <h2 className="text-xl font-bold">Filtros de Búsqueda</h2>
-              <div className="flex-grow sm:flex-grow-0 sm:w-72">
-                <input 
-                  type="text"
-                  placeholder="Buscar por ID o No. Boleto..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="input-field w-full"
+    const handleNotificarEmail = async (venta) => {
+        const emailValido = venta.comprador.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(venta.comprador.email);
+        if (!emailValido) { return alert(`El correo del cliente (${venta.comprador.email || 'No proporcionado'}) no es válido.`); }
+        if (!window.confirm(`¿Enviar el comprobante por correo a ${venta.comprador.email}?`)) return;
+        try {
+            const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
+            const templateParams = {
+                to_email: venta.comprador.email,
+                to_name: `${venta.comprador.nombre} ${venta.comprador.apellidos || ''}`,
+                raffle_name: venta.nombreRifa,
+                ticket_numbers: boletosTexto,
+                id_compra: venta.idCompra
+            };
+            await emailjs.send(EMAIL_CONFIG.serviceID, EMAIL_CONFIG.templateID, templateParams, EMAIL_CONFIG.publicKey);
+            alert("Correo de confirmación enviado exitosamente.");
+        } catch (error) {
+            console.error("Fallo al enviar el correo (EmailJS):", error);
+            alert(`AVISO: No se pudo enviar el correo.\nError: ${error.text || 'Revisa la consola y tu configuración de EmailJS.'}`);
+        }
+    };
+    
+    const handleEnviarRecordatorio = (venta) => {
+        const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
+        const nombreCliente = venta.comprador.nombre;
+        const nombreSorteo = venta.nombreRifa;
+        let mensaje = `¡Hola, ${nombreCliente}! 👋 Te escribimos de Sorteos App.\n\nNotamos que tu apartado para el sorteo "${nombreSorteo}" con los boletos *${boletosTexto}* ha expirado.\n\n¡No te preocupes! Aún podrías tener la oportunidad de participar. Contáctanos por este medio para ver si tus boletos siguen disponibles y ayudarte a completar la compra. ¡No te quedes fuera!`;
+        const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensaje)}`;
+        window.open(waUrl, '_blank');
+    };
+
+    const estadisticas = useMemo(() => {
+        if (!rifa || !ventas) return { apartadosCount: 0, vendidosCount: 0, disponiblesCount: 0, apartadosDinero: 0, vendidosDinero: 0 };
+        const vendidosCount = rifa.boletosVendidos || 0;
+        const apartadosArr = ventas.filter(v => v.estado === 'apartado');
+        const apartadosCount = apartadosArr.reduce((sum, v) => sum + (v.cantidad || 0), 0);
+        const disponiblesCount = rifa.boletos - vendidosCount - apartadosCount;
+        const vendidosDinero = vendidosCount * rifa.precio;
+        const apartadosDinero = apartadosCount * rifa.precio;
+        return { apartadosCount, vendidosCount, disponiblesCount, apartadosDinero, vendidosDinero };
+    }, [ventas, rifa]);
+
+    const ventasFiltradas = useMemo(() => {
+        if (!ventas) return [];
+        const terminoBusqueda = searchTerm.trim().toLowerCase();
+        return ventas
+            .filter(venta => {
+                if (!terminoBusqueda) return true;
+                const esBusquedaNumerica = !isNaN(Number(terminoBusqueda)) && terminoBusqueda !== '';
+                if (esBusquedaNumerica) {
+                    return venta.numeros && venta.numeros.includes(parseInt(terminoBusqueda, 10));
+                } else {
+                    return venta.idCompra && venta.idCompra.toLowerCase().includes(terminoBusqueda);
+                }
+            })
+            .filter(v => {
+                const fechaVenta = v.fechaApartado?.toDate();
+                if (!fechaVenta) return true;
+                if (fechaInicio && new Date(fechaVenta) < new Date(fechaInicio)) return false;
+                if (fechaFin) {
+                    const fin = new Date(fechaFin);
+                    fin.setHours(23, 59, 59, 999);
+                    if (fechaVenta > fin) return false;
+                }
+                return true;
+            })
+            .filter(v => {
+                if (filtroVentas === 'todos') return true;
+                if (filtroVentas === 'pagados') return v.estado === 'comprado';
+                if (filtroVentas === 'apartados') return v.estado === 'apartado';
+                if (filtroVentas === 'manual') return v.estado === 'comprado' && !v.userId;
+                return true;
+            });
+    }, [ventas, fechaInicio, fechaFin, filtroVentas, searchTerm]);
+
+    const datosGrafico = useMemo(() => {
+        if (!ventasFiltradas) return [];
+        const agrupadas = ventasFiltradas.reduce((acc, venta) => {
+            const fecha = venta.fechaApartado?.toDate();
+            if (!fecha) return acc;
+            let clave;
+            if (modoGrafica === 'semana') {
+                const inicioSemana = new Date(fecha);
+                inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
+                clave = inicioSemana.toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' });
+            } else {
+                clave = fecha.toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' });
+            }
+            acc[clave] = (acc[clave] || 0) + Number(venta.cantidad || 0);
+            return acc;
+        }, {});
+        return Object.entries(agrupadas).map(([fecha, total]) => ({ fecha, total })).reverse();
+    }, [ventasFiltradas, modoGrafica]);
+
+    if (cargando) return <div className="text-center p-10">Cargando detalles del sorteo...</div>;
+    if (!rifa) return <div className="text-danger text-center p-10">No se encontró el sorteo.</div>;
+    
+    return (
+        <div className="p-4 max-w-7xl mx-auto min-h-screen">
+            <Link to="/admin/historial-ventas" className="text-accent-primary hover:underline mb-4 inline-block">← Volver a la selección de sorteos</Link>
+            
+            <div className="bg-background-light border border-border-color shadow-lg rounded-xl p-6 mb-6">
+                <h1 className="text-3xl font-bold mb-4">{rifa.nombre}</h1>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                    <div className="p-2 rounded-lg bg-background-dark"><p className="text-xs text-text-subtle uppercase font-semibold">Boletos Totales</p><p className="text-2xl font-bold">{rifa.boletos}</p></div>
+                    <div className="p-2 rounded-lg bg-success/10"><p className="text-xs text-success uppercase font-semibold">Vendidos</p><p className="text-xl font-bold text-success">{estadisticas.vendidosCount} <span className="text-sm font-normal">(${estadisticas.vendidosDinero.toLocaleString()})</span></p></div>
+                    <div className="p-2 rounded-lg bg-warning/10"><p className="text-xs text-warning uppercase font-semibold">Apartados</p><p className="text-xl font-bold text-warning">{estadisticas.apartadosCount} <span className="text-sm font-normal">(${estadisticas.apartadosDinero.toLocaleString()})</span></p></div>
+                    <div className="p-2 rounded-lg bg-accent-primary/10"><p className="text-xs text-accent-primary/80 uppercase font-semibold">Disponibles</p><p className="text-2xl font-bold text-accent-primary">{estadisticas.disponiblesCount}</p></div>
+                </div>
+            </div>
+
+            <div className="border-b border-border-color mb-6">
+                <nav className="-mb-px flex space-x-2 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
+                    <button onClick={() => setActiveTab('ventas')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'ventas' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><VentasIcon/> Historial de Ventas</button>
+                    <button onClick={() => setActiveTab('stats')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'stats' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><StatsIcon/> Estadísticas</button>
+                    <button onClick={() => setActiveTab('acciones')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'acciones' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><AccionesIcon/> Acciones</button>
+                </nav>
+            </div>
+
+            <div className="animate-fade-in mt-6">
+                {activeTab === 'ventas' && (
+                    <div className="bg-background-light p-4 sm:p-6 rounded-xl shadow-lg border border-border-color">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                            <h2 className="text-xl font-bold">Filtros de Búsqueda</h2>
+                            <div className="flex-grow sm:flex-grow-0 sm:w-72">
+                                <input 
+                                    type="text"
+                                    placeholder="Buscar por ID o No. Boleto..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="input-field w-full"
+                                />
+                            </div>
+                        </div>
+                        <div className="border-b border-border-color">
+                            <nav className="-mb-px flex space-x-4 overflow-x-auto" aria-label="Filters">
+                                <button onClick={() => setFiltroVentas('todos')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'todos' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle'}`}>Todos</button>
+                                <button onClick={() => setFiltroVentas('pagados')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'pagados' ? 'border-success text-success' : 'border-transparent text-text-subtle'}`}>Pagados</button>
+                                <button onClick={() => setFiltroVentas('apartados')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'apartados' ? 'border-warning text-warning' : 'border-transparent text-text-subtle'}`}>Apartados</button>
+                                <button onClick={() => setFiltroVentas('manual')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'manual' ? 'border-purple-400 text-purple-400' : 'border-transparent text-text-subtle'}`}>Venta Manual</button>
+                            </nav>
+                        </div>
+                        <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
+                        <HistorialVentas 
+                            ventasFiltradas={ventasFiltradas} 
+                            mostrarTotal={true} 
+                            onConfirmarPago={handleConfirmarPago}
+                            onLiberarBoletos={handleLiberarBoletos}
+                            onNotificarWhatsApp={handleNotificarWhatsApp}
+                            onNotificarEmail={handleNotificarEmail}
+                            onEnviarRecordatorio={handleEnviarRecordatorio}
+                            totalBoletos={rifa.boletos}
+                        />
+                    </div>
+                )}
+                {activeTab === 'stats' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-background-light p-4 rounded-lg shadow-md border border-border-color space-y-4">
+                            <h3 className="text-lg font-bold">Filtros de Reporte</h3>
+                            <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
+                            <PanelDeExportacion rifa={rifa} ventasFiltradas={ventasFiltradas} graficoRef={graficoRef} />
+                        </div>
+                        <GraficaVentas graficoRef={graficoRef} datosGrafico={datosGrafico} modo={modoGrafica} setModo={setModoGrafica} />
+                    </div>
+                )}
+                {activeTab === 'acciones' && (
+                    <div className="bg-background-light p-6 rounded-xl shadow-lg border border-border-color">
+                        <h2 className="text-2xl font-bold mb-4">Acciones del Sorteo</h2>
+                        <p className="text-text-subtle mb-6">Usa estas herramientas para gestionar tu sorteo manualmente.</p>
+                        <button onClick={() => { setBoletosVentaManual([]); setShowModalVenta(true); }} className="btn bg-success text-white hover:bg-green-700">
+                            Registrar Venta Manual
+                        </button>
+                        <p className="text-xs text-text-subtle mt-2">Para registrar ventas en efectivo o por otros medios.</p>
+                    </div>
+                )}
+            </div>
+            {showModalVenta && (
+                <ModalVentaManual 
+                    rifa={rifa} 
+                    onClose={() => setShowModalVenta(false)}
+                    boletosOcupados={boletosOcupados}
+                    boletosSeleccionados={boletosVentaManual}
+                    setBoletosSeleccionados={setBoletosVentaManual}
+                    onAgregarMultiples={handleAgregarMultiplesManual}
                 />
-              </div>
-            </div>
-            <div className="border-b border-border-color">
-              <nav className="-mb-px flex space-x-4 overflow-x-auto" aria-label="Filters">
-                {/* REPARACIÓN: Se usan los colores semánticos del tema. */}
-                <button onClick={() => setFiltroVentas('todos')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'todos' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle'}`}>Todos</button>
-                <button onClick={() => setFiltroVentas('pagados')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'pagados' ? 'border-success text-success' : 'border-transparent text-text-subtle'}`}>Pagados</button>
-                <button onClick={() => setFiltroVentas('apartados')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'apartados' ? 'border-warning text-warning' : 'border-transparent text-text-subtle'}`}>Apartados</button>
-                <button onClick={() => setFiltroVentas('manual')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${filtroVentas === 'manual' ? 'border-purple-400 text-purple-400' : 'border-transparent text-text-subtle'}`}>Venta Manual</button>
-              </nav>
-            </div>
-            <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
-            <HistorialVentas 
-              ventasFiltradas={ventasFiltradas} 
-              mostrarTotal={true} 
-              onConfirmarPago={handleConfirmarPago}
-              onLiberarBoletos={handleLiberarBoletos}
-              onNotificarWhatsApp={handleNotificarWhatsApp}
-              onNotificarEmail={handleNotificarEmail}
-              onEnviarRecordatorio={handleEnviarRecordatorio}
-              totalBoletos={rifa.boletos}
-            />
-          </div>
-        )}
-        {activeTab === 'stats' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-background-light p-4 rounded-lg shadow-md border border-border-color space-y-4">
-              <h3 className="text-lg font-bold">Filtros de Reporte</h3>
-              <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />
-              <PanelDeExportacion rifa={rifa} ventasFiltradas={ventasFiltradas} graficoRef={graficoRef} />
-            </div>
-            <GraficaVentas graficoRef={graficoRef} datosGrafico={datosGrafico} modo={modoGrafica} setModo={setModoGrafica} />
-          </div>
-        )}
-        {activeTab === 'acciones' && (
-          <div className="bg-background-light p-6 rounded-xl shadow-lg border border-border-color">
-             <h2 className="text-2xl font-bold mb-4">Acciones del Sorteo</h2>
-             <p className="text-text-subtle mb-6">Usa estas herramientas para gestionar tu sorteo manualmente.</p>
-             <button onClick={() => setShowModalVenta(true)} className="btn bg-success text-white hover:bg-green-700">
-               + Registrar Venta Manual
-             </button>
-             <p className="text-xs text-text-subtle mt-2">Para registrar ventas en efectivo o por otros medios.</p>
-          </div>
-        )}
-      </div>
-      {showModalVenta && (
-        <ModalVentaManual rifa={rifa} onClose={() => setShowModalVenta(false)} />
-      )}
-    </div>
-  );
+            )}
+        </div>
+    );
 }
 
-export default RifaDetalleAdmin; 
+export default RifaDetalleAdmin;
