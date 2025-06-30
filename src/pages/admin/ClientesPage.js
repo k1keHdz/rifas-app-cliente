@@ -18,7 +18,6 @@ const StatCard = ({ title, value, icon }) => (
     </div>
 );
 
-
 function ClientesPage() {
     const [clientes, setClientes] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -80,7 +79,7 @@ function ClientesPage() {
     const exportarCSV = () => {
         const headers = ["Nombre Completo", "Teléfono", "Email", "Estado", "Fecha Primera Compra", "Total Boletos Comprados"];
         const rows = clientesFiltrados.map(cliente => [
-            `"${cliente.nombre} ${cliente.apellidos}"`,
+            `"${cliente.nombre} ${cliente.apellidos || ''}"`,
             `"${cliente.telefono}"`,
             `"${cliente.email || 'N/A'}"`,
             `"${cliente.estado || 'N/A'}"`,

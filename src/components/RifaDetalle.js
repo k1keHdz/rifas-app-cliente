@@ -1,5 +1,3 @@
-// src/components/RifaDetalle.js
-
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
@@ -19,7 +17,7 @@ import ModalCooldown from "../components/ModalCooldown";
 
 function RifaDetalle() {
     const { id: rifaId } = useParams();
-    const { currentUser, userData } = useAuth();
+    const { currentUser, userData, cargandoAuth } = useAuth();
     const { config, cargandoConfig } = useConfig();
     
     const { 
@@ -32,7 +30,6 @@ function RifaDetalle() {
 
     const [rifa, setRifa] = useState(null);
     const [cargandoRifa, setCargandoRifa] = useState(true);
-    const [datosPerfil, setDatosPerfil] = useState({});
     const [filtroDisponibles, setFiltroDisponibles] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [boletosPorPagina] = useState(5000);
@@ -93,18 +90,6 @@ function RifaDetalle() {
         return () => unsubscribe();
     }, [rifaId]);
 
-    useEffect(() => {
-        if (currentUser) {
-            const userRef = doc(db, 'usuarios', currentUser.uid);
-            const unsubscribe = onSnapshot(userRef, (docSnap) => {
-                if (docSnap.exists()) { setDatosPerfil(docSnap.data()); }
-            });
-            return () => unsubscribe();
-        } else {
-            setDatosPerfil({});
-        }
-    }, [currentUser]);
-
     const handleReservarPorWhatsapp = async () => {
         if (boletosSeleccionados.length === 0) { 
             setAlertaGeneral("Debes seleccionar al menos un boleto para continuar.");
@@ -131,7 +116,7 @@ function RifaDetalle() {
         setImagenIndex((prev) => (prev + direccion + rifa.imagenes.length) % rifa.imagenes.length);
     };
 
-    if (cargandoRifa || cargandoConfig || cargandoBoletos) return <div className="text-center py-40">Cargando sorteo...</div>;
+    if (cargandoRifa || cargandoConfig || cargandoBoletos || cargandoAuth) return <div className="text-center py-40">Cargando sorteo...</div>;
     if (!rifa) return <div className="p-4 text-center"><p>Sorteo no encontrado.</p></div>;
     
     const boletosVendidos = rifa.boletosVendidos || 0;
@@ -238,7 +223,7 @@ function RifaDetalle() {
             
             {mostrarModalDatos && <ModalDatosComprador 
                 onCerrar={() => setMostrarModalDatos(false)} 
-                datosIniciales={datosPerfil}
+                datosIniciales={userData}
                 rifa={rifa}
                 boletosSeleccionados={boletosSeleccionados}
                 boletosOcupados={boletosOcupados}

@@ -1,5 +1,3 @@
-// src/components/ModalDatosComprador.js
-
 import { useState, useEffect } from 'react';
 import { collection, addDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
@@ -17,13 +15,7 @@ function ModalDatosComprador({ onCerrar, datosIniciales = {}, rifa, boletosSelec
     const [datos, setDatos] = useState({
         nombre: '',
         apellidos: '',
-        // =================================================================================================
-        // INICIO DE LA MODIFICACIÓN: Se añade el campo 'estado'
-        // =================================================================================================
         estado: '',
-        // =================================================================================================
-        // FIN DE LA MODIFICACIÓN
-        // =================================================================================================
         telefono: '',
         email: '',
     });
@@ -31,20 +23,17 @@ function ModalDatosComprador({ onCerrar, datosIniciales = {}, rifa, boletosSelec
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
+        const authEmail = currentUser?.email || '';
+        const profileEmail = datosIniciales?.email || '';
+
         setDatos({
-            nombre: datosIniciales.nombre || '',
-            apellidos: datosIniciales.apellidos || '',
-            // =================================================================================================
-            // INICIO DE LA MODIFICACIÓN: Se carga el 'estado' desde los datos iniciales
-            // =================================================================================================
-            estado: datosIniciales.estado || '',
-            // =================================================================================================
-            // FIN DE LA MODIFICACIÓN
-            // =================================================================================================
-            telefono: datosIniciales.telefono || '',
-            email: datosIniciales.email || '',
+            nombre: datosIniciales?.nombre || '',
+            apellidos: datosIniciales?.apellidos || '',
+            estado: datosIniciales?.estado || '',
+            telefono: datosIniciales?.telefono || '',
+            email: authEmail || profileEmail,
         });
-    }, [datosIniciales]);
+    }, [datosIniciales, currentUser]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -53,16 +42,10 @@ function ModalDatosComprador({ onCerrar, datosIniciales = {}, rifa, boletosSelec
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // =================================================================================================
-        // INICIO DE LA MODIFICACIÓN: Se añade 'estado' a la validación
-        // =================================================================================================
         if (!datos.nombre || !datos.apellidos || !datos.telefono || !datos.estado) {
             setError('El nombre, apellidos, estado y teléfono son obligatorios.');
             return;
         }
-        // =================================================================================================
-        // FIN DE LA MODIFICACIÓN
-        // =================================================================================================
 
         setIsSubmitting(true);
         setError('');
@@ -79,7 +62,7 @@ function ModalDatosComprador({ onCerrar, datosIniciales = {}, rifa, boletosSelec
             const idCompra = nanoid(8).toUpperCase();
             const ventaData = {
                 idCompra,
-                comprador: datos, // 'datos' ya incluye el nuevo campo 'estado'
+                comprador: datos,
                 numeros: boletosSeleccionados,
                 cantidad: boletosSeleccionados.length,
                 estado: 'apartado',
@@ -152,9 +135,6 @@ function ModalDatosComprador({ onCerrar, datosIniciales = {}, rifa, boletosSelec
                             className="input-field mt-1"
                         />
                     </div>
-                    {/* ================================================================================================= */}
-                    {/* INICIO DE LA MODIFICACIÓN: Se añade el campo 'Estado' al formulario del modal                */}
-                    {/* ================================================================================================= */}
                     <div>
                         <label htmlFor="modal-estado" className="block text-sm font-medium text-text-subtle">Estado de Residencia</label>
                         <input
@@ -163,9 +143,6 @@ function ModalDatosComprador({ onCerrar, datosIniciales = {}, rifa, boletosSelec
                             className="input-field mt-1"
                         />
                     </div>
-                    {/* ================================================================================================= */}
-                    {/* FIN DE LA MODIFICACIÓN                                                                          */}
-                    {/* ================================================================================================= */}
                     <div>
                         <label className="block text-sm font-medium text-text-subtle">Correo Electrónico (Opcional)</label>
                         <input

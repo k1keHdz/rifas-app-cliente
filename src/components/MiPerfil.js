@@ -1,5 +1,3 @@
-// src/components/MiPerfil.js
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getAuth, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
@@ -25,9 +23,8 @@ const SocialIcon = ({ href, title, icon: Icon, className }) => (
     </a>
 );
 
-
 function MiPerfil() {
-    const { currentUser, userData } = useAuth();
+    const { currentUser, userData, updateUserData } = useAuth();
     
     const [activeTab, setActiveTab] = useState('historial');
     const [nombre, setNombre] = useState('');
@@ -43,13 +40,7 @@ function MiPerfil() {
     const [currentPasswordForPass, setCurrentPasswordForPass] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    // =================================================================================================
-    // INICIO DE LA MODIFICACIÓN: Se unifica la información de las rifas en un solo estado.
-    // =================================================================================================
     const [rifasData, setRifasData] = useState({});
-    // =================================================================================================
-    // FIN DE LA MODIFICACIÓN
-    // =================================================================================================
 
     const tuNumeroDeWhatsApp = '527773367064';
     const tuUsuarioDeTelegram = 'tu_usuario_tg';
@@ -100,18 +91,14 @@ function MiPerfil() {
         return () => unsubscribe();
     }, [currentUser, activeTab]);
 
-    // =================================================================================================
-    // INICIO DE LA MODIFICACIÓN: Este useEffect ahora obtiene el objeto completo de la rifa.
-    // =================================================================================================
     useEffect(() => {
         if (misCompras.length === 0) return;
-
         const fetchRifaData = async () => {
             const rifaIdsUnicas = [...new Set(misCompras.map(c => c.rifaId))];
             const nuevasRifasData = {};
             
             const promises = rifaIdsUnicas.map(async (rifaId) => {
-                if (!rifasData[rifaId]) { // Solo busca si no tenemos ya los datos
+                if (!rifasData[rifaId]) {
                     try {
                         const rifaRef = doc(db, 'rifas', rifaId);
                         const rifaSnap = await getDoc(rifaRef);
@@ -130,12 +117,8 @@ function MiPerfil() {
                 setRifasData(prev => ({ ...prev, ...nuevasRifasData }));
             }
         };
-
         fetchRifaData();
     }, [misCompras, rifasData]);
-    // =================================================================================================
-    // FIN DE LA MODIFICACIÓN
-    // =================================================================================================
 
     const handleProfileUpdate = async (e) => {
         e.preventDefault();
@@ -146,7 +129,9 @@ function MiPerfil() {
         }
         try {
             const userRef = doc(db, 'usuarios', currentUser.uid);
-            await updateDoc(userRef, { nombre, apellidos, telefono, estado });
+            const updatedData = { nombre, apellidos, telefono, estado };
+            await updateDoc(userRef, updatedData);
+            updateUserData(updatedData);
             setModalInfo({ type: 'exito', title: '¡Éxito!', message: 'Tus datos del perfil han sido actualizados.' });
         } catch (err) {
             console.error("Error al actualizar perfil:", err);
@@ -166,7 +151,16 @@ function MiPerfil() {
         try {
             const credential = EmailAuthProvider.credential(user.email, currentPasswordForEmail);
             await reauthenticateWithCredential(user, credential);
+            
+            // Actualizar Firestore ANTES de enviar la verificación
+            const userRef = doc(db, 'usuarios', currentUser.uid);
+            await updateDoc(userRef, { email: newEmail });
+            
+            // Forzar la actualización en el contexto
+            updateUserData({ email: newEmail });
+
             await verifyBeforeUpdateEmail(user, newEmail);
+            
             setNewEmail('');
             setCurrentPasswordForEmail('');
             setModalInfo({ type: 'exito', title: 'Correo de Verificación Enviado', message: `Revisa la bandeja de entrada de ${newEmail} y haz clic en el enlace para completar el cambio.` });
@@ -293,17 +287,11 @@ function MiPerfil() {
                                                                     <p className="text-xs text-text-subtle mb-4">
                                                                         Fecha de compra: {compra.fechaApartado?.seconds ? new Date(compra.fechaApartado.seconds * 1000).toLocaleString('es-MX') : 'N/A'}
                                                                     </p>
-                                                                    {/* ================================================================================================= */}
-                                                                    {/* INICIO DE LA MODIFICACIÓN: Se muestra el enlace condicionalmente                                */}
-                                                                    {/* ================================================================================================= */}
                                                                     {rifaActual && rifaActual.estado === 'activa' && (
                                                                         <Link to={`/rifa/${compra.rifaId}`} className="text-sm font-semibold text-accent-primary hover:underline">
                                                                             Ir al Sorteo →
                                                                         </Link>
                                                                     )}
-                                                                    {/* ================================================================================================= */}
-                                                                    {/* FIN DE LA MODIFICACIÓN                                                                          */}
-                                                                    {/* ================================================================================================= */}
                                                                 </div>
                                                             </div>
                                                             

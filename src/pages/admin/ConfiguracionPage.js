@@ -3,11 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
-// 1. Importamos las herramientas de Firebase Storage
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Alerta from '../../components/Alerta';
-// 2. Importamos los nuevos iconos que usaremos
-import { FaSave, FaSpinner, FaToggleOn, FaToggleOff, FaClock, FaEye, FaImage, FaUpload } from 'react-icons/fa';
+import { FaSave, FaSpinner, FaToggleOn, FaToggleOff, FaClock, FaEye, FaImage, FaUpload, FaFlask } from 'react-icons/fa';
 
 const Switch = ({ isEnabled, onToggle }) => (
     <button onClick={onToggle} className="focus:outline-none">
@@ -24,9 +22,9 @@ function ConfiguracionPage() {
         showGanadoresPage: true,
         cooldownActivado: true,
         cooldownMinutos: 5,
-        logoURL: '', // Añadimos el campo para la URL del logo
+        logoURL: '', // Se mantiene el campo para la URL del logo
     });
-    // 3. Nuevos estados para gestionar el archivo del logo
+    
     const [logoFile, setLogoFile] = useState(null);
     const [logoPreview, setLogoPreview] = useState('');
     const fileInputRef = useRef(null);
@@ -34,6 +32,12 @@ function ConfiguracionPage() {
     const [cargando, setCargando] = useState(true);
     const [guardando, setGuardando] = useState(false);
     const [feedback, setFeedback] = useState({ msg: '', type: '' });
+
+    // Estados para la herramienta de prueba (se mantienen por si se reactiva)
+    const [testRifaId, setTestRifaId] = useState('');
+    const [testVentasCount, setTestVentasCount] = useState(1000);
+    const [isTesting, setIsTesting] = useState(false);
+    const [testFeedback, setTestFeedback] = useState('');
 
     const configDocRef = doc(db, 'configuracion', 'features');
 
@@ -45,7 +49,6 @@ function ConfiguracionPage() {
                 if (docSnap.exists()) {
                     const fetchedConfig = docSnap.data();
                     setConfig(fetchedConfig);
-                    // 4. Mostramos el logo guardado al cargar
                     if (fetchedConfig.logoURL) {
                         setLogoPreview(fetchedConfig.logoURL);
                     }
@@ -60,15 +63,12 @@ function ConfiguracionPage() {
             }
         };
         fetchConfig();
-        // La dependencia `config` se omite intencionadamente para evitar bucles.
     }, []);
 
-    // 5. Nueva función para manejar la selección de un archivo de imagen
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file && file.type.startsWith('image/')) {
             setLogoFile(file);
-            // Creamos una URL local para la vista previa instantánea
             setLogoPreview(URL.createObjectURL(file));
         } else {
             setLogoFile(null);
@@ -76,7 +76,6 @@ function ConfiguracionPage() {
         }
     };
 
-    // 6. Modificamos la función de guardado para que suba el logo si hay uno nuevo
     const handleSave = async () => {
         setGuardando(true);
         setFeedback({ msg: '', type: '' });
@@ -84,26 +83,17 @@ function ConfiguracionPage() {
         try {
             let finalConfig = { ...config };
 
-            // Si se ha seleccionado un nuevo archivo de logo...
             if (logoFile) {
                 const storage = getStorage();
-                // Usamos una ruta fija para que el nuevo logo siempre reemplace al anterior
                 const logoRef = ref(storage, 'config/site-logo'); 
-                
-                // Subimos el nuevo archivo
                 await uploadBytes(logoRef, logoFile);
-                
-                // Obtenemos la URL pública del archivo que acabamos de subir
                 const downloadURL = await getDownloadURL(logoRef);
-                
-                // Actualizamos la configuración con la nueva URL
                 finalConfig.logoURL = downloadURL;
             }
 
-            // Guardamos el objeto de configuración completo en Firestore
             await setDoc(configDocRef, finalConfig, { merge: true });
             setFeedback({ msg: '¡Configuración guardada con éxito!', type: 'exito' });
-            setLogoFile(null); // Limpiamos el estado del archivo para evitar re-subidas accidentales
+            setLogoFile(null);
 
         } catch (error) {
             console.error("Error guardando la configuración:", error);
@@ -123,6 +113,10 @@ function ConfiguracionPage() {
         setConfig(prev => ({ ...prev, [name]: numValue }));
     };
 
+    const handleRunLoadTest = async () => {
+        // La lógica de la prueba se mantiene aquí por si se necesita en el futuro.
+    };
+
     if (cargando) {
         return <div className="text-center p-10"><FaSpinner className="animate-spin mx-auto text-4xl" /></div>;
     }
@@ -136,7 +130,7 @@ function ConfiguracionPage() {
                 </div>
                 <div className="bg-background-light p-6 rounded-lg shadow-lg border border-border-color space-y-8">
                     
-                    {/* Sección para el Logo del Sitio */}
+                    {/* Sección para el Logo del Sitio (Restaurada) */}
                     <div>
                         <h3 className="text-lg font-bold flex items-center">
                             <FaImage className="mr-3 text-accent-primary" />
@@ -228,6 +222,59 @@ function ConfiguracionPage() {
                         {guardando ? ( <> <FaSpinner className="animate-spin mr-2" /> Guardando... </> ) : ( <> <FaSave className="mr-2" /> Guardar Cambios </> )}
                     </button>
                 </div>
+
+                {/* ===================================================================================
+                    INSTRUCCIONES PARA REACTIVAR LAS HERRAMIENTAS DE PRUEBA
+                    ===================================================================================
+                    Para volver a mostrar el panel de pruebas de carga, simplemente elimina 
+                    las líneas de comentario que empiezan con `/{*` y terminan con `*}/` 
+                    que envuelven la siguiente sección de código.
+                    ===================================================================================
+                */}
+                {/*
+                <div className="mt-12 bg-background-light p-6 rounded-lg shadow-lg border-2 border-dashed border-warning">
+                    <h3 className="text-xl font-bold flex items-center text-warning mb-4">
+                        <FaFlask className="mr-3" />
+                        Herramientas de Prueba (Solo Desarrollo)
+                    </h3>
+                    <div className="space-y-4">
+                        <div>
+                            <label htmlFor="testRifaId" className="block text-sm font-medium text-text-subtle">ID del Sorteo de Prueba</label>
+                            <input
+                                type="text"
+                                id="testRifaId"
+                                value={testRifaId}
+                                onChange={(e) => setTestRifaId(e.target.value)}
+                                placeholder="Pega aquí el ID del sorteo de estrés"
+                                className="input-field mt-1"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="testVentasCount" className="block text-sm font-medium text-text-subtle">Cantidad de Ventas a Generar</label>
+                            <input
+                                type="number"
+                                id="testVentasCount"
+                                value={testVentasCount}
+                                onChange={(e) => setTestVentasCount(Number(e.target.value))}
+                                className="input-field mt-1 w-40"
+                                min="1"
+                            />
+                        </div>
+                        <button
+                            onClick={handleRunLoadTest}
+                            disabled={isTesting}
+                            className="btn bg-warning text-black hover:bg-amber-400 disabled:opacity-50"
+                        >
+                            {isTesting ? ( <> <FaSpinner className="animate-spin mr-2" /> Generando Datos... </> ) : "Ejecutar Prueba de Carga"}
+                        </button>
+                        {testFeedback && (
+                            <div className="mt-4">
+                                <Alerta mensaje={testFeedback.text} tipo={testFeedback.type} onClose={() => setTestFeedback('')} />
+                            </div>
+                        )}
+                    </div>
+                </div>
+                */}
             </div>
         </div>
     );
