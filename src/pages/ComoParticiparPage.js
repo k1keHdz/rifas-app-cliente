@@ -1,5 +1,3 @@
-// src/pages/ComoParticiparPage.js
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -8,14 +6,7 @@ const ElegirIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" heig
 const SeleccionarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M3 3h18v18H3z"/><path d="M9 9h6v6H9z"/><path d="M9 1v2"/><path d="M15 1v2"/><path d="M9 21v-2"/><path d="M15 21v-2"/><path d="M1 9h2"/><path d="M1 15h2"/><path d="M21 9h-2"/><path d="M21 15h-2"/></svg>;
 const PagarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M12.5 8 8 9.5"/><path d="m3 11 5 1.5"/><path d="M12.5 16 8 14.5"/></svg>;
 const EsperarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2.5-2.5-2.5S6 10.62 6 12a2.5 2.5 0 0 0 2.5 2.5z"/><path d="M20 12h-6"/><path d="M14.5 4.5 17 2"/><path d="m14 17 3 3"/><path d="M2 12h1.5"/><path d="m5 4.5 1 1"/><path d="m5 17 1-1"/></svg>;
-
-// =================================================================================================
-// INICIO DE LA MODIFICACIÓN: Se añade el nuevo icono para el paso de registro
-// =================================================================================================
 const RegistroIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>;
-// =================================================================================================
-// FIN DE LA MODIFICACIÓN
-// =================================================================================================
 
 const Paso = ({ icono, titulo, children }) => (
     <div className="flex">
@@ -50,7 +41,7 @@ function ComoParticiparPage() {
                     <div className="relative rounded-xl shadow-2xl overflow-hidden border border-border-color" style={{ paddingTop: '56.25%' /* Proporción 16:9 */ }}>
                         <iframe 
                             className="absolute top-0 left-0 w-full h-full"
-                            src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                            src="https://www.youtube.com/embed/EB0m6qMeopA" 
                             title="Video Tutorial de Cómo Participar" 
                             frameBorder="0" 
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -74,17 +65,11 @@ function ComoParticiparPage() {
                             Una vez dentro del sorteo, verás el tablero de boletos. Elige tus números de la suerte haciendo clic sobre ellos. Puedes seleccionar tantos como quieras. ¡No olvides usar nuestra "Máquina de la Suerte" si te sientes indeciso!
                         </Paso>
                         
-                        {/* ================================================================================================= */}
-                        {/* INICIO DE LA MODIFICACIÓN: Se añade el paso sobre los beneficios de registrarse                   */}
-                        {/* ================================================================================================= */}
                         <div className="md:col-span-2 border-2 border-dashed border-accent-primary/50 bg-background-light p-6 rounded-xl">
                             <Paso icono={<RegistroIcon/>} titulo="Paso 2.5 (Recomendado): ¡Crea tu Cuenta!">
                                 Aunque puedes comprar como invitado, <Link to="/registro" className="text-accent-primary font-semibold hover:underline">crear una cuenta</Link> es gratis y te da grandes beneficios: tus datos se llenarán automáticamente en futuras compras, podrás ver todo tu historial de boletos y recibirás soporte prioritario.
                             </Paso>
                         </div>
-                        {/* ================================================================================================= */}
-                        {/* FIN DE LA MODIFICACIÓN                                                                          */}
-                        {/* ================================================================================================= */}
 
                         <Paso icono={<PagarIcon/>} titulo="Paso 3: Aparta y Paga">
                             Cuando tengas tus boletos, haz clic en "Apartar por WhatsApp". Serás redirigido para enviarnos un mensaje con los detalles de tu compra. Te enviaremos las instrucciones de pago. Tienes 12 horas para completar el pago antes de que tus boletos se liberen.
