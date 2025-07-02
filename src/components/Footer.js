@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useConfig } from '../context/ConfigContext'; // 1. Importamos el hook de configuración
-import { FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa';
+import { useConfig } from '../context/ConfigContext';
+import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaTelegramPlane, FaWhatsapp, FaUsers } from 'react-icons/fa';
 
 const FooterSocialIcon = ({ href, title, icon: Icon }) => (
     <a href={href} target="_blank" rel="noopener noreferrer" title={title} className="text-gray-400 hover:text-white transition-colors duration-300">
@@ -12,18 +12,14 @@ const FooterSocialIcon = ({ href, title, icon: Icon }) => (
     </a>
 );
 
-
 function Footer() {
-    const { config } = useConfig(); // 2. Usamos el hook para obtener la configuración
+    const { config, datosGenerales, cargandoConfig } = useConfig();
 
-    const socialLinks = {
-        facebook: 'https://facebook.com/tu_pagina_real',
-        instagram: 'https://instagram.com/tu_usuario_real',
-        tiktok: 'https://tiktok.com/@tu_usuario_real'
-    };
-
-    // 3. Definimos el logo a usar, con un respaldo
-    const logoToShow = config?.logoURL || "https://i.imgur.com/a9A1Jps.png";
+    if (cargandoConfig || !config || !datosGenerales) {
+        return <footer className="bg-background-dark h-48"></footer>;
+    }
+    
+    const logoToShow = config.logoURL || "https://i.imgur.com/a9A1Jps.png";
 
     return (
         <footer className="bg-background-dark">
@@ -41,8 +37,7 @@ function Footer() {
                         <h3 className="text-sm font-semibold text-text-subtle tracking-wider uppercase">Navegación</h3>
                         <ul className="mt-4 space-y-2">
                             <li><Link to="/" className="text-base hover:opacity-75">Inicio</Link></li>
-                            {/* El enlace a ganadores también respeta la configuración */}
-                            {config?.showGanadoresPage && (
+                            {config.showGanadoresPage && (
                                 <li><Link to="/ganadores" className="text-base hover:opacity-75">Ganadores</Link></li>
                             )}
                             <li><Link to="/como-participar" className="text-base hover:opacity-75">Cómo Participar</Link></li>
@@ -61,16 +56,21 @@ function Footer() {
                     
                     <div>
                         <h3 className="text-sm font-semibold text-text-subtle tracking-wider uppercase">Síguenos</h3>
-                        <div className="flex mt-4 space-x-6">
-                            <FooterSocialIcon href={socialLinks.facebook} title="Facebook" icon={FaFacebook} />
-                            <FooterSocialIcon href={socialLinks.instagram} title="Instagram" icon={FaInstagram} />
-                            <FooterSocialIcon href={socialLinks.tiktok} title="TikTok" icon={FaTiktok} />
+                        <div className="flex mt-4 space-x-6 flex-wrap gap-y-4">
+                            {/* LÓGICA DE VISIBILIDAD: El icono solo aparece si el enlace existe Y su interruptor para el Footer está en 'true' */}
+                            {datosGenerales.urlFacebook && datosGenerales.mostrarFacebookEnFooter && <FooterSocialIcon href={datosGenerales.urlFacebook} title="Facebook" icon={FaFacebook} />}
+                            {datosGenerales.urlInstagram && datosGenerales.mostrarInstagramEnFooter && <FooterSocialIcon href={datosGenerales.urlInstagram} title="Instagram" icon={FaInstagram} />}
+                            {datosGenerales.urlTiktok && datosGenerales.mostrarTiktokEnFooter && <FooterSocialIcon href={datosGenerales.urlTiktok} title="TikTok" icon={FaTiktok} />}
+                            {datosGenerales.urlYoutube && datosGenerales.mostrarYoutubeEnFooter && <FooterSocialIcon href={datosGenerales.urlYoutube} title="YouTube" icon={FaYoutube} />}
+                            {datosGenerales.urlTelegram && datosGenerales.mostrarTelegramEnFooter && <FooterSocialIcon href={datosGenerales.urlTelegram} title="Telegram" icon={FaTelegramPlane} />}
+                            {datosGenerales.urlWhatsappContacto && datosGenerales.mostrarWhatsappContactoEnFooter && <FooterSocialIcon href={datosGenerales.urlWhatsappContacto} title="WhatsApp" icon={FaWhatsapp} />}
+                            {datosGenerales.urlGrupoWhatsapp && datosGenerales.mostrarGrupoWhatsappEnFooter && <FooterSocialIcon href={datosGenerales.urlGrupoWhatsapp} title="Grupo de WhatsApp" icon={FaUsers} />}
                         </div>
                     </div>
 
                 </div>
                 <div className="mt-8 border-t border-border-color pt-8 text-center">
-                    <p className="text-base text-text-subtle">&copy; 2025 SorteosElPrimo. Todos los derechos reservados.</p>
+                    <p className="text-base text-text-subtle">&copy; 2025 Sorteos App. Todos los derechos reservados.</p>
                 </div>
             </div>
         </footer>

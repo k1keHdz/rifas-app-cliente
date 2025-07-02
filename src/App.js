@@ -1,5 +1,3 @@
-// src/App.js
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { RifasProvider } from "./context/RifasContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -49,9 +47,13 @@ function AppRoutes() {
             <Route path="/admin" element={<RutaProtegida rolRequerido="admin"><AdminDashboard /></RutaProtegida>} />
             <Route path="/admin/gestionar-rifas" element={<RutaProtegida rolRequerido="admin"><GestionarRifasPage /></RutaProtegida>} />
             <Route path="/admin/historial-ventas" element={<RutaProtegida rolRequerido="admin"><SeleccionarRifaHistorial /></RutaProtegida>} />
+            
+            {/* --- RUTA CORREGIDA --- */}
+            {/* Esta es la ruta correcta y única para ver el detalle de un sorteo como admin */}
+            <Route path="/admin/historial-ventas/:id" element={<RutaProtegida rolRequerido="admin"><RifaDetalleAdmin /></RutaProtegida>} />
+            
             <Route path="/admin/clientes" element={<RutaProtegida rolRequerido="admin"><ClientesPage /></RutaProtegida>} />
             <Route path="/admin/configuracion" element={<RutaProtegida rolRequerido="admin"><ConfiguracionPage /></RutaProtegida>} />
-            <Route path="/admin/rifa/:id" element={<RutaProtegida rolRequerido="admin"><RifaDetalleAdmin /></RutaProtegida>} />
             <Route path="/admin/ganadores" element={<RutaProtegida rolRequerido="admin"><GestionarGanadoresPage /></RutaProtegida>} />
             <Route path="/completar-perfil" element={<RutaProtegida><CompletarPerfil /></RutaProtegida>} />
             <Route path="/perfil" element={<RutaProtegida><MiPerfil /></RutaProtegida>} />

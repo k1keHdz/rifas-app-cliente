@@ -11,35 +11,67 @@ export function useConfig() {
 }
 
 export function ConfigProvider({ children }) {
-    const [config, setConfig] = useState(null);
-    const [cargandoConfig, setCargandoConfig] = useState(true);
+    // MODIFICADO: Ahora tenemos dos estados para la configuración
+    const [featuresConfig, setFeaturesConfig] = useState(null); // Para 'features'
+    const [datosGenerales, setDatosGenerales] = useState(null); // NUEVO: Para 'datosGenerales'
 
+    // MODIFICADO: Y dos estados de carga para controlar ambos
+    const [cargandoFeatures, setCargandoFeatures] = useState(true);
+    const [cargandoGenerales, setCargandoGenerales] = useState(true);
+
+    // Este useEffect se encarga de leer el documento 'features'
     useEffect(() => {
-        const configDocRef = doc(db, 'configuracion', 'features');
-
-        const unsubscribe = onSnapshot(configDocRef, (docSnap) => {
+        const featuresDocRef = doc(db, 'configuracion', 'features');
+        const unsubscribe = onSnapshot(featuresDocRef, (docSnap) => {
             if (docSnap.exists()) {
-                setConfig(docSnap.data());
+                setFeaturesConfig(docSnap.data());
             } else {
-                console.log("No se encontró el documento de configuración, se usarán valores por defecto.");
-                setConfig({
+                console.log("No se encontró el documento de 'features', se usarán valores por defecto.");
+                setFeaturesConfig({
                     showGanadoresPage: true,
                     cooldownActivado: false,
                     cooldownMinutos: 5,
                 });
             }
-            setCargandoConfig(false);
+            setCargandoFeatures(false);
         }, (error) => {
-            console.error("Error al cargar la configuración en tiempo real:", error);
-            setCargandoConfig(false);
+            console.error("Error al cargar la configuración de 'features':", error);
+            setCargandoFeatures(false);
         });
 
         return () => unsubscribe();
     }, []);
 
+    // NUEVO: Este useEffect se encarga de leer nuestros nuevos 'datosGenerales'
+    useEffect(() => {
+        const generalesDocRef = doc(db, 'configuracion', 'datosGenerales');
+        const unsubscribe = onSnapshot(generalesDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setDatosGenerales(docSnap.data());
+            } else {
+                console.log("No se encontró el documento de 'datosGenerales', se usarán valores por defecto.");
+                // Proporcionamos valores por defecto para que la app no se rompa si el doc no existe
+                setDatosGenerales({
+                    WhatsappPrincipal: '5210000000000',
+                    urlFacebook: 'https://facebook.com',
+                    // ... puedes añadir más valores por defecto para los otros campos aquí
+                });
+            }
+            setCargandoGenerales(false);
+        }, (error) => {
+            console.error("Error al cargar los datos generales:", error);
+            setCargandoGenerales(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+
+    // MODIFICADO: El valor del contexto ahora incluye todo
     const value = {
-        config,
-        cargandoConfig,
+        config: featuresConfig, // Mantenemos el nombre 'config' por compatibilidad
+        datosGenerales: datosGenerales, // NUEVO: nuestros datos de contacto
+        cargandoConfig: cargandoFeatures || cargandoGenerales, // La carga termina cuando AMBOS terminan
     };
 
     return (

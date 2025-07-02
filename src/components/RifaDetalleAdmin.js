@@ -1,3 +1,5 @@
+// src/components/RifaDetalleAdmin.js
+
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { doc, collection, onSnapshot, query, orderBy, getDocs, limit, startAfter, where, getCountFromServer, writeBatch, increment, deleteDoc } from "firebase/firestore";
@@ -13,7 +15,7 @@ import emailjs from '@emailjs/browser';
 import EMAIL_CONFIG from '../emailjsConfig';
 import { formatTicketNumber } from "../utils/rifaHelper";
 
-// --- Íconos (Sin cambios) ---
+// --- Íconos ---
 const VentasIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
 const StatsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M3 3v18h18"/><path d="m18 9-5 5-4-4-3 3"/></svg>;
 const AccionesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
@@ -88,7 +90,7 @@ function RifaDetalleAdmin() {
     
     const handleNotificarWhatsApp = (venta) => {
         const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
-        let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para el sorteo "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Te deseamos mucha suerte en el sorteo!`;
+        let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para: "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Te deseamos mucha suerte en el sorteo!`;
         const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensajeWhats)}`;
         window.open(waUrl, '_blank');
     };
@@ -112,7 +114,7 @@ function RifaDetalleAdmin() {
         const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
         const nombreCliente = venta.comprador.nombre;
         const nombreSorteo = venta.nombreRifa;
-        let mensaje = `¡Hola, ${nombreCliente}! 👋 Te escribimos de Sorteos App.\n\nNotamos que tu apartado para el sorteo "${nombreSorteo}" con los boletos *${boletosTexto}* ha expirado.\n\n¡No te preocupes! Aún podrías tener la oportunidad de participar. Contáctanos por este medio para ver si tus boletos siguen disponibles y ayudarte a completar la compra. ¡No te quedes fuera!`;
+        let mensaje = `¡Hola, ${nombreCliente}! 👋 Te escribimos de Sorteos El Primo.\n\nNotamos que tu apartado para: "${nombreSorteo}" con los boletos *${boletosTexto}* ha expirado.\n\n¡No te preocupes! Aún podrías tener la oportunidad de participar. Contáctanos por este medio para ver si tus boletos siguen disponibles y ayudarte a completar la compra. ¡No te quedes fuera!`;
         const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensaje)}`;
         window.open(waUrl, '_blank');
     };
@@ -169,14 +171,10 @@ function RifaDetalleAdmin() {
         fetchVentasCompletas();
     }, [rifaId, activeTab, fechaInicio, fechaFin]);
 
-    // --- EFECTO DE SINCRONIZACIÓN CORREGIDO ---
     useEffect(() => {
         const docRef = doc(db, "rifas", rifaId);
         const unsubscribeRifa = onSnapshot(docRef, (docSnap) => setRifa(docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null));
         
-        // Este listener ahora se encarga de AMBAS tareas:
-        // 1. Poblar el mapa completo de boletosOcupados.
-        // 2. Contar el total de boletos apartados.
         const ventasRef = collection(db, "rifas", rifaId, "ventas");
         const unsubscribeVentas = onSnapshot(query(ventasRef), (snapshot) => {
             const ocupados = new Map();
@@ -190,8 +188,8 @@ function RifaDetalleAdmin() {
                     tempApartadosCount += venta.cantidad || 0;
                 }
             });
-            setBoletosOcupados(ocupados); // Actualiza el mapa COMPLETO
-            setApartadosRealesCount(tempApartadosCount); // Actualiza el contador de apartados
+            setBoletosOcupados(ocupados);
+            setApartadosRealesCount(tempApartadosCount);
         });
 
         return () => { unsubscribeRifa(); unsubscribeVentas(); };
@@ -261,7 +259,7 @@ function RifaDetalleAdmin() {
                     <button onClick={() => setActiveTab('ventas')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'ventas' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><VentasIcon/> Historial de Ventas</button>
                     <button onClick={() => setActiveTab('stats')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'stats' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><StatsIcon/> Estadísticas</button>
                     <button onClick={() => setActiveTab('acciones')} className={`flex-shrink-0 flex items-center whitespace-nowrap py-3 px-2 sm:px-4 border-b-2 font-medium text-sm transition-colors ${ activeTab === 'acciones' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-subtle hover:border-border-color' }`}><AccionesIcon/> Acciones</button>
-                </nav>
+                 </nav>
             </div>
 
             <div className="animate-fade-in mt-6">
@@ -293,10 +291,10 @@ function RifaDetalleAdmin() {
                 )}
                 {activeTab === 'acciones' && (
                      <div className="bg-background-light p-6 rounded-xl shadow-lg border border-border-color">
-                        <h2 className="text-2xl font-bold mb-4">Acciones del Sorteo</h2><p className="text-text-subtle mb-6">Usa estas herramientas para gestionar tu sorteo manualmente.</p>
-                        <button onClick={() => { setBoletosVentaManual([]); setShowModalVenta(true); }} className="btn bg-success text-white hover:bg-green-700">+ Registrar Venta Manual</button>
-                        <p className="text-xs text-text-subtle mt-2">Para registrar ventas en efectivo o por otros medios.</p>
-                    </div>
+                         <h2 className="text-2xl font-bold mb-4">Acciones del Sorteo</h2><p className="text-text-subtle mb-6">Usa estas herramientas para gestionar tu sorteo manualmente.</p>
+                         <button onClick={() => { setBoletosVentaManual([]); setShowModalVenta(true); }} className="btn bg-success text-white hover:bg-green-700">+ Registrar Venta Manual</button>
+                         <p className="text-xs text-text-subtle mt-2">Para registrar ventas en efectivo o por otros medios.</p>
+                     </div>
                 )}
             </div>
             {showModalVenta && ( <ModalVentaManual rifa={rifa} onClose={() => setShowModalVenta(false)} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosVentaManual} setBoletosSeleccionados={setBoletosVentaManual} onAgregarMultiples={handleAgregarMultiplesManual}/> )}

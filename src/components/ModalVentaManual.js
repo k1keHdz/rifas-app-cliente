@@ -13,13 +13,11 @@ function SelectorDeBoletosInterno({ numeros, boletosOcupados, boletosSeleccionad
         <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1.5 w-max mx-auto p-1">
             {numeros.map(numeroBoleto => {
                 const estaOcupado = boletosOcupados.has(numeroBoleto);
-                // No renderizar si ya está ocupado en la base de datos
                 if (estaOcupado && !boletosSeleccionados.includes(numeroBoleto)) return null;
                 
                 const estaSeleccionado = boletosSeleccionados.includes(numeroBoleto);
                 
                 let color = estaSeleccionado ? 'bg-success text-white' : 'bg-background-dark text-text-subtle border-border-color hover:bg-border-color/50';
-                // Si está ocupado pero también en nuestra selección (por un conflicto), mostrarlo como error
                 if (estaOcupado && estaSeleccionado) {
                     color = 'bg-danger text-white ring-2 ring-offset-2 ring-danger';
                 }
@@ -58,17 +56,12 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
 
     const handleChange = (e) => setComprador({ ...comprador, [e.target.name]: e.target.value });
 
-    // --- LÓGICA DE SELECCIÓN CORREGIDA ---
     const toggleBoletoManual = (numero) => {
         const estaSeleccionado = boletosSeleccionados.includes(numero);
-
         if (estaSeleccionado) {
-            // SIEMPRE permitir quitar un boleto de la lista de selección.
             setBoletosSeleccionados(prev => prev.filter(n => n !== numero));
         } else {
-            // Si se va a AÑADIR, primero verificar que no esté ocupado.
             if (boletosOcupados.has(numero)) {
-                // Opcional: mostrar una alerta o simplemente no hacer nada.
                 alert(`El boleto ${formatTicketNumber(numero, rifa.boletos)} ya está ocupado.`);
                 return;
             }
@@ -78,14 +71,43 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
 
     const generarMensajeWhatsApp = (venta) => {
         const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
-        let mensaje = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu compra para el sorteo "${venta.nombreRifa}" ha sido registrada con éxito.\n\n`;
+        let mensaje = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu compra para: "${venta.nombreRifa}" ha sido registrada con éxito.\n\n`;
         mensaje += `ID de Compra: *${venta.idCompra}*\n\n`;
         mensaje += `Aquí tienes el resumen de tu compra:\n*Tus números:* ${boletosTexto}\n*Estado:* Pagado\n\n`;
         mensaje += `¡Te deseamos mucha suerte!`;
         return encodeURIComponent(mensaje);
     };
 
-    const handleNotificarEmail = async (venta) => { /* Tu lógica existente */ };
+    // --- FUNCIÓN DE EMAIL RESTAURADA ---
+    const handleNotificarEmail = async (venta) => {
+        if (!venta.comprador.email) {
+            setFeedbackMsg({ text: 'No se proporcionó un correo para este comprador.', type: 'error' });
+            return;
+        }
+        
+        setIsSendingEmail(true);
+        setFeedbackMsg({ text: '', type: '' });
+
+        try {
+            const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
+            const templateParams = {
+                to_email: venta.comprador.email,
+                to_name: `${venta.comprador.nombre} ${venta.comprador.apellidos || ''}`,
+                raffle_name: venta.nombreRifa,
+                ticket_numbers: boletosTexto,
+                id_compra: venta.idCompra
+            };
+
+            await emailjs.send(EMAIL_CONFIG.serviceID, EMAIL_CONFIG.templateID, templateParams, EMAIL_CONFIG.publicKey);
+            setFeedbackMsg({ text: 'Correo enviado exitosamente.', type: 'exito' });
+
+        } catch (error) {
+            console.error("Fallo al enviar el correo (EmailJS):", error);
+            setFeedbackMsg({ text: 'Error al enviar el correo. Revisa la consola.', type: 'error' });
+        } finally {
+            setIsSendingEmail(false);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -238,10 +260,16 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
                     <div className="text-center animate-fade-in">
                         <h2 className="text-2xl font-bold text-success mb-4">¡Venta Registrada con Éxito!</h2>
                         <p className="mb-6 text-text-subtle">La venta ha sido guardada. Ahora puedes enviar un comprobante al cliente.</p>
-                        {feedbackMsg && ( <div className="my-4"> <Alerta mensaje={feedbackMsg.text} tipo={feedbackMsg.type} onClose={() => setFeedbackMsg('')} /> </div> )}
+                        
+                        {feedbackMsg.text && ( <div className="my-4"> <Alerta mensaje={feedbackMsg.text} tipo={feedbackMsg.type} onClose={() => setFeedbackMsg({text: '', type: ''})} /> </div> )}
+
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <a href={`https://wa.me/52${ventaRealizada.comprador.telefono}?text=${generarMensajeWhatsApp(ventaRealizada)}`} target="_blank" rel="noopener noreferrer" className="btn bg-green-500 text-white hover:bg-green-600 w-full text-center">Enviar por WhatsApp</a>
-                            <button onClick={() => handleNotificarEmail(ventaRealizada)} disabled={isSendingEmail || !ventaRealizada.comprador.email} className="btn btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button 
+                                onClick={() => handleNotificarEmail(ventaRealizada)} 
+                                disabled={isSendingEmail || !ventaRealizada.comprador.email} 
+                                className="btn btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
                                 {isSendingEmail ? 'Enviando...' : 'Enviar por Correo'}
                             </button>
                         </div>

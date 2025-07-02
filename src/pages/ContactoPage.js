@@ -1,9 +1,10 @@
-// src/pages/ContactoPage.js (Versión Final y Limpia)
+// src/pages/ContactoPage.js
 
 import React, { useState, useRef } from 'react';
 import emailjs from '@emailjs/browser';
 import Alerta from '../components/Alerta';
-import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaTelegramPlane } from 'react-icons/fa';
+import { useConfig } from '../context/ConfigContext';
+import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaTelegramPlane, FaYoutube, FaUsers } from 'react-icons/fa';
 
 const SocialButton = ({ href, title, icon: Icon, className }) => (
     <a href={href} target="_blank" rel="noopener noreferrer" title={title} className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-transform duration-300 transform hover:scale-110 ${className}`}>
@@ -16,20 +17,13 @@ function ContactoPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedback, setFeedback] = useState({ msg: '', type: '' });
     
-    const socialLinks = {
-        whatsapp: 'https://wa.me/5217773367064',
-        telegram: 'https://t.me/tu_usuario_tg',
-        facebook: 'https://facebook.com/tu_pagina_real',
-        instagram: 'https://instagram.com/tu_usuario_real',
-        tiktok: 'https://tiktok.com/@tu_usuario_real'
-    };
+    const { datosGenerales, cargandoConfig } = useConfig();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
         setFeedback({ msg: '', type: '' });
 
-        // Validamos que las variables de entorno existan antes de intentar el envío
         if (!process.env.REACT_APP_EMAILJS_SERVICE_ID || !process.env.REACT_APP_EMAILJS_CONTACT_TEMPLATE_ID || !process.env.REACT_APP_EMAILJS_PUBLIC_KEY) {
             console.error("Una o más variables de entorno de EmailJS no están definidas.");
             setFeedback({ msg: 'Error de configuración del servicio de correo.', type: 'error' });
@@ -54,6 +48,10 @@ function ContactoPage() {
         }
     };
 
+    if (cargandoConfig || !datosGenerales) {
+        return <div className="bg-background-dark py-12 sm:py-16 text-center">Cargando datos de contacto...</div>;
+    }
+
     return (
         <div className="bg-background-dark py-12 sm:py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -67,6 +65,7 @@ function ContactoPage() {
                     
                     <div className="mt-12 bg-background-light border border-border-color p-6 sm:p-8 rounded-2xl shadow-lg">
                         <form ref={form} onSubmit={handleSubmit} className="space-y-6">
+                            {/* El formulario se mantiene igual */}
                             <div>
                                 <label htmlFor="from_name" className="block text-sm font-medium">Tu Nombre</label>
                                 <div className="mt-1">
@@ -101,12 +100,15 @@ function ContactoPage() {
                         <p className="mt-2 text-lg text-text-subtle">
                             Mantente al día con los últimos sorteos, noticias y ganadores.
                         </p>
-                        <div className="mt-8 flex justify-center items-center space-x-4 sm:space-x-6">
-                            <SocialButton href={socialLinks.whatsapp} title="WhatsApp" icon={FaWhatsapp} className="bg-[#25D366]"/>
-                            <SocialButton href={socialLinks.facebook} title="Facebook" icon={FaFacebook} className="bg-[#1877F2]"/>
-                            <SocialButton href={socialLinks.instagram} title="Instagram" icon={FaInstagram} className="bg-gradient-to-br from-yellow-400 via-red-500 to-purple-600"/>
-                            <SocialButton href={socialLinks.tiktok} title="TikTok" icon={FaTiktok} className="bg-black"/>
-                            <SocialButton href={socialLinks.telegram} title="Telegram" icon={FaTelegramPlane} className="bg-[#24A1DE]"/>
+                        <div className="mt-8 flex justify-center items-center flex-wrap gap-4 sm:gap-6">
+                            {/* LÓGICA DE VISIBILIDAD: El icono solo aparece si el enlace existe Y su interruptor para Contacto está en 'true' */}
+                            {datosGenerales.urlWhatsappContacto && datosGenerales.mostrarWhatsappContactoEnContacto && <SocialButton href={datosGenerales.urlWhatsappContacto} title="WhatsApp" icon={FaWhatsapp} className="bg-[#25D366]"/>}
+                            {datosGenerales.urlFacebook && datosGenerales.mostrarFacebookEnContacto && <SocialButton href={datosGenerales.urlFacebook} title="Facebook" icon={FaFacebook} className="bg-[#1877F2]"/>}
+                            {datosGenerales.urlInstagram && datosGenerales.mostrarInstagramEnContacto && <SocialButton href={datosGenerales.urlInstagram} title="Instagram" icon={FaInstagram} className="bg-gradient-to-br from-yellow-400 via-red-500 to-purple-600"/>}
+                            {datosGenerales.urlTiktok && datosGenerales.mostrarTiktokEnContacto && <SocialButton href={datosGenerales.urlTiktok} title="TikTok" icon={FaTiktok} className="bg-black"/>}
+                            {datosGenerales.urlTelegram && datosGenerales.mostrarTelegramEnContacto && <SocialButton href={datosGenerales.urlTelegram} title="Telegram" icon={FaTelegramPlane} className="bg-[#24A1DE]"/>}
+                            {datosGenerales.urlYoutube && datosGenerales.mostrarYoutubeEnContacto && <SocialButton href={datosGenerales.urlYoutube} title="YouTube" icon={FaYoutube} className="bg-[#FF0000]"/>}
+                            {datosGenerales.urlGrupoWhatsapp && datosGenerales.mostrarGrupoWhatsappEnContacto && <SocialButton href={datosGenerales.urlGrupoWhatsapp} title="Grupo de WhatsApp" icon={FaUsers} className="bg-[#25D366]"/>}
                         </div>
                     </div>
                 </div>

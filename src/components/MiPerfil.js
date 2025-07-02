@@ -1,5 +1,8 @@
+// src/components/MiPerfil.js
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useConfig } from '../context/ConfigContext';
 import { getAuth, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { doc, getDoc, updateDoc, collectionGroup, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
@@ -8,9 +11,10 @@ import { formatTicketNumber } from '../utils/rifaHelper';
 import ContadorRegresivo from './ContadorRegresivo';
 import Avatar from './Avatar';
 import FeedbackModal from './FeedbackModal';
-import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaTelegramPlane } from 'react-icons/fa';
+// MODIFICADO: Añadimos FaUsers y FaYoutube para que no falte ninguno
+import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaTelegramPlane, FaYoutube, FaUsers } from 'react-icons/fa';
 
-// --- Iconos ---
+// --- Iconos (sin cambios) ---
 const HistorialIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>;
 const DatosIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 const SeguridadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
@@ -25,6 +29,7 @@ const SocialIcon = ({ href, title, icon: Icon, className }) => (
 
 function MiPerfil() {
     const { currentUser, userData, updateUserData } = useAuth();
+    const { datosGenerales, cargandoConfig } = useConfig();
     
     const [activeTab, setActiveTab] = useState('historial');
     const [nombre, setNombre] = useState('');
@@ -42,12 +47,6 @@ function MiPerfil() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [rifasData, setRifasData] = useState({});
 
-    const tuNumeroDeWhatsApp = '527773367064';
-    const tuUsuarioDeTelegram = 'tu_usuario_tg';
-    const tuPaginaDeFacebook = 'https://facebook.com/tu_pagina';
-    const tuUsuarioDeInstagram = 'https://instagram.com/tu_usuario';
-    const tuUsuarioDeTikTok = 'https://tiktok.com/@tu_usuario';
-    
     const displayName = userData?.nombre || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Usuario';
     const photo = userData?.photoURL || currentUser?.photoURL;
 
@@ -55,13 +54,13 @@ function MiPerfil() {
         const totalBoletos = rifasData[compra.rifaId]?.boletos || 100;
         const boletosTexto = compra.numeros.map(n => formatTicketNumber(n, totalBoletos)).join(', ');
         
-        let mensaje = `¡Hola! 👋 Tengo una consulta sobre mi compra para el sorteo "${compra.nombreRifa}".\n\n`;
+        let mensaje = `¡Hola! 👋 Tengo una consulta sobre mi compra para: "${compra.nombreRifa}".\n\n`;
         mensaje += `Mis números son: *${boletosTexto}*.\n`;
         mensaje += `Mi compra aún aparece como 'apartado' y me gustaría verificar el estado de mi pago. ¡Gracias!`;
         
         return encodeURIComponent(mensaje);
     };
-
+    
     useEffect(() => {
         if (userData) {
             setNombre(userData.nombre || '');
@@ -152,11 +151,9 @@ function MiPerfil() {
             const credential = EmailAuthProvider.credential(user.email, currentPasswordForEmail);
             await reauthenticateWithCredential(user, credential);
             
-            // Actualizar Firestore ANTES de enviar la verificación
             const userRef = doc(db, 'usuarios', currentUser.uid);
             await updateDoc(userRef, { email: newEmail });
             
-            // Forzar la actualización en el contexto
             updateUserData({ email: newEmail });
 
             await verifyBeforeUpdateEmail(user, newEmail);
@@ -207,7 +204,7 @@ function MiPerfil() {
         }
     };
 
-    if (!userData) { return <div className="min-h-screen text-center pt-20">Cargando perfil...</div>; }
+    if (!userData || cargandoConfig || !datosGenerales) { return <div className="min-h-screen text-center pt-20">Cargando perfil...</div>; }
     const isPasswordUser = currentUser.providerData.some(p => p.providerId === 'password');
 
     return (
@@ -305,12 +302,15 @@ function MiPerfil() {
                                                                     </p>
                                                                     <div className="text-center mt-6">
                                                                         <p className="text-sm font-semibold mb-2">¿Necesitas ayuda con tu compra?</p>
-                                                                        <div className="flex justify-center items-center space-x-4">
-                                                                            <SocialIcon href={`https://wa.me/${tuNumeroDeWhatsApp}?text=${generarMensajeSoporte(compra)}`} title="Contactar por WhatsApp" icon={FaWhatsapp} className="bg-[#25D366]"/>
-                                                                            <SocialIcon href={tuPaginaDeFacebook} title="Visita nuestro Facebook" icon={FaFacebook} className="bg-[#1877F2]"/>
-                                                                            <SocialIcon href={tuUsuarioDeInstagram} title="Síguenos en Instagram" icon={FaInstagram} className="bg-gradient-to-br from-yellow-400 via-red-500 to-purple-600"/>
-                                                                            <SocialIcon href={tuUsuarioDeTikTok} title="Encuéntranos en TikTok" icon={FaTiktok} className="bg-black"/>
-                                                                            <SocialIcon href={`https://t.me/${tuUsuarioDeTelegram}`} title="Contactar por Telegram" icon={FaTelegramPlane} className="bg-[#24A1DE]"/>
+                                                                        <div className="flex justify-center items-center flex-wrap gap-4">
+                                                                            {/* CORREGIDO: Añadidos los iconos faltantes de YouTube y Grupo de WhatsApp */}
+                                                                            {datosGenerales.WhatsappPrincipal && datosGenerales.mostrarWhatsappContactoEnPerfil && <SocialIcon href={`https://wa.me/${datosGenerales.WhatsappPrincipal}?text=${generarMensajeSoporte(compra)}`} title="Contactar por WhatsApp" icon={FaWhatsapp} className="bg-[#25D366]"/>}
+                                                                            {datosGenerales.urlFacebook && datosGenerales.mostrarFacebookEnPerfil && <SocialIcon href={datosGenerales.urlFacebook} title="Visita nuestro Facebook" icon={FaFacebook} className="bg-[#1877F2]"/>}
+                                                                            {datosGenerales.urlInstagram && datosGenerales.mostrarInstagramEnPerfil && <SocialIcon href={datosGenerales.urlInstagram} title="Síguenos en Instagram" icon={FaInstagram} className="bg-gradient-to-br from-yellow-400 via-red-500 to-purple-600"/>}
+                                                                            {datosGenerales.urlTiktok && datosGenerales.mostrarTiktokEnPerfil && <SocialIcon href={datosGenerales.urlTiktok} title="Encuéntranos en TikTok" icon={FaTiktok} className="bg-black"/>}
+                                                                            {datosGenerales.urlTelegram && datosGenerales.mostrarTelegramEnPerfil && <SocialIcon href={datosGenerales.urlTelegram} title="Contactar por Telegram" icon={FaTelegramPlane} className="bg-[#24A1DE]"/>}
+                                                                            {datosGenerales.urlYoutube && datosGenerales.mostrarYoutubeEnPerfil && <SocialIcon href={datosGenerales.urlYoutube} title="YouTube" icon={FaYoutube} className="bg-[#FF0000]"/>}
+                                                                            {datosGenerales.urlGrupoWhatsapp && datosGenerales.mostrarGrupoWhatsappEnPerfil && <SocialIcon href={datosGenerales.urlGrupoWhatsapp} title="Grupo de WhatsApp" icon={FaUsers} className="bg-[#25D366]"/>}
                                                                         </div>
                                                                     </div>
                                                                 </div>
