@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 // CORREGIDO: Se importa 'getFunctions' y 'httpsCallable' para usar Cloud Functions
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { collection, query, where, getDocs, onSnapshot, doc, getDoc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 import { RIFAS_ESTADOS } from '../constants/rifas';
 import { Link } from 'react-router-dom';
@@ -25,7 +25,7 @@ const TarjetaResultado = ({ resultado }) => {
             <div className="bg-background-light rounded-xl shadow-lg p-6 text-center border-t-8 border-success animate-fade-in">
                 <TicketIcon className="w-10 h-10 text-success mx-auto mb-4" />
                 <h3 className="text-xl font-bold">{resultado.nombreRifa}</h3>
-                <p className="text-sm text-text-subtle mb-4">Boleto Número:</p>
+                <p className="text-sm text-text-subtle mb-4">Número de Boleto:</p>
                 <p className="text-5xl font-mono font-bold tracking-wider mb-4">{formatTicketNumber(resultado.numeroBuscado, totalBoletos)}</p>
                 <p className="font-semibold text-lg mb-4 text-success">¡Este boleto está disponible!</p>
                 <Link to={`/rifa/${resultado.rifaId}`} state={{ boletoSeleccionado: resultado.numeroBuscado }} className="inline-block w-full text-center bg-success text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors">
@@ -83,11 +83,11 @@ const TarjetaResultado = ({ resultado }) => {
                     <div>
                         <p className={`text-sm font-bold uppercase tracking-wide ${esPagado ? 'text-success' : 'text-warning'}`}>{esPagado ? 'Pagado' : 'Apartado'}</p>
                         <h3 className="text-2xl font-bold mt-1">{resultado.nombreRifa}</h3>
-                        <p className="text-text-subtle">Boleto Número:</p>
+                        <p className="text-text-subtle">Número de Boleto:</p>
                         <p className="text-5xl font-mono font-bold tracking-wider my-2">{formatTicketNumber(resultado.numeroBuscado, totalBoletos)}</p>
                     </div>
                     <div className="text-sm space-y-2 border-t border-border-color mt-4 pt-4 text-text-subtle">
-                        <p><strong>Comprador:</strong> {nombreParcial} {resultado.comprador.estado ? `(${resultado.comprador.estado})` : ''}</p>
+                        <p><strong>Cliente:</strong> {nombreParcial} {resultado.comprador.estado ? `(${resultado.comprador.estado})` : ''}</p>
                         {!esPagado && resultado.fechaExpiracion && (
                             <div className="flex items-center pt-2">
                                 <strong className="mr-2">Expira:</strong> <ContadorRegresivo fechaExpiracion={resultado.fechaExpiracion} />
