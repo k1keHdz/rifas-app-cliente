@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react'; 
 import { Link } from 'react-router-dom'; 
 import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig'; 
+// CORREGIDO: Ruta actualizada
+import { db } from '../config/firebaseConfig'; 
 import { RIFAS_ESTADOS } from '../constants/rifas';
 import { getDrawConditionText, formatTicketNumber } from '../utils/rifaHelper';
 import { FaTicketAlt, FaMousePointer, FaWhatsapp, FaTrophy } from 'react-icons/fa';

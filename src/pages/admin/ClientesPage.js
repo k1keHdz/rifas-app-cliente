@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { db } from '../../firebase/firebaseConfig';
+import { db } from '../../config/firebaseConfig';
 import { FaFileCsv, FaSearch, FaUserFriends, FaSpinner, FaSync } from 'react-icons/fa';
 
 const StatCard = ({ title, value, icon }) => (
@@ -72,19 +72,22 @@ function ClientesPage() {
         );
     }, [searchTerm, clientes]);
 
-    const totalBoletosVendidos = useMemo(() => {
-        return clientes.reduce((acc, cliente) => acc + (cliente.totalBoletos || 0), 0);
+    const totalBoletosComprados = useMemo(() => {
+        // CORREGIDO: Ahora suma el campo correcto.
+        return clientes.reduce((acc, cliente) => acc + (cliente.totalBoletosComprados || 0), 0);
     }, [clientes]);
     
     const exportarCSV = () => {
-        const headers = ["Nombre Completo", "Teléfono", "Email", "Estado", "Fecha Primera Compra", "Total Boletos Comprados"];
+        // CORREGIDO: El encabezado ahora es más claro.
+        const headers = ["Nombre Completo", "Teléfono", "Email", "Estado", "Fecha Primera Compra", "Total Boletos Pagados"];
         const rows = clientesFiltrados.map(cliente => [
             `"${cliente.nombre} ${cliente.apellidos || ''}"`,
             `"${cliente.telefono}"`,
             `"${cliente.email || 'N/A'}"`,
             `"${cliente.estado || 'N/A'}"`,
             `"${cliente.fechaPrimeraCompra ? new Date(cliente.fechaPrimeraCompra.seconds * 1000).toLocaleDateString('es-MX') : 'N/A'}"`,
-            cliente.totalBoletos
+            // CORREGIDO: Se exporta el campo correcto.
+            cliente.totalBoletosComprados || 0
         ].join(','));
 
         const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join("\n");
@@ -107,7 +110,8 @@ function ClientesPage() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     <StatCard title="Clientes Únicos" value={clientes.length} icon={<FaUserFriends size={22} />} />
-                    <StatCard title="Total Boletos Comprados" value={totalBoletosVendidos} icon={<FaFileCsv size={22} />} />
+                    {/* CORREGIDO: El título de la tarjeta es más claro. */}
+                    <StatCard title="Total Boletos Pagados" value={totalBoletosComprados} icon={<FaFileCsv size={22} />} />
                 </div>
 
                 <div className="bg-background-light p-6 rounded-lg shadow-lg border border-border-color">
@@ -152,7 +156,8 @@ function ClientesPage() {
                                     <th scope="col" className="px-6 py-3">Email</th>
                                     <th scope="col" className="px-6 py-3">Estado</th>
                                     <th scope="col" className="px-6 py-3">Primera Compra</th>
-                                    <th scope="col" className="px-6 py-3 text-right">Total Boletos</th>
+                                    {/* CORREGIDO: El encabezado de la columna es más claro. */}
+                                    <th scope="col" className="px-6 py-3 text-right">Total Boletos Pagados</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -175,7 +180,8 @@ function ClientesPage() {
                                             <td className="px-6 py-4">{cliente.email || 'N/A'}</td>
                                             <td className="px-6 py-4">{cliente.estado || 'N/A'}</td>
                                             <td className="px-6 py-4">{cliente.fechaPrimeraCompra ? new Date(cliente.fechaPrimeraCompra.seconds * 1000).toLocaleDateString('es-MX') : 'N/A'}</td>
-                                            <td className="px-6 py-4 text-right font-bold">{cliente.totalBoletos}</td>
+                                            {/* CORREGIDO: Se muestra el campo correcto. */}
+                                            <td className="px-6 py-4 text-right font-bold">{cliente.totalBoletosComprados || 0}</td>
                                         </tr>
                                     ))
                                 ) : (

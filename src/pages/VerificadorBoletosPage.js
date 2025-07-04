@@ -1,19 +1,21 @@
 // src/pages/VerificadorBoletosPage.js
 
 import React, { useState, useEffect } from 'react';
-import { collection, collectionGroup, query, where, getDocs, onSnapshot, doc, getDoc, orderBy } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
+// CORREGIDO: Se importa 'getFunctions' y 'httpsCallable' para usar Cloud Functions
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { collection, query, where, getDocs, onSnapshot, doc, getDoc, orderBy } from 'firebase/firestore';
+import { db } from '../config/firebaseConfig';
 import { RIFAS_ESTADOS } from '../constants/rifas';
 import { Link } from 'react-router-dom';
-import ContadorRegresivo from '../components/ContadorRegresivo';
+import ContadorRegresivo from '../components/ui/ContadorRegresivo';
 import { formatTicketNumber } from '../utils/rifaHelper';
 
-// --- ÍCONOS ---
+// --- ÍCONOS (sin cambios) ---
 const SearchIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
 const TicketIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 9a3 3 0 0 1 0 6v1a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-1a3 3 0 0 1 0-6V8a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>;
 const ChevronDownIcon = ({ isOpen }) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-5 h-5 text-text-subtle transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6"/></svg>);
 
-// --- SUB-COMPONENTE PARA MOSTRAR RESULTADOS ---
+// --- SUB-COMPONENTE PARA MOSTRAR RESULTADOS (sin cambios) ---
 const TarjetaResultado = ({ resultado }) => {
     const [isOpen, setIsOpen] = useState(resultado.type === 'boleto' ? true : false);
     const totalBoletos = resultado.totalBoletos || 100;
@@ -84,9 +86,6 @@ const TarjetaResultado = ({ resultado }) => {
                         <p className="text-text-subtle">Boleto Número:</p>
                         <p className="text-5xl font-mono font-bold tracking-wider my-2">{formatTicketNumber(resultado.numeroBuscado, totalBoletos)}</p>
                     </div>
-                    {/* ================================================================================================= */}
-                    {/* INICIO DE LA MODIFICACIÓN: Se añade el estado del comprador a la tarjeta de resultado          */}
-                    {/* ================================================================================================= */}
                     <div className="text-sm space-y-2 border-t border-border-color mt-4 pt-4 text-text-subtle">
                         <p><strong>Comprador:</strong> {nombreParcial} {resultado.comprador.estado ? `(${resultado.comprador.estado})` : ''}</p>
                         {!esPagado && resultado.fechaExpiracion && (
@@ -95,9 +94,6 @@ const TarjetaResultado = ({ resultado }) => {
                             </div>
                         )}
                     </div>
-                    {/* ================================================================================================= */}
-                    {/* FIN DE LA MODIFICACIÓN                                                                          */}
-                    {/* ================================================================================================= */}
                 </div>
             </div>
         </div>
@@ -115,7 +111,6 @@ function VerificadorBoletosPage() {
     const [busquedaRealizada, setBusquedaRealizada] = useState(false);
 
     useEffect(() => {
-        // En esta página, como es pública, mantenemos la lógica de obtener rifas para el selector.
         const q = query(collection(db, "rifas"), where("estado", "in", [RIFAS_ESTADOS.ACTIVA, RIFAS_ESTADOS.FINALIZADA]), orderBy("fechaCreacion", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             setRifasActivas(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -133,20 +128,11 @@ function VerificadorBoletosPage() {
         try {
             let data = [];
             if (searchType === 'telefono') {
-                const q = query(collectionGroup(db, 'ventas'), where('comprador.telefono', '==', searchTerm), orderBy('fechaApartado', 'desc'));
-                const querySnapshot = await getDocs(q);
-                data = await Promise.all(querySnapshot.docs.map(async (docSnap) => {
-                    const venta = docSnap.data();
-                    const rifaRef = doc(db, 'rifas', venta.rifaId);
-                    const rifaSnap = await getDoc(rifaRef);
-                    return {
-                        id: docSnap.id, 
-                        type: 'telefono', 
-                        ...venta,
-                        totalBoletos: rifaSnap.exists() ? rifaSnap.data().boletos : 100,
-                        imagenRifa: rifaSnap.exists() ? (rifaSnap.data().imagenes?.[0] || null) : null,
-                    };
-                }));
+                // CORREGIDO: Se llama a la Cloud Function en lugar de hacer una consulta directa.
+                const functions = getFunctions();
+                const verificarBoletos = httpsCallable(functions, 'verificarBoletosPorTelefono');
+                const result = await verificarBoletos({ telefono: searchTerm });
+                data = result.data; // La función ya devuelve los datos procesados.
             } else {
                 if (!selectedRifaId) throw new Error("Por favor, selecciona un sorteo.");
                 const numeroBoleto = parseInt(searchTerm, 10);
@@ -157,7 +143,11 @@ function VerificadorBoletosPage() {
                 const rifaSeleccionada = rifasActivas.find(r => r.id === selectedRifaId);
                 
                 if (querySnapshot.empty) {
-                    data = [{ id: 'disponible', estado: 'disponible', numeroBuscado: numeroBoleto, rifaId: selectedRifaId, nombreRifa: rifaSeleccionada.nombre, totalBoletos: rifaSeleccionada.boletos, imagenRifa: rifaSeleccionada.imagenes?.[0] || null }];
+                    if (rifaSeleccionada.estado === 'activa') {
+                        data = [{ id: 'disponible', estado: 'disponible', numeroBuscado: numeroBoleto, rifaId: selectedRifaId, nombreRifa: rifaSeleccionada.nombre, totalBoletos: rifaSeleccionada.boletos, imagenRifa: rifaSeleccionada.imagenes?.[0] || null }];
+                    } else {
+                        data = []; // No mostrar como disponible si la rifa no está activa
+                    }
                 } else {
                     data = querySnapshot.docs.map(doc => ({ 
                         id: doc.id, 

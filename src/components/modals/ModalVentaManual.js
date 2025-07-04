@@ -1,12 +1,15 @@
+// src/components/modals/ModalVentaManual.js
+
 import React, { useState, useMemo } from 'react';
-import { doc, collection, writeBatch, increment, serverTimestamp, runTransaction, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
-import Alerta from './Alerta';
+// TAREA 1.2: Se elimina 'increment' porque la lógica se mueve al backend.
+import { doc, collection, serverTimestamp, runTransaction, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../config/firebaseConfig';
+import Alerta from '../ui/Alerta';
 import { nanoid } from 'nanoid';
-import BuscadorBoletos from './BuscadorBoletos';
-import { formatTicketNumber } from '../utils/rifaHelper';
+import BuscadorBoletos from '../rifas/BuscadorBoletos';
+import { formatTicketNumber } from '../../utils/rifaHelper';
 import emailjs from '@emailjs/browser';
-import EMAIL_CONFIG from '../emailjsConfig';
+import EMAIL_CONFIG from '../../emailjsConfig';
 
 function SelectorDeBoletosInterno({ numeros, boletosOcupados, boletosSeleccionados, onToggleBoleto, totalBoletos }) {
     return (
@@ -78,7 +81,6 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
         return encodeURIComponent(mensaje);
     };
 
-    // --- FUNCIÓN DE EMAIL RESTAURADA ---
     const handleNotificarEmail = async (venta) => {
         if (!venta.comprador.email) {
             setFeedbackMsg({ text: 'No se proporcionó un correo para este comprador.', type: 'error' });
@@ -120,13 +122,13 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
         try {
             await runTransaction(db, async (transaction) => {
                 const ventasRef = collection(db, "rifas", rifa.id, "ventas");
-                const rifaRef = doc(db, "rifas", rifa.id);
                 const CHUNK_SIZE = 30;
                 const boletosEnConflicto = new Set();
                 
                 for (let i = 0; i < boletosSeleccionados.length; i += CHUNK_SIZE) {
                     const chunk = boletosSeleccionados.slice(i, i + CHUNK_SIZE);
                     const q = query(ventasRef, where('numeros', 'array-contains-any', chunk));
+                    // TAREA 1.2: Se usa get en lugar de transaction.get para leer fuera de la transacción y evitar contención.
                     const snapshot = await getDocs(q);
                     
                     if (!snapshot.empty) {
@@ -155,7 +157,8 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
                 
                 const nuevaVentaRef = doc(ventasRef);
                 transaction.set(nuevaVentaRef, ventaData);
-                transaction.update(rifaRef, { boletosVendidos: increment(boletosSeleccionados.length) });
+                // TAREA 1.2: Se elimina la siguiente línea. El backend se encargará de esto.
+                // transaction.update(rifaRef, { boletosVendidos: increment(boletosSeleccionados.length) });
                 setVentaRealizada({ id: nuevaVentaRef.id, ...ventaData });
             });
 

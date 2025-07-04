@@ -1,34 +1,49 @@
 // src/hooks/useBoletos.js
-// VERSIÓN RECONSTRUIDA: Este hook ahora solo gestiona la SELECCIÓN de boletos.
-// Ya no se conecta a Firestore. Su lógica es simple y estable.
 
 import { useState, useCallback } from 'react';
 
 export const useBoletos = () => {
     const [boletosSeleccionados, setBoletosSeleccionados] = useState([]);
 
-    // La función ahora recibe los boletos ocupados para hacer la validación
+    // CORREGIDO: La lógica ahora es más robusta y segura.
     const toggleBoleto = useCallback((numero, boletosOcupados) => {
-        if (boletosOcupados.has(Number(numero))) return;
-        setBoletosSeleccionados(prev => 
-            prev.includes(numero) 
-                ? prev.filter(n => n !== numero) 
-                : [...prev, numero]
-        );
-    }, []);
+        const num = Number(numero);
+        const isAlreadySelected = boletosSeleccionados.includes(num);
+
+        if (isAlreadySelected) {
+            // Si ya está seleccionado, el usuario quiere DESELECCIONARLO.
+            // Siempre se permite la deselección, sin importar el estado del boleto.
+            setBoletosSeleccionados(prev => prev.filter(n => n !== num));
+        } else {
+            // Si no está seleccionado, el usuario quiere SELECCIONARLO.
+            // Aquí es donde verificamos si está disponible.
+            // Se añade una comprobación para asegurar que boletosOcupados existe.
+            if (boletosOcupados && boletosOcupados.has(num)) {
+                // Si está ocupado, no hacemos nada.
+                console.warn(`Intento de seleccionar el boleto ocupado: ${num}`);
+                return;
+            }
+            // Si está disponible, lo añadimos a la selección.
+            setBoletosSeleccionados(prev => [...prev, num]);
+        }
+    // Se añade boletosSeleccionados como dependencia para que la función siempre tenga la lista más actualizada.
+    }, [boletosSeleccionados]);
 
     const limpiarSeleccion = useCallback(() => {
         setBoletosSeleccionados([]);
     }, []);
 
-    // Esta función ahora es manejada por el componente padre que tiene la lista completa de seleccionados
     const agregarBoletosEspecificos = useCallback((numerosNuevos) => {
-        setBoletosSeleccionados(prev => [...new Set([...prev, ...numerosNuevos])]);
+        setBoletosSeleccionados(prev => {
+            const nuevosNumerosSet = new Set(numerosNuevos);
+            const union = new Set([...prev, ...nuevosNumerosSet]);
+            return Array.from(union);
+        });
     }, []);
 
     return {
         boletosSeleccionados,
-        setBoletosSeleccionados, // Exportamos el setter para usos avanzados
+        setBoletosSeleccionados,
         toggleBoleto,
         limpiarSeleccion,
         agregarBoletosEspecificos,

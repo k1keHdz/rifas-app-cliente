@@ -2,7 +2,8 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
+// CORREGIDO: Ruta actualizada para la configuración de Firebase
+import { db } from '../config/firebaseConfig';
 
 const ConfigContext = createContext();
 
@@ -11,11 +12,8 @@ export function useConfig() {
 }
 
 export function ConfigProvider({ children }) {
-    // MODIFICADO: Ahora tenemos dos estados para la configuración
-    const [featuresConfig, setFeaturesConfig] = useState(null); // Para 'features'
-    const [datosGenerales, setDatosGenerales] = useState(null); // NUEVO: Para 'datosGenerales'
-
-    // MODIFICADO: Y dos estados de carga para controlar ambos
+    const [featuresConfig, setFeaturesConfig] = useState(null);
+    const [datosGenerales, setDatosGenerales] = useState(null);
     const [cargandoFeatures, setCargandoFeatures] = useState(true);
     const [cargandoGenerales, setCargandoGenerales] = useState(true);
 
@@ -42,7 +40,7 @@ export function ConfigProvider({ children }) {
         return () => unsubscribe();
     }, []);
 
-    // NUEVO: Este useEffect se encarga de leer nuestros nuevos 'datosGenerales'
+    // Este useEffect se encarga de leer nuestros 'datosGenerales'
     useEffect(() => {
         const generalesDocRef = doc(db, 'configuracion', 'datosGenerales');
         const unsubscribe = onSnapshot(generalesDocRef, (docSnap) => {
@@ -50,11 +48,9 @@ export function ConfigProvider({ children }) {
                 setDatosGenerales(docSnap.data());
             } else {
                 console.log("No se encontró el documento de 'datosGenerales', se usarán valores por defecto.");
-                // Proporcionamos valores por defecto para que la app no se rompa si el doc no existe
                 setDatosGenerales({
                     WhatsappPrincipal: '5210000000000',
                     urlFacebook: 'https://facebook.com',
-                    // ... puedes añadir más valores por defecto para los otros campos aquí
                 });
             }
             setCargandoGenerales(false);
@@ -66,12 +62,10 @@ export function ConfigProvider({ children }) {
         return () => unsubscribe();
     }, []);
 
-
-    // MODIFICADO: El valor del contexto ahora incluye todo
     const value = {
-        config: featuresConfig, // Mantenemos el nombre 'config' por compatibilidad
-        datosGenerales: datosGenerales, // NUEVO: nuestros datos de contacto
-        cargandoConfig: cargandoFeatures || cargandoGenerales, // La carga termina cuando AMBOS terminan
+        config: featuresConfig,
+        datosGenerales: datosGenerales,
+        cargandoConfig: cargandoFeatures || cargandoGenerales,
     };
 
     return (

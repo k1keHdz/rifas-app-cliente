@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from '../../firebase/firebaseConfig';
-import { RIFAS_ESTADOS } from '../../constants/rifas';
-import Alerta from '../../components/Alerta';
+import { db, storage } from '../../config/firebaseConfig';
+// CORREGIDO: Se eliminó la importación de RIFAS_ESTADOS que no se usaba
+import Alerta from '../../components/ui/Alerta';
 
 // Sub-componente para el buscador
 const BuscadorGanador = ({ todasLasRifas, loadingRifas }) => {
@@ -45,7 +45,7 @@ const BuscadorGanador = ({ todasLasRifas, loadingRifas }) => {
     const notificarGanadorWhatsApp = () => {
         const rifa = todasLasRifas.find(r => r.id === rifaId);
         let mensaje = `🎉 ¡MUCHAS FELICIDADES, ${resultado.comprador.nombre}! 🎉\n\n`;
-        mensaje += `¡Eres el afortunado ganador del sorteo "${rifa.nombre}" con el boleto número *${String(boleto).padStart(5, '0')}*!\n\n`;
+        mensaje += `¡Eres el afortunado ganador del: "${rifa.nombre}" con el boleto número *${String(boleto).padStart(5, '0')}*!\n\n`;
         mensaje += `Nos pondremos en contacto contigo muy pronto para coordinar la entrega de tu premio. ¡Gracias por participar!`;
         const waUrl = `https://wa.me/52${resultado.comprador.telefono}?text=${encodeURIComponent(mensaje)}`;
         window.open(waUrl, '_blank');
@@ -72,9 +72,6 @@ const BuscadorGanador = ({ todasLasRifas, loadingRifas }) => {
             {resultado && resultado !== 'no_encontrado' && (
                 <div className="mt-6 border-t border-border-color pt-4 animate-fade-in">
                     <h3 className="font-bold text-lg text-success">¡Ganador Encontrado!</h3>
-                    {/* ================================================================================================= */}
-                    {/* INICIO DE LA MODIFICACIÓN: Se añade el campo 'Estado' a los detalles del ganador              */}
-                    {/* ================================================================================================= */}
                     <div className="mt-2 p-4 bg-success/10 rounded-lg text-text-subtle">
                         <p><strong className="text-text-primary">Nombre:</strong> {resultado.comprador.nombre} {resultado.comprador.apellidos || ''}</p>
                         <p><strong>Teléfono:</strong> {resultado.comprador.telefono}</p>
@@ -82,9 +79,6 @@ const BuscadorGanador = ({ todasLasRifas, loadingRifas }) => {
                         <p><strong>Estado:</strong> {resultado.comprador.estado || 'No proporcionado'}</p>
                         <p><strong>ID de Compra:</strong> {resultado.idCompra || 'N/A'}</p>
                     </div>
-                    {/* ================================================================================================= */}
-                    {/* FIN DE LA MODIFICACIÓN                                                                          */}
-                    {/* ================================================================================================= */}
                     {resultado.estado === 'comprado' && (
                         <div className="mt-4 flex gap-4">
                             <button onClick={notificarGanadorWhatsApp} className="btn bg-success text-white hover:bg-green-700">Felicitar por WhatsApp</button>
@@ -255,9 +249,6 @@ function GestionarGanadoresPage() {
                         )}
                         {datosGanador && (
                             <div className="animate-fade-in border-t border-border-color pt-6 mt-6 space-y-4">
-                                {/* ================================================================================================= */}
-                                {/* INICIO DE LA MODIFICACIÓN: Se añade el campo 'Estado' a la vista previa del ganador             */}
-                                {/* ================================================================================================= */}
                                 <div className="bg-success/10 p-4 rounded-lg">
                                     <p className="font-bold text-text-primary">Ganador Encontrado:</p>
                                     <p><strong>Nombre:</strong> {datosGanador.nombre}</p>
@@ -265,9 +256,6 @@ function GestionarGanadoresPage() {
                                     <p><strong>Email:</strong> {datosGanador.email || 'No proporcionado'}</p>
                                     <p><strong>Estado:</strong> {datosGanador.estado || 'No proporcionado'}</p>
                                 </div>
-                                {/* ================================================================================================= */}
-                                {/* FIN DE LA MODIFICACIÓN                                                                          */}
-                                {/* ================================================================================================= */}
                                 <div><label className="block text-sm font-medium text-text-subtle mb-1">3. Testimonio del Ganador (Opcional)</label><textarea value={testimonio} onChange={(e) => setTestimonio(e.target.value)} rows="3" className="input-field" placeholder="Ej. ¡Increíble!"></textarea></div>
                                 <div><label className="block text-sm font-medium text-text-subtle mb-1">4. Foto del Ganador (Obligatoria)</label><input type="file" accept="image/*" onChange={handleFotoChange} required className="block w-full text-sm text-text-subtle file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent-primary/10 file:text-accent-primary hover:file:bg-accent-primary/20"/>{fotoPreview && <img src={fotoPreview} alt="Vista previa" className="mt-4 rounded-lg h-32 w-auto"/>}</div>
                                 <div><label className="block text-sm font-medium text-text-subtle mb-1">5. Video del Ganador (Opcional)</label><input type="file" accept="video/*" onChange={handleVideoChange} className="block w-full text-sm text-text-subtle file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent-primary/10 file:text-accent-primary hover:file:bg-accent-primary/20"/>{videoFile && <p className="text-xs text-text-subtle mt-1">Video: <span className="font-medium">{videoFile.name}</span></p>}</div>

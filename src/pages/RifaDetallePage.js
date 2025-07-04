@@ -1,32 +1,40 @@
-import React, { useEffect, useState, useRef } from "react";
+// src/pages/RifaDetallePage.js
+
+import React, { useEffect, useState, useRef, useCallback } from "react";
+// CORREGIDO: Se elimina 'useNavigate' que no se usa.
 import { useParams, Link, useLocation } from "react-router-dom";
 import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
-import { db } from "../firebase/firebaseConfig";
+import { db } from '../config/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useBoletos } from "../hooks/useBoletos";
 import { useConfig } from "../context/ConfigContext";
 import { usePurchaseCooldown } from "../hooks/usePurchaseCooldown";
-import ModalDatosComprador from "../components/ModalDatosComprador";
-import ModalImagen from "../components/ModalImagen";
-import SelectorBoletos from "../components/SelectorBoletos";
-import ModalMaquinaSuerte from "../components/ModalMaquinaSuerte";
-import BuscadorBoletos from "../components/BuscadorBoletos";
+import ModalDatosComprador from "../components/modals/ModalDatosComprador";
+import ModalImagen from "../components/modals/ModalImagen";
+import ModalMaquinaSuerte from "../components/modals/ModalMaquinaSuerte";
+import ModalInvitacionRegistro from "../components/modals/ModalInvitacionRegistro";
+import ModalCooldown from "../components/modals/ModalCooldown";
+import SelectorBoletos from "../components/rifas/SelectorBoletos";
+import BuscadorBoletos from "../components/rifas/BuscadorBoletos";
+import Alerta from "../components/ui/Alerta";
 import { getDrawConditionText, formatTicketNumber } from "../utils/rifaHelper";
-import ModalInvitacionRegistro from "../components/ModalInvitacionRegistro";
-import Alerta from "../components/Alerta";
-import ModalCooldown from "../components/ModalCooldown";
 import { FaExclamationTriangle } from 'react-icons/fa';
 
-function RifaDetalle() {
+function RifaDetallePage() {
     const { id: rifaId } = useParams();
+    // CORREGIDO: Se elimina la variable 'navigate' que no se usaba.
     const { currentUser, userData, cargandoAuth } = useAuth();
     const { config, cargandoConfig } = useConfig();
     const { checkCooldown } = usePurchaseCooldown();
 
     const { 
-        boletosSeleccionados, setBoletosSeleccionados, toggleBoleto, limpiarSeleccion,
+        boletosSeleccionados,
+        toggleBoleto: originalToggleBoleto,
+        limpiarSeleccion,
         agregarBoletosEspecificos 
     } = useBoletos();
+
+    const [conflictingTickets, setConflictingTickets] = useState([]);
 
     const [boletosOcupados, setBoletosOcupados] = useState(new Map());
     const [cargandoBoletos, setCargandoBoletos] = useState(true);
@@ -45,6 +53,20 @@ function RifaDetalle() {
     
     const location = useLocation();
     const selectionProcessed = useRef(false);
+
+    const toggleBoleto = useCallback((numero, boletosOcupados) => {
+        originalToggleBoleto(numero, boletosOcupados);
+        if (conflictingTickets.includes(numero)) {
+            setConflictingTickets(prev => prev.filter(t => t !== numero));
+        }
+    }, [originalToggleBoleto, conflictingTickets]);
+
+    const handleModalClose = (conflicts = []) => {
+        setMostrarModalDatos(false);
+        if (conflicts.length > 0) {
+            setConflictingTickets(conflicts);
+        }
+    };
 
     useEffect(() => {
         if (!rifaId) return;
@@ -127,7 +149,6 @@ function RifaDetalle() {
     if (!rifa) return <div className="p-8 text-center"><h2 className="text-2xl font-bold">Sorteo no encontrado</h2><p className="text-text-subtle mt-2">Este sorteo no existe o ya ha finalizado.</p><Link to="/" className="mt-6 btn btn-primary">Volver al inicio</Link></div>;
     
     const isCompraActiva = rifa.estado === 'activa';
-
     const boletosVendidos = rifa.boletosVendidos || 0;
     const porcentajeVendido = rifa.boletos > 0 ? (boletosVendidos / rifa.boletos) * 100 : 0;
     const conditionText = getDrawConditionText(rifa, 'detallado');
@@ -202,7 +223,7 @@ function RifaDetalle() {
                         </>
                     )}
                     <div className="flex flex-col items-center">
-                        {isCompraActiva && <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={(num) => toggleBoleto(num, boletosOcupados)} />}
+                        {isCompraActiva && <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={toggleBoleto} />}
                         {boletosSeleccionados.length > 0 && isCompraActiva && ( 
                             <div className="text-center my-4 p-4 bg-background-dark border border-border-color rounded-lg w-full max-w-lg animate-fade-in"> 
                                 <p className="font-bold mb-2">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> 
@@ -231,7 +252,8 @@ function RifaDetalle() {
                                 totalBoletos={rifa.boletos}
                                 boletosOcupados={boletosOcupados} 
                                 boletosSeleccionados={boletosSeleccionados} 
-                                onToggleBoleto={(num) => toggleBoleto(num, boletosOcupados)} 
+                                conflictingTickets={conflictingTickets}
+                                onToggleBoleto={toggleBoleto} 
                                 filtroActivo={filtroDisponibles} 
                                 rangoInicio={rangoInicio} 
                                 rangoFin={rangoFin}
@@ -243,7 +265,7 @@ function RifaDetalle() {
             </div>
             
             {mostrarModalDatos && <ModalDatosComprador 
-                onCerrar={() => setMostrarModalDatos(false)} 
+                onClose={handleModalClose}
                 datosIniciales={userData}
                 rifa={rifa}
                 boletosSeleccionados={boletosSeleccionados}
@@ -278,4 +300,4 @@ function RifaDetalle() {
     );
 }
 
-export default RifaDetalle;
+export default RifaDetallePage;

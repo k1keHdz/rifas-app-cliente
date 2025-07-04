@@ -1,10 +1,14 @@
+// src/pages/admin/SeleccionarRifaHistorialPage.js
+
 import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
+// CORREGIDO: Ruta actualizada para la configuración de Firebase
+import { db } from '../../config/firebaseConfig';
 import { Link } from 'react-router-dom';
 import { FaTicketAlt, FaCalendarAlt } from 'react-icons/fa';
 
-function SeleccionarRifaHistorial() {
+// CORREGIDO: Renombrado el componente para que coincida con el nombre del archivo
+function SeleccionarRifaHistorialPage() {
     const [rifas, setRifas] = useState([]);
     const [cargando, setCargando] = useState(true);
 
@@ -61,4 +65,5 @@ function SeleccionarRifaHistorial() {
     );
 }
 
-export default SeleccionarRifaHistorial;
+// CORREGIDO: Exportamos el componente con el nuevo nombre
+export default SeleccionarRifaHistorialPage;

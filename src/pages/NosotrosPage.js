@@ -14,7 +14,7 @@ function NosotrosPage() {
               Nuestra Historia
             </h2>
             <p className="mt-3 max-w-3xl text-lg text-text-subtle">
-              Bienvenido a Sorteos App. Nacimos de la pasión por crear oportunidades emocionantes y transparentes para todos. Creemos que la suerte debe ser accesible y que cada participante merece una experiencia justa y clara.
+              Bienvenido a Sorteos El Primo. Nacimos de la pasión por crear oportunidades emocionantes y transparentes para todos. Creemos que la suerte debe ser accesible y que cada participante merece una experiencia justa y clara.
             </p>
             <p className="mt-4 text-lg text-text-subtle">
               Nuestro compromiso es utilizar la tecnología para simplificar el proceso de participación en sorteos, garantizando que cada uno se realice con la máxima integridad, basándonos en los resultados oficiales de la Lotería Nacional.

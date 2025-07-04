@@ -1,25 +1,25 @@
-import { useState, useEffect } from 'react';
-import { collection, doc, serverTimestamp, Timestamp, runTransaction, query, where, getDocs, increment } from "firebase/firestore";
-import { db } from "../firebase/firebaseConfig";
-import { useAuth } from '../context/AuthContext';
-import { useConfig } from '../context/ConfigContext';
-import { usePurchaseCooldown } from '../hooks/usePurchaseCooldown';
-import { nanoid } from 'nanoid';
-import { formatTicketNumber } from '../utils/rifaHelper';
+// src/components/modals/ModalDatosComprador.js
 
-function ModalDatosComprador({ onCerrar, datosIniciales = {}, rifa, boletosSeleccionados, limpiarSeleccion }) {
+import React, { useState, useEffect } from 'react';
+import { collection, doc, serverTimestamp, Timestamp, runTransaction, query, where, getDocs } from "firebase/firestore";
+import { db } from "../../config/firebaseConfig";
+import { useAuth } from '../../context/AuthContext';
+import { useConfig } from '../../context/ConfigContext';
+import { usePurchaseCooldown } from '../../hooks/usePurchaseCooldown';
+import { nanoid } from 'nanoid';
+import { formatTicketNumber } from '../../utils/rifaHelper';
+import Alerta from '../ui/Alerta'; // Importamos Alerta para usarlo con el nuevo formato
+
+function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSeleccionados, limpiarSeleccion }) {
     const { currentUser } = useAuth();
-    const { config } = useConfig();
+    const { config, datosGenerales } = useConfig();
     const { setCooldown } = usePurchaseCooldown();
 
     const [datos, setDatos] = useState({
-        nombre: '',
-        apellidos: '',
-        estado: '',
-        telefono: '',
-        email: '',
+        nombre: '', apellidos: '', estado: '', telefono: '', email: '',
     });
-    const [error, setError] = useState('');
+    // MODIFICADO: El error ahora puede ser un string o un elemento JSX
+    const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -47,7 +47,7 @@ function ModalDatosComprador({ onCerrar, datosIniciales = {}, rifa, boletosSelec
         }
 
         setIsSubmitting(true);
-        setError('');
+        setError(null);
 
         try {
             const ventaRealizada = await runTransaction(db, async (transaction) => {
@@ -78,7 +78,16 @@ function ModalDatosComprador({ onCerrar, datosIniciales = {}, rifa, boletosSelec
                 }
                 
                 if (boletosEnConflicto.size > 0) {
-                     throw new Error(`¡Conflicto! El/los boleto(s) ${[...boletosEnConflicto].join(', ')} ya fue(ron) apartado(s).`);
+                    // CORREGIDO: Se construye el mensaje de error como un elemento JSX
+                    const errorMessage = (
+                        <span>
+                            ¡Ups! El/los boleto(s) <strong className="text-lg font-bold">{[...boletosEnConflicto].join(', ')}</strong> ya tiene(n) dueño. ¡Pero tu premio te espera en otros!
+                        </span>
+                    );
+                    // Se lanza un error con el mensaje JSX
+                    const error = new Error("Conflicto de boletos");
+                    error.jsxMessage = errorMessage;
+                    throw error;
                 }
 
                 const DOCE_HORAS_EN_MS = 12 * 60 * 60 * 1000;
@@ -95,31 +104,30 @@ function ModalDatosComprador({ onCerrar, datosIniciales = {}, rifa, boletosSelec
                 const nuevaVentaRef = doc(ventasRef);
                 transaction.set(nuevaVentaRef, ventaData);
                 
-                // La actualización de contadores se elimina del cliente para evitar errores de permisos.
-                // Se recomienda manejar esto con una Cloud Function.
-                
                 return ventaData;
             });
 
             if (ventaRealizada) {
                 await setCooldown(config, currentUser);
-                onCerrar(); 
-                const tuNumeroDeWhatsApp = '527773367064';
+                onClose(); 
+                const numeroWhatsappAdmin = datosGenerales?.WhatsappPrincipal;
+                if (!numeroWhatsappAdmin) {
+                    console.error("ALERTA: El número de WhatsApp principal no está configurado.");
+                    return;
+                }
                 const boletosTexto = ventaRealizada.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
                 const totalAPagar = rifa.precio * ventaRealizada.cantidad;
                 const nombreCliente = `${ventaRealizada.comprador.nombre} ${ventaRealizada.comprador.apellidos || ''}`;
                 let mensaje = `¡Hola! 👋 Quiero apartar mis boletos para: "${ventaRealizada.nombreRifa}".\n\n*ID de Compra: ${ventaRealizada.idCompra}*\n\nMis números seleccionados son: *${boletosTexto}*.\nTotal a pagar: *$${totalAPagar.toLocaleString('es-MX')}*.\nMi nombre es: ${nombreCliente}.\n\nQuedo a la espera de las instrucciones para realizar el pago. ¡Tengo 12 horas para completarlo! Gracias.`;
-                const waUrl = `https://wa.me/${tuNumeroDeWhatsApp}?text=${encodeURIComponent(mensaje)}`;
+                const waUrl = `https://wa.me/${numeroWhatsappAdmin}?text=${encodeURIComponent(mensaje)}`;
                 window.open(waUrl, '_blank');
                 limpiarSeleccion();
             }
 
         } catch (err) {
             console.error("Error al confirmar apartado:", err);
-            setError(err.message || 'Ocurrió un error al intentar apartar los boletos.');
-            if (err.message.includes('Conflicto') || err.message.includes('activo')) {
-                setTimeout(() => window.location.reload(), 3000);
-            }
+            // CORREGIDO: Se usa el mensaje JSX si existe, si no, el mensaje de texto normal.
+            setError(err.jsxMessage || err.message || 'Ocurrió un error al intentar apartar los boletos.');
         } finally {
             setIsSubmitting(false);
         }
@@ -128,7 +136,7 @@ function ModalDatosComprador({ onCerrar, datosIniciales = {}, rifa, boletosSelec
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in">
             <div className="bg-background-light border border-border-color rounded-lg shadow-xl max-w-lg w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
-                <button onClick={onCerrar} className="absolute top-3 right-3 text-text-subtle hover:text-danger rounded-full p-1 transition-colors z-20">
+                <button onClick={onClose} className="absolute top-3 right-3 text-text-subtle hover:text-danger rounded-full p-1 transition-colors z-20">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
                 <h2 className="text-xl font-bold text-center mb-4">Confirma tus Datos</h2>
@@ -141,7 +149,8 @@ function ModalDatosComprador({ onCerrar, datosIniciales = {}, rifa, boletosSelec
                     <div><label className="block text-sm font-medium text-text-subtle">Teléfono (WhatsApp)</label><input type="tel" name="telefono" value={datos.telefono} onChange={handleChange} required className="input-field mt-1" /></div>
                     <div><label htmlFor="modal-estado" className="block text-sm font-medium text-text-subtle">Estado de Residencia</label><input id="modal-estado" type="text" name="estado" value={datos.estado} onChange={handleChange} required placeholder="Ej. Jalisco" className="input-field mt-1" /></div>
                     <div><label className="block text-sm font-medium text-text-subtle">Correo Electrónico (Opcional)</label><input type="email" name="email" value={datos.email} onChange={handleChange} className="input-field mt-1" /></div>
-                    {error && <p className="text-sm text-center text-danger p-2 bg-danger/10 rounded-md">{error}</p>}
+                    {/* CORREGIDO: Se usa el componente Alerta para mostrar el error */}
+                    {error && <Alerta mensaje={error} tipo="error" onClose={() => setError(null)} />}
                     <div className="pt-4">
                         <button type="submit" disabled={isSubmitting} className="w-full btn bg-success text-white hover:bg-green-700 disabled:opacity-50">
                             {isSubmitting ? 'Verificando y Apartando...' : 'Confirmar y Apartar'}

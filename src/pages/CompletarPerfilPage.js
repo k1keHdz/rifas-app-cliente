@@ -1,58 +1,43 @@
-// src/components/CompletarPerfil.js
+// src/pages/CompletarPerfilPage.js
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
-import Alerta from './Alerta';
+// CORREGIDO: Ruta actualizada para la configuración de Firebase
+import { db } from '../config/firebaseConfig';
+// CORREGIDO: Ruta actualizada para el componente Alerta
+import Alerta from '../components/ui/Alerta';
 
-function CompletarPerfil() {
+// CORREGIDO: Renombrado el componente para que coincida con el nombre del archivo
+function CompletarPerfilPage() {
     const { currentUser, userData } = useAuth();
     const navigate = useNavigate();
     
     const [nombre, setNombre] = useState('');
     const [apellidos, setApellidos] = useState('');
     const [telefono, setTelefono] = useState('');
-    // =================================================================================================
-    // INICIO DE LA MODIFICACIÓN: Se añade el estado para 'estado' de residencia
-    // =================================================================================================
     const [estado, setEstado] = useState('');
-    // =================================================================================================
-    // FIN DE LA MODIFICACIÓN
-    // =================================================================================================
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (userData) {
-            // Si el usuario ya tiene teléfono y estado, se considera completo y se le redirige.
             if (userData.telefono && userData.estado) {
                 navigate('/perfil');
             }
             setNombre(userData.nombre || currentUser?.displayName || '');
             setApellidos(userData.apellidos || '');
-            // =================================================================================================
-            // INICIO DE LA MODIFICACIÓN: Se carga el 'estado' desde los datos existentes
-            // =================================================================================================
             setEstado(userData.estado || '');
-            // =================================================================================================
-            // FIN DE LA MODIFICACIÓN
-            // =================================================================================================
         }
     }, [userData, currentUser, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // =================================================================================================
-        // INICIO DE LA MODIFICACIÓN: Se añade 'estado' a la validación
-        // =================================================================================================
         if (!telefono || !nombre || !estado) {
             setError("El nombre, estado y teléfono son obligatorios.");
             return;
         }
-        // =================================================================================================
-        // FIN DE LA MODIFICACIÓN
-        // =================================================================================================
         if (!/^\d{10}$/.test(telefono)) {
             setError("El número de teléfono debe tener 10 dígitos.");
             return;
@@ -62,9 +47,6 @@ function CompletarPerfil() {
 
         try {
             const userRef = doc(db, 'usuarios', currentUser.uid);
-            // =================================================================================================
-            // INICIO DE LA MODIFICACIÓN: Se añade 'estado' al objeto de actualización
-            // =================================================================================================
             const updatedData = {
                 nombre,
                 apellidos,
@@ -72,9 +54,6 @@ function CompletarPerfil() {
                 estado,
                 photoURL: currentUser.photoURL || userData.photoURL || ''
             };
-            // =================================================================================================
-            // FIN DE LA MODIFICACIÓN
-            // =================================================================================================
             await updateDoc(userRef, updatedData);
             navigate('/perfil'); 
         } catch (err) {
@@ -107,16 +86,10 @@ function CompletarPerfil() {
                         <label className="block text-sm font-medium">Teléfono (10 dígitos)</label>
                         <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} required placeholder="Ej. 5512345678" className="input-field mt-1"/>
                     </div>
-                    {/* ================================================================================================= */}
-                    {/* INICIO DE LA MODIFICACIÓN: Se añade el campo 'Estado' al formulario                           */}
-                    {/* ================================================================================================= */}
                     <div>
                         <label className="block text-sm font-medium">Estado de Residencia</label>
                         <input type="text" value={estado} onChange={(e) => setEstado(e.target.value)} required placeholder="Ej. Jalisco" className="input-field mt-1"/>
                     </div>
-                    {/* ================================================================================================= */}
-                    {/* FIN DE LA MODIFICACIÓN                                                                          */}
-                    {/* ================================================================================================= */}
                     
                     {error && <Alerta tipo="error" mensaje={error} />}
 
@@ -129,4 +102,5 @@ function CompletarPerfil() {
     );
 }
 
-export default CompletarPerfil;
+// CORREGIDO: Exportamos el componente con el nuevo nombre
+export default CompletarPerfilPage;

@@ -1,8 +1,9 @@
-// src/components/Footer.js
+// src/components/layout/Footer.js
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useConfig } from '../context/ConfigContext';
+// CORREGIDO: La ruta ahora sube dos niveles para encontrar la carpeta 'context'
+import { useConfig } from '../../context/ConfigContext';
 import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaTelegramPlane, FaWhatsapp, FaUsers } from 'react-icons/fa';
 
 const FooterSocialIcon = ({ href, title, icon: Icon }) => (
@@ -57,7 +58,6 @@ function Footer() {
                     <div>
                         <h3 className="text-sm font-semibold text-text-subtle tracking-wider uppercase">Síguenos</h3>
                         <div className="flex mt-4 space-x-6 flex-wrap gap-y-4">
-                            {/* LÓGICA DE VISIBILIDAD: El icono solo aparece si el enlace existe Y su interruptor para el Footer está en 'true' */}
                             {datosGenerales.urlFacebook && datosGenerales.mostrarFacebookEnFooter && <FooterSocialIcon href={datosGenerales.urlFacebook} title="Facebook" icon={FaFacebook} />}
                             {datosGenerales.urlInstagram && datosGenerales.mostrarInstagramEnFooter && <FooterSocialIcon href={datosGenerales.urlInstagram} title="Instagram" icon={FaInstagram} />}
                             {datosGenerales.urlTiktok && datosGenerales.mostrarTiktokEnFooter && <FooterSocialIcon href={datosGenerales.urlTiktok} title="TikTok" icon={FaTiktok} />}
@@ -70,7 +70,7 @@ function Footer() {
 
                 </div>
                 <div className="mt-8 border-t border-border-color pt-8 text-center">
-                    <p className="text-base text-text-subtle">&copy; 2025 Sorteos App. Todos los derechos reservados.</p>
+                    <p className="text-base text-text-subtle">&copy; 2025 Sorteos El Primo. Todos los derechos reservados.</p>
                 </div>
             </div>
         </footer>

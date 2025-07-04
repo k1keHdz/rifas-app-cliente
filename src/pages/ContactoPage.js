@@ -2,8 +2,9 @@
 
 import React, { useState, useRef } from 'react';
 import emailjs from '@emailjs/browser';
-import Alerta from '../components/Alerta';
+import Alerta from '../components/ui/Alerta';
 import { useConfig } from '../context/ConfigContext';
+import EMAIL_CONFIG from '../emailjsConfig'; // TAREA 2.1: Se importa la configuración centralizada.
 import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaTelegramPlane, FaYoutube, FaUsers } from 'react-icons/fa';
 
 const SocialButton = ({ href, title, icon: Icon, className }) => (
@@ -24,8 +25,9 @@ function ContactoPage() {
         setIsSubmitting(true);
         setFeedback({ msg: '', type: '' });
 
-        if (!process.env.REACT_APP_EMAILJS_SERVICE_ID || !process.env.REACT_APP_EMAILJS_CONTACT_TEMPLATE_ID || !process.env.REACT_APP_EMAILJS_PUBLIC_KEY) {
-            console.error("Una o más variables de entorno de EmailJS no están definidas.");
+        // TAREA 2.1: Se utiliza la configuración importada para mayor consistencia.
+        if (!EMAIL_CONFIG.serviceID || !EMAIL_CONFIG.contactTemplateID || !EMAIL_CONFIG.publicKey) {
+            console.error("Una o más variables de EmailJS no están definidas en emailjsConfig.js.");
             setFeedback({ msg: 'Error de configuración del servicio de correo.', type: 'error' });
             setIsSubmitting(false);
             return;
@@ -33,10 +35,10 @@ function ContactoPage() {
 
         try {
             await emailjs.sendForm(
-                process.env.REACT_APP_EMAILJS_SERVICE_ID, 
-                process.env.REACT_APP_EMAILJS_CONTACT_TEMPLATE_ID, 
+                EMAIL_CONFIG.serviceID, 
+                EMAIL_CONFIG.contactTemplateID, // Se usa la plantilla específica de contacto.
                 form.current, 
-                process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+                EMAIL_CONFIG.publicKey
             );
             setFeedback({ msg: '¡Mensaje enviado con éxito! Te responderemos pronto.', type: 'exito' });
             form.current.reset();
@@ -65,7 +67,6 @@ function ContactoPage() {
                     
                     <div className="mt-12 bg-background-light border border-border-color p-6 sm:p-8 rounded-2xl shadow-lg">
                         <form ref={form} onSubmit={handleSubmit} className="space-y-6">
-                            {/* El formulario se mantiene igual */}
                             <div>
                                 <label htmlFor="from_name" className="block text-sm font-medium">Tu Nombre</label>
                                 <div className="mt-1">
@@ -101,7 +102,6 @@ function ContactoPage() {
                             Mantente al día con los últimos sorteos, noticias y ganadores.
                         </p>
                         <div className="mt-8 flex justify-center items-center flex-wrap gap-4 sm:gap-6">
-                            {/* LÓGICA DE VISIBILIDAD: El icono solo aparece si el enlace existe Y su interruptor para Contacto está en 'true' */}
                             {datosGenerales.urlWhatsappContacto && datosGenerales.mostrarWhatsappContactoEnContacto && <SocialButton href={datosGenerales.urlWhatsappContacto} title="WhatsApp" icon={FaWhatsapp} className="bg-[#25D366]"/>}
                             {datosGenerales.urlFacebook && datosGenerales.mostrarFacebookEnContacto && <SocialButton href={datosGenerales.urlFacebook} title="Facebook" icon={FaFacebook} className="bg-[#1877F2]"/>}
                             {datosGenerales.urlInstagram && datosGenerales.mostrarInstagramEnContacto && <SocialButton href={datosGenerales.urlInstagram} title="Instagram" icon={FaInstagram} className="bg-gradient-to-br from-yellow-400 via-red-500 to-purple-600"/>}

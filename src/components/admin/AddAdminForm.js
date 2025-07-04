@@ -1,8 +1,9 @@
-// src/components/AddAdminForm.js
+// src/components/admin/AddAdminForm.js
 
 import React, { useState } from 'react';
 import { getFunctions, httpsCallable } from "firebase/functions";
-import Alerta from './Alerta';
+// CORREGIDO: Ruta actualizada para apuntar a la subcarpeta 'ui'
+import Alerta from '../ui/Alerta';
 import { FaUserShield, FaSpinner } from 'react-icons/fa';
 
 /**
@@ -26,21 +27,16 @@ function AddAdminForm() {
         }
 
         try {
-            // Inicializa la conexión con las Cloud Functions
             const functions = getFunctions();
-            // Apunta a la función específica que queremos llamar
             const addAdminRole = httpsCallable(functions, 'addAdminRole');
             
-            // Llama a la función y le pasa el email en el cuerpo de la petición
             const result = await addAdminRole({ email: email });
             
-            // Muestra el mensaje de éxito que devuelve la función
             setFeedback({ msg: result.data.result, type: 'exito' });
-            setEmail(''); // Limpia el campo después del éxito
+            setEmail('');
 
         } catch (error) {
             console.error("Error al nombrar administrador:", error);
-            // Firebase devuelve un mensaje de error claro, lo mostramos al usuario
             setFeedback({ msg: error.message || 'Ocurrió un error inesperado.', type: 'error' });
         } finally {
             setIsLoading(false);
@@ -52,8 +48,8 @@ function AddAdminForm() {
             <div className="flex items-start sm:items-center mb-4">
                  <FaUserShield className="w-8 h-8 mr-4 text-accent-primary flex-shrink-0" />
                  <div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-text-primary">Nombrar Nuevo Administrador</h3>
-                    <p className="text-text-subtle mt-1">Otorga privilegios de administrador a un usuario existente por su correo electrónico.</p>
+                     <h3 className="text-xl sm:text-2xl font-bold text-text-primary">Nombrar Nuevo Administrador</h3>
+                     <p className="text-text-subtle mt-1">Otorga privilegios de administrador a un usuario existente por su correo electrónico.</p>
                  </div>
             </div>
             <form onSubmit={handleSubmit}>

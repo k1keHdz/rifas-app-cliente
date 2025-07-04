@@ -3,29 +3,38 @@ import { RifasProvider } from "./context/RifasContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ConfigProvider, useConfig } from "./context/ConfigContext"; 
 
-// Componentes y Páginas
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import Login from "./components/Login";
-import Registro from "./components/Registro";
-import RifaDetalle from "./components/RifaDetalle";
-import RifaDetalleAdmin from "./components/RifaDetalleAdmin";
-import RutaProtegida from "./components/RutaProtegida";
-import CompletarPerfil from "./components/CompletarPerfil";
-import AdminDashboard from "./components/AdminDashboard";
-import MiPerfil from "./components/MiPerfil";
-import SeleccionarRifaHistorial from "./components/SeleccionarRifaHistorial";
-import GestionarRifasPage from "./pages/admin/GestionarRifasPage";
+// --- Componentes y Páginas (Rutas de importación actualizadas) ---
+
+// Componentes de Layout y Lógica
+import Navbar from "./components/layout/Navbar"; // CORREGIDO
+import Footer from "./components/layout/Footer"; // CORREGIDO
+import RutaProtegida from "./components/RutaProtegida"; // Se mantiene (no se movió)
+
+// Páginas Públicas
 import Home from "./pages/Home";
 import VerificadorBoletosPage from "./pages/VerificadorBoletosPage";
 import ComoParticiparPage from "./pages/ComoParticiparPage";
-import GestionarGanadoresPage from "./pages/admin/GestionarGanadoresPage";
 import GanadoresPage from "./pages/GanadoresPage";
 import ContactoPage from "./pages/ContactoPage";
-import ClientesPage from "./pages/admin/ClientesPage";
-import ConfiguracionPage from "./pages/admin/ConfiguracionPage";
 import NosotrosPage from "./pages/NosotrosPage";
 import TransparenciaPage from "./pages/TransparenciaPage";
+import RifaDetallePage from "./pages/RifaDetallePage"; // CORREGIDO
+
+// Páginas de Usuario y Autenticación
+import LoginPage from "./pages/LoginPage"; // CORREGIDO
+import RegistroPage from "./pages/RegistroPage"; // CORREGIDO
+import CompletarPerfilPage from "./pages/CompletarPerfilPage"; // CORREGIDO
+import MiPerfilPage from "./pages/MiPerfilPage"; // CORREGIDO
+
+// Páginas de Administrador
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage"; // CORREGIDO
+import ClientesPage from "./pages/admin/ClientesPage";
+import ConfiguracionPage from "./pages/admin/ConfiguracionPage";
+import GestionarGanadoresPage from "./pages/admin/GestionarGanadoresPage";
+import GestionarRifasPage from "./pages/admin/GestionarRifasPage";
+import RifaDetalleAdminPage from "./pages/admin/RifaDetalleAdminPage"; // CORREGIDO
+import SeleccionarRifaHistorialPage from "./pages/admin/SeleccionarRifaHistorialPage"; // CORREGIDO
+
 
 function AppRoutes() {
     const { config, cargandoConfig } = useConfig();
@@ -34,31 +43,32 @@ function AppRoutes() {
     }
     return (
         <Routes>
+            {/* Rutas Públicas */}
             <Route path="/" element={<Home />} />
-            <Route path="/rifa/:id" element={<RifaDetalle />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/registro" element={<Registro />} />
+            <Route path="/rifa/:id" element={<RifaDetallePage />} /> {/* CORREGIDO */}
+            <Route path="/login" element={<LoginPage />} /> {/* CORREGIDO */}
+            <Route path="/registro" element={<RegistroPage />} /> {/* CORREGIDO */}
             <Route path="/verificador" element={<VerificadorBoletosPage />} />
             <Route path="/como-participar" element={<ComoParticiparPage />} />
             <Route path="/contacto" element={<ContactoPage />} />
+            <Route path="/nosotros" element={<NosotrosPage />} />
+            <Route path="/transparencia" element={<TransparenciaPage />} />
             {config?.showGanadoresPage && (
                 <Route path="/ganadores" element={<GanadoresPage />} />
             )}
-            <Route path="/admin" element={<RutaProtegida rolRequerido="admin"><AdminDashboard /></RutaProtegida>} />
+
+            {/* Rutas Protegidas de Usuario */}
+            <Route path="/completar-perfil" element={<RutaProtegida><CompletarPerfilPage /></RutaProtegida>} /> {/* CORREGIDO */}
+            <Route path="/perfil" element={<RutaProtegida><MiPerfilPage /></RutaProtegida>} /> {/* CORREGIDO */}
+
+            {/* Rutas Protegidas de Administrador */}
+            <Route path="/admin" element={<RutaProtegida rolRequerido="admin"><AdminDashboardPage /></RutaProtegida>} /> {/* CORREGIDO */}
             <Route path="/admin/gestionar-rifas" element={<RutaProtegida rolRequerido="admin"><GestionarRifasPage /></RutaProtegida>} />
-            <Route path="/admin/historial-ventas" element={<RutaProtegida rolRequerido="admin"><SeleccionarRifaHistorial /></RutaProtegida>} />
-            
-            {/* --- RUTA CORREGIDA --- */}
-            {/* Esta es la ruta correcta y única para ver el detalle de un sorteo como admin */}
-            <Route path="/admin/historial-ventas/:id" element={<RutaProtegida rolRequerido="admin"><RifaDetalleAdmin /></RutaProtegida>} />
-            
+            <Route path="/admin/historial-ventas" element={<RutaProtegida rolRequerido="admin"><SeleccionarRifaHistorialPage /></RutaProtegida>} /> {/* CORREGIDO */}
+            <Route path="/admin/historial-ventas/:id" element={<RutaProtegida rolRequerido="admin"><RifaDetalleAdminPage /></RutaProtegida>} /> {/* CORREGIDO */}
             <Route path="/admin/clientes" element={<RutaProtegida rolRequerido="admin"><ClientesPage /></RutaProtegida>} />
             <Route path="/admin/configuracion" element={<RutaProtegida rolRequerido="admin"><ConfiguracionPage /></RutaProtegida>} />
             <Route path="/admin/ganadores" element={<RutaProtegida rolRequerido="admin"><GestionarGanadoresPage /></RutaProtegida>} />
-            <Route path="/completar-perfil" element={<RutaProtegida><CompletarPerfil /></RutaProtegida>} />
-            <Route path="/perfil" element={<RutaProtegida><MiPerfil /></RutaProtegida>} />
-            <Route path="/nosotros" element={<NosotrosPage />} />
-            <Route path="/transparencia" element={<TransparenciaPage />} />
         </Routes>
     );
 }

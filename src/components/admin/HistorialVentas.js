@@ -1,6 +1,9 @@
+// src/components/admin/HistorialVentas.js
+
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { formatTicketNumber } from '../utils/rifaHelper';
+// CORREGIDO: Se eliminó la importación de 'Link' que no se usaba.
+// CORREGIDO: Se actualizó la ruta para el helper.
+import { formatTicketNumber } from '../../utils/rifaHelper';
 
 function HistorialVentas({ 
     ventas = [],
@@ -80,7 +83,6 @@ function HistorialVentas({
                                             {esApartado && (<button onClick={() => onLiberarBoletos(venta)} className="w-full bg-border-color px-3 py-1 rounded text-xs font-bold hover:bg-opacity-50 transition-colors text-center">Liberar Boletos</button>)}
                                             {esApartado && haExpirado && (<button onClick={() => onEnviarRecordatorio(venta)} className="w-full bg-accent-primary text-white px-3 py-1 rounded text-xs font-bold hover:opacity-90 transition-colors text-center">Enviar Recordatorio</button>)}
                                             
-                                            {/* --- CORRECCIÓN DE ESTILO AQUÍ --- */}
                                             {esComprado && (<> 
                                                 <button onClick={() => onNotificarWhatsApp(venta)} className="w-full bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600 transition-colors text-center">Notificar WhatsApp</button> 
                                                 <button onClick={() => onNotificarEmail(venta)} className="w-full bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-600 disabled:opacity-50 transition-colors text-center" disabled={!venta.comprador?.email}>Notificar Correo</button> 

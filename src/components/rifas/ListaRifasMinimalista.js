@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useRifas } from '../context/RifasContext';
+// src/components/rifas/ListaRifasMinimalista.js
+
+import React from 'react';
+// CORREGIDO: Ruta actualizada para el contexto
+import { useRifas } from '../../context/RifasContext';
 import { Link } from 'react-router-dom';
-import { FaTicketAlt, FaCalendarAlt } from 'react-icons/fa';
+// CORREGIDO: Se eliminaron los iconos que no se usaban.
 
 function ListaRifasMinimalista() {
     const { rifas, cargando } = useRifas();
@@ -17,8 +20,6 @@ function ListaRifasMinimalista() {
                     rifas.map(rifa => (
                         <Link
                             key={rifa.id}
-                            // --- CORRECCIÓN DEL ENLACE ---
-                            // Ahora apunta a la ruta específica para el historial de admin.
                             to={`/admin/historial-ventas/${rifa.id}`}
                             className="block p-4 border border-border-color rounded-lg hover:bg-border-color/20 hover:border-accent-primary/50 transition-all duration-200"
                         >

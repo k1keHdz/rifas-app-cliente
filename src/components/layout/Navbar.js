@@ -1,13 +1,15 @@
-// src/components/Navbar.js
+// src/components/layout/Navbar.js
 
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useConfig } from "../context/ConfigContext"; // 1. Importamos el hook de configuración
+// CORREGIDO: La ruta ahora sube dos niveles para encontrar la carpeta 'context'
+import { useAuth } from "../../context/AuthContext";
+import { useConfig } from "../../context/ConfigContext";
 import { getAuth, signOut } from "firebase/auth";
-import Avatar from "./Avatar";
+// CORREGIDO: La ruta ahora apunta a la subcarpeta 'ui'
+import Avatar from "../ui/Avatar";
 
-// --- Iconos SVG para la UI ---
+// --- Iconos SVG para la UI (sin cambios) ---
 const MenuIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>;
 const CloseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>;
 const LogoutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>;
@@ -15,7 +17,7 @@ const LogoutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" heig
 
 function Navbar() {
     const { currentUser, userData } = useAuth();
-    const { config } = useConfig(); // 2. Usamos el hook para obtener la configuración
+    const { config } = useConfig();
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -36,7 +38,7 @@ function Navbar() {
         setIsMenuOpen(false);
     };
 
-    // 3. Definimos el logo a usar, con un respaldo por si no hay nada en la BD
+    // Si la configuración no ha cargado, es mejor mostrar un logo genérico
     const logoToShow = config?.logoURL || "https://i.imgur.com/a9A1Jps.png";
 
     return (
@@ -46,7 +48,7 @@ function Navbar() {
                     <div className="flex-shrink-0">
                         <Link to="/" onClick={handleLinkClick} className="flex items-center">
                             <img 
-                                src={logoToShow} // 4. Usamos la variable del logo
+                                src={logoToShow}
                                 alt="Logo Sorteos App" 
                                 className="h-12 w-auto"
                             />

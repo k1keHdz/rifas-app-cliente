@@ -1,17 +1,18 @@
-// src/components/MiPerfil.js
+// src/pages/MiPerfilPage.js
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import { getAuth, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { doc, getDoc, updateDoc, collectionGroup, query, where, getDocs, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
+import { doc, getDoc, updateDoc, collectionGroup, query, where, onSnapshot } from 'firebase/firestore';
+// CORREGIDO: Ruta actualizada para la configuración de Firebase
+import { db } from '../config/firebaseConfig';
 import { Link } from 'react-router-dom';
 import { formatTicketNumber } from '../utils/rifaHelper';
-import ContadorRegresivo from './ContadorRegresivo';
-import Avatar from './Avatar';
-import FeedbackModal from './FeedbackModal';
-// MODIFICADO: Añadimos FaUsers y FaYoutube para que no falte ninguno
+// CORREGIDO: Rutas actualizadas para los componentes
+import ContadorRegresivo from '../components/ui/ContadorRegresivo';
+import Avatar from '../components/ui/Avatar';
+import FeedbackModal from '../components/modals/FeedbackModal';
 import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaTelegramPlane, FaYoutube, FaUsers } from 'react-icons/fa';
 
 // --- Iconos (sin cambios) ---
@@ -27,7 +28,8 @@ const SocialIcon = ({ href, title, icon: Icon, className }) => (
     </a>
 );
 
-function MiPerfil() {
+// CORREGIDO: Renombrado el componente para que coincida con el nombre del archivo
+function MiPerfilPage() {
     const { currentUser, userData, updateUserData } = useAuth();
     const { datosGenerales, cargandoConfig } = useConfig();
     
@@ -303,7 +305,6 @@ function MiPerfil() {
                                                                     <div className="text-center mt-6">
                                                                         <p className="text-sm font-semibold mb-2">¿Necesitas ayuda con tu compra?</p>
                                                                         <div className="flex justify-center items-center flex-wrap gap-4">
-                                                                            {/* CORREGIDO: Añadidos los iconos faltantes de YouTube y Grupo de WhatsApp */}
                                                                             {datosGenerales.WhatsappPrincipal && datosGenerales.mostrarWhatsappContactoEnPerfil && <SocialIcon href={`https://wa.me/${datosGenerales.WhatsappPrincipal}?text=${generarMensajeSoporte(compra)}`} title="Contactar por WhatsApp" icon={FaWhatsapp} className="bg-[#25D366]"/>}
                                                                             {datosGenerales.urlFacebook && datosGenerales.mostrarFacebookEnPerfil && <SocialIcon href={datosGenerales.urlFacebook} title="Visita nuestro Facebook" icon={FaFacebook} className="bg-[#1877F2]"/>}
                                                                             {datosGenerales.urlInstagram && datosGenerales.mostrarInstagramEnPerfil && <SocialIcon href={datosGenerales.urlInstagram} title="Síguenos en Instagram" icon={FaInstagram} className="bg-gradient-to-br from-yellow-400 via-red-500 to-purple-600"/>}
@@ -382,4 +383,5 @@ function MiPerfil() {
     );
 }
 
-export default MiPerfil;
+// CORREGIDO: Exportamos el componente con el nuevo nombre
+export default MiPerfilPage;

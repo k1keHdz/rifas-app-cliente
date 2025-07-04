@@ -1,9 +1,12 @@
+// src/components/rifas/SelectorBoletos.js
 import React from 'react';
-import { formatTicketNumber } from '../utils/rifaHelper';
+import { formatTicketNumber } from '../../utils/rifaHelper';
 
 const SelectorBoletos = ({
     boletosOcupados,
     boletosSeleccionados,
+    // NUEVO: Prop para recibir los boletos en conflicto
+    conflictingTickets = [],
     onToggleBoleto,
     filtroActivo,
     rangoInicio,
@@ -27,6 +30,9 @@ const SelectorBoletos = ({
                         }
 
                         const estaSeleccionado = boletosSeleccionados.includes(numeroBoleto);
+                        // NUEVO: Verificamos si el boleto está en la lista de conflictos
+                        const esConflicto = conflictingTickets.includes(numeroBoleto);
+
                         let colorClasses = '';
 
                         if (estaSeleccionado) {
@@ -42,13 +48,18 @@ const SelectorBoletos = ({
                             colorClasses = 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100';
                         }
                         
+                        // NUEVO: Si es un boleto en conflicto, añadimos una animación para resaltarlo.
+                        if (esConflicto) {
+                            colorClasses += ' animate-pulse ring-4 ring-offset-2 ring-danger ring-offset-background-dark';
+                        }
+                        
                         const isDisabled = !compraActiva || estaOcupado;
 
                         return (
                             <button
                                 key={numeroBoleto}
                                 onClick={() => onToggleBoleto(numeroBoleto)}
-                                className={`border w-14 h-10 sm:w-12 rounded text-xs sm:text-sm font-mono transition-transform transform ${colorClasses} ${!isDisabled && 'hover:scale-110'}`}
+                                className={`border w-14 h-10 sm:w-12 rounded text-xs sm:text-sm font-mono transition-all transform ${colorClasses} ${!isDisabled && 'hover:scale-110'}`}
                                 disabled={isDisabled}
                             >
                                 {formatTicketNumber(numeroBoleto, totalBoletos)}

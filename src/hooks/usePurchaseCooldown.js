@@ -1,7 +1,8 @@
 // src/hooks/usePurchaseCooldown.js
 
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
+// CORREGIDO: Ruta actualizada para la configuración de Firebase
+import { db } from '../config/firebaseConfig';
 
 const formatTimeLeft = (ms) => {
     const totalSeconds = Math.round(ms / 1000);
