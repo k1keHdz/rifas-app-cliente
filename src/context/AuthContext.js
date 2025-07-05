@@ -18,12 +18,10 @@ export function AuthProvider({ children }) {
         setUserData(prevData => ({ ...prevData, ...newData }));
     }, []);
 
-    // Efecto 1: Escucha los cambios de estado de autenticación de Firebase.
     useEffect(() => {
         const auth = getAuth();
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             setCurrentUser(user);
-            // Si no hay usuario, la carga ha terminado.
             if (!user) {
                 setLoading(false);
             }
@@ -31,11 +29,8 @@ export function AuthProvider({ children }) {
         return () => unsubscribeAuth();
     }, []);
 
-    // Efecto 2: Escucha los cambios en los datos del usuario en Firestore, SÓLO si hay un usuario.
     useEffect(() => {
-        // Si hay un usuario, buscamos sus datos.
         if (currentUser) {
-            // Activamos el estado de carga mientras se obtienen los datos.
             setLoading(true); 
             const userRef = doc(db, 'usuarios', currentUser.uid);
             
@@ -45,7 +40,6 @@ export function AuthProvider({ children }) {
                 } else {
                     setUserData(null);
                 }
-                // La carga termina cuando se reciben los datos (o se confirma que no existen).
                 setLoading(false); 
             }, (error) => {
                 console.error("Error al obtener datos del usuario:", error);
@@ -55,11 +49,10 @@ export function AuthProvider({ children }) {
 
             return () => unsubscribeFirestore();
         } else {
-            // Si no hay usuario (currentUser es null), limpiamos los datos y nos aseguramos de que no esté cargando.
             setUserData(null);
             setLoading(false);
         }
-    }, [currentUser]); // La única dependencia correcta para este efecto es 'currentUser'.
+    }, [currentUser]);
 
     const value = useMemo(() => ({
         currentUser,

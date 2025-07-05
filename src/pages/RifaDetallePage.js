@@ -1,6 +1,3 @@
-// src/pages/RifaDetallePage.js
-
-// CORRECCIÓN FINAL: Se elimina 'useCallback' de la importación ya que no se utiliza.
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { doc, onSnapshot } from "firebase/firestore";

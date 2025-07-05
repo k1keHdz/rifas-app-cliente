@@ -2,22 +2,19 @@
 
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-// CORREGIDO: La ruta ahora sube dos niveles para encontrar la carpeta 'context'
 import { useAuth } from "../../context/AuthContext";
 import { useConfig } from "../../context/ConfigContext";
 import { getAuth, signOut } from "firebase/auth";
-// CORREGIDO: La ruta ahora apunta a la subcarpeta 'ui'
 import Avatar from "../ui/Avatar";
 
-// --- Iconos SVG para la UI (sin cambios) ---
 const MenuIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>;
 const CloseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>;
 const LogoutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>;
 
-
 function Navbar() {
     const { currentUser, userData } = useAuth();
-    const { config } = useConfig();
+    // Se obtienen los datos y el estado de carga del contexto.
+    const { config, cargandoConfig } = useConfig();
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -38,20 +35,27 @@ function Navbar() {
         setIsMenuOpen(false);
     };
 
-    // Si la configuración no ha cargado, es mejor mostrar un logo genérico
-    const logoToShow = config?.logoURL || "https://i.imgur.com/a9A1Jps.png";
-
     return (
         <nav className="bg-background-dark shadow-md sticky top-0 z-40 border-b border-border-color">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                     <div className="flex-shrink-0">
-                        <Link to="/" onClick={handleLinkClick} className="flex items-center">
-                            <img 
-                                src={logoToShow}
-                                alt="Logo Sorteos App" 
-                                className="h-12 w-auto"
-                            />
+                        <Link to="/" onClick={handleLinkClick} className="flex items-center justify-center h-12 w-32">
+                            {/* Lógica de renderizado condicional para el logo */}
+                            {cargandoConfig ? (
+                                // 1. Muestra un esqueleto mientras carga.
+                                <div className="h-full w-full bg-border-color rounded-md animate-pulse"></div>
+                            ) : config?.logoURL ? (
+                                // 2. CORRECCIÓN DEFINITIVA: Busca en 'config.logoURL', que es el lugar correcto.
+                                <img 
+                                    src={config.logoURL}
+                                    alt="Logo Sorteos App" 
+                                    className="h-full w-auto object-contain"
+                                />
+                            ) : (
+                                // 3. Si ya cargó PERO NO hay URL, muestra un texto de respaldo.
+                                <span className="font-bold text-lg text-text-subtle">Sorteos</span>
+                            )}
                         </Link>
                     </div>
 
@@ -60,7 +64,7 @@ function Navbar() {
                         <Link to="/" className="text-accent-primary font-bold px-3 py-2 rounded-md text-sm hover:bg-background-light">Inicio</Link>
                         <Link to="/como-participar" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Cómo participar</Link>
                         
-                        {config?.showGanadoresPage && (
+                        {!cargandoConfig && config?.showGanadoresPage && (
                             <Link to="/ganadores" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-background-light">Ganadores</Link>
                         )}
 
@@ -73,7 +77,6 @@ function Navbar() {
                             <Link to="/admin" className="px-3 py-2 rounded-md text-sm font-bold hover:bg-background-light">Admin</Link>
                         )}
                         
-                        {/* --- SECCIÓN DE USUARIO (ESCRITORIO) --- */}
                         <div className="flex items-center space-x-4 ml-4">
                             {currentUser ? (
                                 <div className="flex items-center space-x-4">
@@ -103,7 +106,6 @@ function Navbar() {
                         </div>
                     </div>
 
-                    {/* Botón de Menú Móvil */}
                     <div className="md:hidden flex items-center">
                         <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="inline-flex items-center justify-center p-2 rounded-md hover:bg-background-light focus:outline-none">
                             {isMenuOpen ? <CloseIcon /> : <MenuIcon />}
@@ -112,14 +114,13 @@ function Navbar() {
                 </div>
             </div>
 
-            {/* Panel de Menú Móvil */}
             {isMenuOpen && (
                 <div className="md:hidden bg-background-light">
                     <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                         <Link to="/" onClick={handleLinkClick} className="text-accent-primary font-bold hover:bg-border-color block px-3 py-2 rounded-md text-base">Inicio</Link>
                         <Link to="/como-participar" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Cómo participar</Link>
                         
-                        {config?.showGanadoresPage && (
+                        {!cargandoConfig && config?.showGanadoresPage && (
                             <Link to="/ganadores" onClick={handleLinkClick} className="hover:bg-border-color block px-3 py-2 rounded-md text-base font-medium">Ganadores</Link>
                         )}
 

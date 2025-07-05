@@ -1,14 +1,11 @@
-// src/components/rifas/SelectorBoletos.js
 import React from 'react';
 import { formatTicketNumber } from '../../utils/rifaHelper';
 
-// Este componente está memoizado, por lo que es crucial que las props que recibe,
-// especialmente las funciones, sean estables.
 const SelectorBoletos = ({
     boletosOcupados,
     boletosSeleccionados,
     conflictingTickets = [],
-    onToggleBoleto, // Ahora recibe una función estable desde el padre
+    onToggleBoleto,
     filtroActivo,
     rangoInicio,
     rangoFin,
@@ -16,8 +13,6 @@ const SelectorBoletos = ({
     compraActiva
 }) => {
 
-    // La generación de la lista de boletos a mostrar es la operación más costosa.
-    // Al evitar re-renders innecesarios, mejoramos drásticamente el rendimiento.
     const numerosAMostrar = Array.from({ length: rangoFin - rangoInicio }, (_, i) => rangoInicio + i);
 
     return (
@@ -70,5 +65,4 @@ const SelectorBoletos = ({
     );
 };
 
-// Se mantiene React.memo, que ahora funcionará correctamente gracias a las props estables.
 export default React.memo(SelectorBoletos);

@@ -1,5 +1,3 @@
-// src/context/RifasContext.js
-
 import { createContext, useState, useEffect, useContext, useMemo, useCallback } from "react";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
@@ -52,7 +50,6 @@ export const RifasProvider = ({ children }) => {
         setIsFormVisible(false);
     }, []);
     
-    // TAREA 1.1 (FIX): Se memoriza el objeto 'value' para estabilizar el contexto.
     const value = useMemo(() => ({
         rifas,
         cargando,

@@ -1,5 +1,3 @@
-// src/pages/admin/ConfiguracionPage.js
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -92,7 +90,6 @@ function ConfiguracionPage() {
             if (generalesSnap.exists()) {
                 const fetchedGenerales = generalesSnap.data();
                 setDatosGenerales(fetchedGenerales);
-                // CORRECCIÓN: La vista previa se toma de datosGenerales.
                 if (fetchedGenerales.logoURL) {
                     setLogoPreview(fetchedGenerales.logoURL);
                 }
@@ -126,23 +123,19 @@ function ConfiguracionPage() {
         setGuardando(true);
         setFeedback({ msg: '', type: '' });
         try {
-            // CORRECCIÓN CLAVE: La URL del logo se gestiona en una copia de datosGenerales.
             let finalGeneralesConfig = { ...datosGenerales };
             if (logoFile) {
                 const storage = getStorage();
                 const logoRef = ref(storage, 'config/site-logo'); 
                 await uploadBytes(logoRef, logoFile);
                 const downloadURL = await getDownloadURL(logoRef);
-                // La URL se asigna al objeto de datos generales.
                 finalGeneralesConfig.logoURL = downloadURL;
             }
             
             const featuresDocRef = doc(db, 'configuracion', 'features');
             const generalesDocRef = doc(db, 'configuracion', 'datosGenerales');
             
-            // Se guarda 'featuresConfig' como antes.
             const saveFeatures = setDoc(featuresDocRef, featuresConfig, { merge: true });
-            // Se guarda el objeto 'finalGeneralesConfig' que ahora contiene la URL del logo.
             const saveGenerales = setDoc(generalesDocRef, finalGeneralesConfig, { merge: true });
             
             await Promise.all([saveFeatures, saveGenerales]);
