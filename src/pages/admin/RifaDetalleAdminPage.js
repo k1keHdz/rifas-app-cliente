@@ -17,7 +17,6 @@ import { formatTicketNumber } from "../../utils/rifaHelper";
 import ConfirmationModal from "../../components/modals/ConfirmationModal";
 import Alerta from "../../components/ui/Alerta";
 
-// --- Íconos ---
 const VentasIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
 const StatsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M3 3v18h18"/><path d="m18 9-5 5-4-4-3 3"/></svg>;
 const AccionesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
@@ -42,17 +41,20 @@ function RifaDetalleAdminPage() {
     const [showModalVenta, setShowModalVenta] = useState(false);
     const [showMoney, setShowMoney] = useState(true);
     const graficoRef = useRef(null);
-    const [boletosOcupados, setBoletosOcupados] = useState(new Map());
     const [apartadosRealesCount, setApartadosRealesCount] = useState(0);
 
     const [confirmationState, setConfirmationState] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
     const [pageFeedback, setPageFeedback] = useState({ msg: '', type: '' });
-    // MEJORA UX: Se usa una referencia para el temporizador de la alerta.
     const feedbackTimeoutRef = useRef(null);
 
-    // MEJORA UX: Función centralizada para mostrar notificaciones que se ocultan solas.
-    const showFeedback = (msg, type = 'info', duration = 4000) => {
-        // Limpia cualquier temporizador anterior para evitar solapamientos.
+    const { 
+        boletosSeleccionados, 
+        setBoletosSeleccionados,
+        boletosOcupados,
+        agregarBoletosEspecificos,
+    } = useBoletos(rifaId);
+
+    const showFeedback = useCallback((msg, type = 'info', duration = 4000) => {
         if (feedbackTimeoutRef.current) {
             clearTimeout(feedbackTimeoutRef.current);
         }
@@ -60,19 +62,13 @@ function RifaDetalleAdminPage() {
         feedbackTimeoutRef.current = setTimeout(() => {
             setPageFeedback({ msg: '', type: '' });
         }, duration);
-    };
+    }, []);
 
-    const { 
-        boletosSeleccionados: boletosVentaManual, 
-        setBoletosSeleccionados: setBoletosVentaManual,
-        agregarBoletosEspecificos: agregarBoletosVentaManual
-    } = useBoletos();
-
-    const handleConfirmarPago = (venta) => {
+    const handleConfirmarPago = useCallback((venta) => {
         setConfirmationState({
             isOpen: true,
             title: 'Confirmar Pago',
-            message: `¿Estás seguro de confirmar el pago para la compra ID: ${venta.idCompra || 'N/A'}? Esta acción es irreversible.`,
+            message: `¿Estás seguro que deseas confirmar el pago para la compra ID: ${venta.idCompra || 'N/A'}? Esta acción es irreversible.`,
             confirmText: 'Sí, Confirmar',
             onConfirm: async () => {
                 try {
@@ -86,14 +82,14 @@ function RifaDetalleAdminPage() {
                 setConfirmationState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
             }
         });
-    };
+    }, [rifaId, showFeedback]);
 
-    const handleLiberarBoletos = (venta) => {
-        const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
+    const handleLiberarBoletos = useCallback((venta) => {
+        const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa?.boletos)).join(', ');
         setConfirmationState({
             isOpen: true,
             title: 'Liberar Boletos',
-            message: `¿Estás seguro de liberar los boletos [${boletosTexto}]? Esta venta se eliminará permanentemente.`,
+            message: `¿Estás seguro que deseas liberar los boletos [${boletosTexto}]? Esta venta se eliminará permanentemente.`,
             confirmText: 'Sí, Liberar',
             onConfirm: async () => {
                 try {
@@ -107,16 +103,16 @@ function RifaDetalleAdminPage() {
                 setConfirmationState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
             }
         });
-    };
+    }, [rifaId, rifa?.boletos, showFeedback]);
     
-    const handleNotificarWhatsApp = (venta) => {
-        const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
+    const handleNotificarWhatsApp = useCallback((venta) => {
+        const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa?.boletos)).join(', ');
         let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para: "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Te deseamos mucha suerte en el sorteo!`;
         const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensajeWhats)}`;
         window.open(waUrl, '_blank');
-    };
+    }, [rifa?.boletos]);
 
-    const handleNotificarEmail = (venta) => {
+    const handleNotificarEmail = useCallback((venta) => {
         const emailValido = venta.comprador.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(venta.comprador.email);
         if (!emailValido) { 
             showFeedback(`El correo del cliente (${venta.comprador.email || 'No proporcionado'}) no es válido.`, 'error');
@@ -130,7 +126,7 @@ function RifaDetalleAdminPage() {
             confirmText: 'Sí, Enviar',
             onConfirm: async () => {
                 try {
-                    const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
+                    const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa?.boletos)).join(', ');
                     const templateParams = { to_email: venta.comprador.email, to_name: `${venta.comprador.nombre} ${venta.comprador.apellidos || ''}`, raffle_name: venta.nombreRifa, ticket_numbers: boletosTexto, id_compra: venta.idCompra };
                     await emailjs.send(EMAIL_CONFIG.serviceID, EMAIL_CONFIG.templateID, templateParams, EMAIL_CONFIG.publicKey);
                     showFeedback('Correo de confirmación enviado exitosamente.', 'exito');
@@ -141,16 +137,16 @@ function RifaDetalleAdminPage() {
                 setConfirmationState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
             }
         });
-    };
+    }, [rifa?.boletos, showFeedback]);
     
-    const handleEnviarRecordatorio = (venta) => {
-        const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
+    const handleEnviarRecordatorio = useCallback((venta) => {
+        const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa?.boletos)).join(', ');
         const nombreCliente = venta.comprador.nombre;
         const nombreSorteo = venta.nombreRifa;
         let mensaje = `¡Hola, ${nombreCliente}! 👋 Te escribimos de Sorteos El Primo.\n\nNotamos que tu apartado para: "${nombreSorteo}" con los boletos *${boletosTexto}* ha expirado.\n\n¡No te preocupes! Aún podrías tener la oportunidad de participar. Contáctanos por este medio para ver si tus boletos siguen disponibles y ayudarte a completar la compra. ¡No te quedes fuera!`;
         const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensaje)}`;
         window.open(waUrl, '_blank');
-    };
+    }, [rifa?.boletos]);
 
     useEffect(() => {
         if (!rifaId || activeTab !== 'ventas') return;
@@ -224,7 +220,7 @@ function RifaDetalleAdminPage() {
     
         cargarVentas();
     
-    }, [rifaId, activeTab, paginaActual, searchTerm, fechaInicio, fechaFin, filtroTabla, ventasPorPagina]);
+    }, [rifaId, activeTab, paginaActual, searchTerm, fechaInicio, filtroTabla, ventasPorPagina]);
 
     useEffect(() => {
         if (!rifaId) return;
@@ -291,18 +287,13 @@ function RifaDetalleAdminPage() {
         
         const ventasRef = collection(db, "rifas", rifaId, "ventas");
         const unsubscribeVentasGenerales = onSnapshot(query(ventasRef), (snapshot) => {
-            const ocupados = new Map();
             let tempApartadosCount = 0;
             snapshot.forEach(doc => {
                 const venta = doc.data();
-                if (venta.numeros) {
-                    venta.numeros.forEach(num => ocupados.set(Number(num), venta.estado));
-                }
                 if (venta.estado === 'apartado') {
                     tempApartadosCount += venta.cantidad || 0;
                 }
             });
-            setBoletosOcupados(ocupados);
             setApartadosRealesCount(tempApartadosCount);
         });
 
@@ -316,16 +307,8 @@ function RifaDetalleAdminPage() {
     
     const handleAgregarMultiplesManual = useCallback((cantidad) => {
         if (!rifa) return;
-        const todosLosNumeros = Array.from({ length: rifa.boletos }, (_, i) => i);
-        const boletosDisponibles = todosLosNumeros.filter(num => !boletosOcupados.has(num) && !boletosVentaManual.includes(num));
-        if (boletosDisponibles.length < cantidad) {
-            alert(`¡No hay suficientes boletos disponibles! Solo quedan ${boletosDisponibles.length}.`);
-            agregarBoletosVentaManual(boletosDisponibles); return;
-        }
-        for (let i = boletosDisponibles.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [boletosDisponibles[i], boletosDisponibles[j]] = [boletosDisponibles[j], boletosDisponibles[i]];}
-        const nuevosBoletos = boletosDisponibles.slice(0, cantidad);
-        agregarBoletosVentaManual(nuevosBoletos);
-    }, [rifa, boletosOcupados, boletosVentaManual, agregarBoletosVentaManual]);
+        agregarBoletosEspecificos(Array.from({length: cantidad}));
+    }, [rifa, agregarBoletosEspecificos]);
     
     const estadisticasGenerales = useMemo(() => {
         if (!rifa) return { vendidosCount: 0, apartadosCount: 0, disponiblesCount: 0, vendidosDinero: 0, apartadosDinero: 0, porcentajeVendido: 0 };
@@ -350,15 +333,17 @@ function RifaDetalleAdminPage() {
         return Object.entries(agrupadas).map(([fecha, total]) => ({ fecha, total })).reverse();
     }, [ventasParaStats, modoGrafica]);
 
+    const handleCloseVentaModal = useCallback(() => {
+        setShowModalVenta(false);
+    }, []);
+
     if (!rifa) return <div className="text-center p-10">{cargando ? 'Cargando...' : 'No se encontró el sorteo.'}</div>;
 
     const TabButton = ({ active, onClick, children }) => ( <button onClick={onClick} className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${active ? 'bg-accent-primary text-white shadow' : 'bg-background-dark text-text-subtle hover:bg-border-color'}`}>{children}</button>);
 
     return (
-        // MEJORA UX: Se añade 'relative' para que la alerta flotante se posicione correctamente dentro de este contenedor.
         <div className="p-4 max-w-7xl mx-auto min-h-screen relative">
             
-            {/* MEJORA UX: Contenedor para la alerta flotante (toast) */}
             <div className="fixed top-20 right-5 z-50 w-full max-w-sm">
                 {pageFeedback.msg && (
                     <Alerta 
@@ -420,12 +405,12 @@ function RifaDetalleAdminPage() {
                 {activeTab === 'acciones' && (
                        <div className="bg-background-light p-6 rounded-xl shadow-lg border border-border-color">
                            <h2 className="text-2xl font-bold mb-4">Acciones del Sorteo</h2><p className="text-text-subtle mb-6">Usa estas herramientas para gestionar tu sorteo manualmente.</p>
-                           <button onClick={() => { setBoletosVentaManual([]); setShowModalVenta(true); }} className="btn bg-success text-white hover:bg-green-700">+ Registrar Venta Manual</button>
+                           <button onClick={() => { setBoletosSeleccionados([]); setShowModalVenta(true); }} className="btn bg-success text-white hover:bg-green-700">+ Registrar Venta Manual</button>
                            <p className="text-xs text-text-subtle mt-2">Para registrar ventas en efectivo o por otros medios.</p>
                        </div>
                 )}
             </div>
-            {showModalVenta && ( <ModalVentaManual rifa={rifa} onClose={() => setShowModalVenta(false)} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosVentaManual} setBoletosSeleccionados={setBoletosVentaManual} onAgregarMultiples={handleAgregarMultiplesManual}/> )}
+            {showModalVenta && ( <ModalVentaManual rifa={rifa} onClose={handleCloseVentaModal} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} setBoletosSeleccionados={setBoletosSeleccionados} onAgregarMultiples={handleAgregarMultiplesManual}/> )}
             
             <ConfirmationModal
                 isOpen={confirmationState.isOpen}

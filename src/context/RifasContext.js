@@ -1,8 +1,7 @@
 // src/context/RifasContext.js
 
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useMemo, useCallback } from "react";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
-// CORREGIDO: Ruta actualizada para la configuración de Firebase
 import { db } from "../config/firebaseConfig";
 
 const RifasContext = createContext();
@@ -18,12 +17,12 @@ export const RifasProvider = ({ children }) => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [feedback, setFeedback] = useState({ msg: '', type: '' });
 
-    const showFeedback = (msg, type = 'info') => {
+    const showFeedback = useCallback((msg, type = 'info') => {
         setFeedback({ msg, type });
         setTimeout(() => {
             setFeedback({ msg: '', type: '' });
         }, 4000);
-    };
+    }, []);
 
     useEffect(() => {
         const q = query(collection(db, "rifas"), orderBy("fechaCreacion", "desc"));
@@ -38,22 +37,23 @@ export const RifasProvider = ({ children }) => {
         return () => unsubscribe();
     }, []);
 
-    const seleccionarRifaParaEditar = (rifa) => {
+    const seleccionarRifaParaEditar = useCallback((rifa) => {
         setRifaSeleccionada(rifa);
         setIsFormVisible(true);
-    };
+    }, []);
 
-    const iniciarCreacionRifa = () => {
+    const iniciarCreacionRifa = useCallback(() => {
         setRifaSeleccionada(null);
         setIsFormVisible(true);
-    };
+    }, []);
 
-    const ocultarFormulario = () => {
+    const ocultarFormulario = useCallback(() => {
         setRifaSeleccionada(null);
         setIsFormVisible(false);
-    };
+    }, []);
     
-    const value = {
+    // TAREA 1.1 (FIX): Se memoriza el objeto 'value' para estabilizar el contexto.
+    const value = useMemo(() => ({
         rifas,
         cargando,
         rifaSeleccionada,
@@ -63,7 +63,7 @@ export const RifasProvider = ({ children }) => {
         ocultarFormulario,
         feedback,
         showFeedback,
-    };
+    }), [rifas, cargando, rifaSeleccionada, isFormVisible, feedback, seleccionarRifaParaEditar, iniciarCreacionRifa, ocultarFormulario, showFeedback]);
 
     return <RifasContext.Provider value={value}>{children}</RifasContext.Provider>;
 };

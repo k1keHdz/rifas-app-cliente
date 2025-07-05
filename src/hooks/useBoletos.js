@@ -1,33 +1,64 @@
 // src/hooks/useBoletos.js
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { collection, query, onSnapshot, where } from 'firebase/firestore';
+import { db } from '../config/firebaseConfig';
 
-export const useBoletos = () => {
+/**
+ * Hook centralizado para gestionar el estado de los boletos de una rifa específica.
+ * Es la única fuente de verdad para los boletos seleccionados y ocupados.
+ * @param {string} rifaId - El ID de la rifa a la que se le dará seguimiento.
+ */
+export const useBoletos = (rifaId) => {
     const [boletosSeleccionados, setBoletosSeleccionados] = useState([]);
+    const [boletosOcupados, setBoletosOcupados] = useState(new Map());
+    const [cargandoBoletos, setCargandoBoletos] = useState(true);
 
-    // CORREGIDO: La lógica ahora es más robusta y segura.
-    const toggleBoleto = useCallback((numero, boletosOcupados) => {
-        const num = Number(numero);
-        const isAlreadySelected = boletosSeleccionados.includes(num);
-
-        if (isAlreadySelected) {
-            // Si ya está seleccionado, el usuario quiere DESELECCIONARLO.
-            // Siempre se permite la deselección, sin importar el estado del boleto.
-            setBoletosSeleccionados(prev => prev.filter(n => n !== num));
-        } else {
-            // Si no está seleccionado, el usuario quiere SELECCIONARLO.
-            // Aquí es donde verificamos si está disponible.
-            // Se añade una comprobación para asegurar que boletosOcupados existe.
-            if (boletosOcupados && boletosOcupados.has(num)) {
-                // Si está ocupado, no hacemos nada.
-                console.warn(`Intento de seleccionar el boleto ocupado: ${num}`);
-                return;
-            }
-            // Si está disponible, lo añadimos a la selección.
-            setBoletosSeleccionados(prev => [...prev, num]);
+    // Efecto que escucha en tiempo real los boletos vendidos o apartados de la rifa.
+    useEffect(() => {
+        if (!rifaId) {
+            setCargandoBoletos(false);
+            return;
         }
-    // Se añade boletosSeleccionados como dependencia para que la función siempre tenga la lista más actualizada.
-    }, [boletosSeleccionados]);
+
+        setCargandoBoletos(true);
+        const ventasRef = collection(db, 'rifas', rifaId, 'ventas');
+        const q = query(ventasRef, where("estado", "in", ["comprado", "apartado"]));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const ocupados = new Map();
+            snapshot.forEach((doc) => {
+                const venta = doc.data();
+                if (venta.numeros && venta.estado) {
+                    venta.numeros.forEach(num => ocupados.set(Number(num), venta.estado));
+                }
+            });
+            setBoletosOcupados(ocupados);
+            setCargandoBoletos(false);
+        }, (error) => {
+            console.error("[useBoletos] Error en listener de Firestore:", error);
+            setCargandoBoletos(false);
+        });
+
+        return () => unsubscribe();
+    }, [rifaId]);
+
+    /**
+     * Alterna la selección de un boleto. Memoizada con useCallback.
+     * Su única dependencia es el mapa de boletos ocupados.
+     */
+    const toggleBoleto = useCallback((numero) => {
+        const num = Number(numero);
+        
+        if (boletosOcupados.has(num)) {
+            console.warn(`Intento de seleccionar el boleto ocupado: ${num}`);
+            return;
+        }
+
+        setBoletosSeleccionados(prev => 
+            prev.includes(num) ? prev.filter(n => n !== num) : [...prev, num]
+        );
+    }, [boletosOcupados]);
 
     const limpiarSeleccion = useCallback(() => {
         setBoletosSeleccionados([]);
@@ -35,15 +66,15 @@ export const useBoletos = () => {
 
     const agregarBoletosEspecificos = useCallback((numerosNuevos) => {
         setBoletosSeleccionados(prev => {
-            const nuevosNumerosSet = new Set(numerosNuevos);
-            const union = new Set([...prev, ...nuevosNumerosSet]);
-            return Array.from(union);
+            const nuevosNumerosFiltrados = numerosNuevos.filter(num => !boletosOcupados.has(num) && !prev.includes(num));
+            return [...prev, ...nuevosNumerosFiltrados];
         });
-    }, []);
+    }, [boletosOcupados]);
 
     return {
         boletosSeleccionados,
-        setBoletosSeleccionados,
+        boletosOcupados,
+        cargandoBoletos,
         toggleBoleto,
         limpiarSeleccion,
         agregarBoletosEspecificos,

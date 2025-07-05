@@ -1,6 +1,5 @@
-// src/components/modals/ModalMaquinaSuerte.js
+// --- src/components/modals/ModalMaquinaSuerte.js ---
 import React, { useState, useCallback } from 'react';
-// CORREGIDO: Ruta actualizada para el helper
 import { formatTicketNumber } from '../../utils/rifaHelper';
 
 function ModalMaquinaSuerte({ totalBoletos, boletosOcupados, boletosYaSeleccionados, onCerrar, onSeleccionar }) {

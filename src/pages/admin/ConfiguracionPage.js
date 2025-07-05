@@ -55,12 +55,16 @@ const initialFeaturesConfig = {
     showGanadoresPage: true,
     cooldownActivado: true,
     cooldownMinutos: 5,
+};
+
+const initialGeneralesConfig = {
     logoURL: '',
+    WhatsappPrincipal: '',
 };
 
 function ConfiguracionPage() {
     const [featuresConfig, setFeaturesConfig] = useState(initialFeaturesConfig);
-    const [datosGenerales, setDatosGenerales] = useState({});
+    const [datosGenerales, setDatosGenerales] = useState(initialGeneralesConfig);
     const [isSocialConfigOpen, setIsSocialConfigOpen] = useState(false);
     const [logoFile, setLogoFile] = useState(null);
     const [logoPreview, setLogoPreview] = useState('');
@@ -68,14 +72,10 @@ function ConfiguracionPage() {
     const [cargando, setCargando] = useState(true);
     const [guardando, setGuardando] = useState(false);
     const [feedback, setFeedback] = useState({ msg: '', type: '' });
-
-    // --- LÓGICA DE PRUEBAS (ACTIVADA) ---
-    // Para desactivar, comente desde la siguiente línea...
     const [testRifaId, setTestRifaId] = useState('');
     const [testVentasCount, setTestVentasCount] = useState(100);
     const [isTesting, setIsTesting] = useState(false);
     const [testFeedback, setTestFeedback] = useState({ text: '', type: '' });
-    // ...hasta esta línea.
 
     const fetchAllConfig = useCallback(async () => {
         setCargando(true);
@@ -84,19 +84,20 @@ function ConfiguracionPage() {
             const generalesDocRef = doc(db, 'configuracion', 'datosGenerales');
             const featuresSnap = await getDoc(featuresDocRef);
             if (featuresSnap.exists()) {
-                const fetchedConfig = featuresSnap.data();
-                setFeaturesConfig(fetchedConfig);
-                if (fetchedConfig.logoURL) {
-                    setLogoPreview(fetchedConfig.logoURL);
-                }
+                setFeaturesConfig(featuresSnap.data());
             } else {
                 await setDoc(featuresDocRef, initialFeaturesConfig);
             }
             const generalesSnap = await getDoc(generalesDocRef);
             if (generalesSnap.exists()) {
-                setDatosGenerales(generalesSnap.data());
+                const fetchedGenerales = generalesSnap.data();
+                setDatosGenerales(fetchedGenerales);
+                // CORRECCIÓN: La vista previa se toma de datosGenerales.
+                if (fetchedGenerales.logoURL) {
+                    setLogoPreview(fetchedGenerales.logoURL);
+                }
             } else {
-                await setDoc(generalesDocRef, {}); 
+                await setDoc(generalesDocRef, initialGeneralesConfig);
             }
         } catch (error) {
             console.error("Error cargando la configuración:", error);
@@ -125,18 +126,25 @@ function ConfiguracionPage() {
         setGuardando(true);
         setFeedback({ msg: '', type: '' });
         try {
-            let finalFeaturesConfig = { ...featuresConfig };
+            // CORRECCIÓN CLAVE: La URL del logo se gestiona en una copia de datosGenerales.
+            let finalGeneralesConfig = { ...datosGenerales };
             if (logoFile) {
                 const storage = getStorage();
                 const logoRef = ref(storage, 'config/site-logo'); 
                 await uploadBytes(logoRef, logoFile);
                 const downloadURL = await getDownloadURL(logoRef);
-                finalFeaturesConfig.logoURL = downloadURL;
+                // La URL se asigna al objeto de datos generales.
+                finalGeneralesConfig.logoURL = downloadURL;
             }
+            
             const featuresDocRef = doc(db, 'configuracion', 'features');
             const generalesDocRef = doc(db, 'configuracion', 'datosGenerales');
-            const saveFeatures = setDoc(featuresDocRef, finalFeaturesConfig, { merge: true });
-            const saveGenerales = setDoc(generalesDocRef, datosGenerales, { merge: true });
+            
+            // Se guarda 'featuresConfig' como antes.
+            const saveFeatures = setDoc(featuresDocRef, featuresConfig, { merge: true });
+            // Se guarda el objeto 'finalGeneralesConfig' que ahora contiene la URL del logo.
+            const saveGenerales = setDoc(generalesDocRef, finalGeneralesConfig, { merge: true });
+            
             await Promise.all([saveFeatures, saveGenerales]);
             setFeedback({ msg: '¡Configuración guardada con éxito!', type: 'exito' });
             setLogoFile(null);
@@ -148,8 +156,6 @@ function ConfiguracionPage() {
         }
     };
     
-    // --- FUNCIÓN DE PRUEBAS (ACTIVADA) ---
-    // Para desactivar, comente desde la siguiente línea...
     const handleRunLoadTest = async () => {
         if (!testRifaId || !testVentasCount) {
             setTestFeedback({ text: 'Debes proporcionar un ID de sorteo y una cantidad.', type: 'error' });
@@ -169,7 +175,6 @@ function ConfiguracionPage() {
             setIsTesting(false);
         }
     };
-    // ...hasta esta línea.
 
     const handleFeaturesToggle = (key) => setFeaturesConfig(prev => ({ ...prev, [key]: !prev[key] }));
     const handleFeaturesInputChange = (e) => {
@@ -271,8 +276,6 @@ function ConfiguracionPage() {
                     </button>
                 </div>
                 
-                {/* --- PANEL DE PRUEBAS (ACTIVADO) --- */}
-                {/* Para desactivar, comente desde la siguiente línea... */}
                 <div className="mt-12 bg-background-light p-6 rounded-lg shadow-lg border-2 border-dashed border-warning">
                     <h3 className="text-xl font-bold flex items-center text-warning mb-4">
                         <FaFlask className="mr-3" />
@@ -315,7 +318,6 @@ function ConfiguracionPage() {
                         )}
                     </div>
                 </div>
-                {/* ...hasta esta línea. */}
             </div>
         </div>
     );

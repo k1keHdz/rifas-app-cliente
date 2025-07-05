@@ -1,9 +1,6 @@
-// src/context/AuthContext.js
-
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useCallback, useMemo } from 'react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
-// CORREGIDO: Ruta actualizada para la configuración de Firebase
 import { db } from '../config/firebaseConfig';
 
 const AuthContext = React.createContext();
@@ -21,60 +18,59 @@ export function AuthProvider({ children }) {
         setUserData(prevData => ({ ...prevData, ...newData }));
     }, []);
 
+    // Efecto 1: Escucha los cambios de estado de autenticación de Firebase.
     useEffect(() => {
         const auth = getAuth();
-        // Esta es la suscripción principal que escucha cambios de login/logout en Firebase Auth
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             setCurrentUser(user);
-
-            // Si el usuario cierra sesión (user es null), limpiamos los datos y terminamos la carga.
+            // Si no hay usuario, la carga ha terminado.
             if (!user) {
-                setUserData(null);
                 setLoading(false);
             }
-            // Si el usuario inicia sesión, el resto se maneja en el siguiente useEffect.
         });
-
-        // Nos aseguramos de cancelar la suscripción al desmontar el componente para evitar fugas de memoria.
         return () => unsubscribeAuth();
     }, []);
 
-    // MEJORADO: Este useEffect se dedica exclusivamente a escuchar los datos del usuario logueado.
-    // Se activa solo cuando 'currentUser' cambia.
+    // Efecto 2: Escucha los cambios en los datos del usuario en Firestore, SÓLO si hay un usuario.
     useEffect(() => {
-        // Si no hay usuario, no hacemos nada.
-        if (!currentUser) return;
-
-        // Creamos una referencia al documento del usuario en Firestore.
-        const userRef = doc(db, 'usuarios', currentUser.uid);
-        
-        // Esta es la suscripción que escucha cambios en el perfil del usuario en la base de datos.
-        const unsubscribeFirestore = onSnapshot(userRef, (docSnap) => {
-            if (docSnap.exists()) {
-                setUserData({ uid: currentUser.uid, ...docSnap.data() });
-            } else {
+        // Si hay un usuario, buscamos sus datos.
+        if (currentUser) {
+            // Activamos el estado de carga mientras se obtienen los datos.
+            setLoading(true); 
+            const userRef = doc(db, 'usuarios', currentUser.uid);
+            
+            const unsubscribeFirestore = onSnapshot(userRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    setUserData({ uid: currentUser.uid, ...docSnap.data() });
+                } else {
+                    setUserData(null);
+                }
+                // La carga termina cuando se reciben los datos (o se confirma que no existen).
+                setLoading(false); 
+            }, (error) => {
+                console.error("Error al obtener datos del usuario:", error);
                 setUserData(null);
-                console.log(`Perfil para usuario ${currentUser.uid} no encontrado.`);
-            }
-            // Marcamos la carga como completa solo después de intentar obtener los datos de Firestore.
-            setLoading(false);
-        }, (error) => {
-            console.error("Error con el listener de Firestore:", error);
+                setLoading(false); 
+            });
+
+            return () => unsubscribeFirestore();
+        } else {
+            // Si no hay usuario (currentUser es null), limpiamos los datos y nos aseguramos de que no esté cargando.
             setUserData(null);
             setLoading(false);
-        });
+        }
+    }, [currentUser]); // La única dependencia correcta para este efecto es 'currentUser'.
 
-        // Cancelamos la suscripción a los datos del perfil si el usuario cierra sesión o el componente se desmonta.
-        return () => unsubscribeFirestore();
-
-    }, [currentUser]); // La dependencia clave es 'currentUser'.
-
-    const value = { currentUser, userData, cargandoAuth, updateUserData };
+    const value = useMemo(() => ({
+        currentUser,
+        userData,
+        cargandoAuth,
+        updateUserData
+    }), [currentUser, userData, cargandoAuth, updateUserData]);
     
     return (
         <AuthContext.Provider value={value}>
-            {/* Renderizamos a los hijos solo cuando la autenticación inicial ha terminado */}
-            {!cargandoAuth && children}
+            {children}
         </AuthContext.Provider>
     );
 }

@@ -1,6 +1,5 @@
-// src/components/rifas/BuscadorBoletos.js
+// --- src/components/rifas/BuscadorBoletos.js ---
 import { useState } from 'react';
-// CORREGIDO: Ruta actualizada para el helper
 import { formatTicketNumber } from '../../utils/rifaHelper';
 
 const BuscadorBoletos = ({
@@ -8,7 +7,6 @@ const BuscadorBoletos = ({
     boletosOcupados,
     boletosSeleccionados,
     onSelectBoleto,
-    paddingLength = 2
 }) => {
     const [numero, setNumero] = useState('');
     const [estado, setEstado] = useState(null);

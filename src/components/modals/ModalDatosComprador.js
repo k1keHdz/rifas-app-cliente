@@ -1,5 +1,4 @@
-// src/components/modals/ModalDatosComprador.js
-
+// --- src/components/modals/ModalDatosComprador.js ---
 import React, { useState, useEffect } from 'react';
 import { collection, doc, serverTimestamp, Timestamp, runTransaction, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
@@ -8,7 +7,7 @@ import { useConfig } from '../../context/ConfigContext';
 import { usePurchaseCooldown } from '../../hooks/usePurchaseCooldown';
 import { nanoid } from 'nanoid';
 import { formatTicketNumber } from '../../utils/rifaHelper';
-import Alerta from '../ui/Alerta'; // Importamos Alerta para usarlo con el nuevo formato
+import Alerta from '../ui/Alerta';
 
 function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSeleccionados, limpiarSeleccion }) {
     const { currentUser } = useAuth();
@@ -18,7 +17,6 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
     const [datos, setDatos] = useState({
         nombre: '', apellidos: '', estado: '', telefono: '', email: '',
     });
-    // MODIFICADO: El error ahora puede ser un string o un elemento JSX
     const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -64,6 +62,8 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
 
                 const CHUNK_SIZE = 30;
                 const boletosEnConflicto = new Set();
+                const boletosEnConflictoNumeros = [];
+
                 for (let i = 0; i < boletosSeleccionados.length; i += CHUNK_SIZE) {
                     const chunk = boletosSeleccionados.slice(i, i + CHUNK_SIZE);
                     const q = query(ventasRef, where('numeros', 'array-contains-any', chunk));
@@ -71,22 +71,24 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
                     if (!snapshot.empty) {
                         snapshot.docs.forEach(doc => {
                             doc.data().numeros.forEach(num => {
-                                if (chunk.includes(num)) boletosEnConflicto.add(formatTicketNumber(num, rifa.boletos));
+                                if (chunk.includes(num)) {
+                                    boletosEnConflicto.add(formatTicketNumber(num, rifa.boletos));
+                                    boletosEnConflictoNumeros.push(num);
+                                }
                             });
                         });
                     }
                 }
                 
                 if (boletosEnConflicto.size > 0) {
-                    // CORREGIDO: Se construye el mensaje de error como un elemento JSX
                     const errorMessage = (
                         <span>
-                            ¡Ups! El/los boleto(s) <strong className="text-lg font-bold">{[...boletosEnConflicto].join(', ')}</strong> ya tiene(n) dueño. ¡Pero tu premio te espera en otros!
+                            ¡Ups! El/los boleto(s) <strong className="text-lg font-bold">{[...boletosEnConflicto].join(', ')}</strong> ya tiene(n) dueño.
                         </span>
                     );
-                    // Se lanza un error con el mensaje JSX
                     const error = new Error("Conflicto de boletos");
                     error.jsxMessage = errorMessage;
+                    error.conflictingTickets = boletosEnConflictoNumeros;
                     throw error;
                 }
 
@@ -126,8 +128,10 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
 
         } catch (err) {
             console.error("Error al confirmar apartado:", err);
-            // CORREGIDO: Se usa el mensaje JSX si existe, si no, el mensaje de texto normal.
             setError(err.jsxMessage || err.message || 'Ocurrió un error al intentar apartar los boletos.');
+            if (err.conflictingTickets) {
+                onClose(err.conflictingTickets);
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -136,7 +140,7 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in">
             <div className="bg-background-light border border-border-color rounded-lg shadow-xl max-w-lg w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
-                <button onClick={onClose} className="absolute top-3 right-3 text-text-subtle hover:text-danger rounded-full p-1 transition-colors z-20">
+                <button onClick={() => onClose()} className="absolute top-3 right-3 text-text-subtle hover:text-danger rounded-full p-1 transition-colors z-20">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
                 <h2 className="text-xl font-bold text-center mb-4">Confirma tus Datos</h2>
@@ -149,7 +153,6 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
                     <div><label className="block text-sm font-medium text-text-subtle">Teléfono (WhatsApp)</label><input type="tel" name="telefono" value={datos.telefono} onChange={handleChange} required className="input-field mt-1" /></div>
                     <div><label htmlFor="modal-estado" className="block text-sm font-medium text-text-subtle">Estado de Residencia</label><input id="modal-estado" type="text" name="estado" value={datos.estado} onChange={handleChange} required placeholder="Ej. Jalisco" className="input-field mt-1" /></div>
                     <div><label className="block text-sm font-medium text-text-subtle">Correo Electrónico (Opcional)</label><input type="email" name="email" value={datos.email} onChange={handleChange} className="input-field mt-1" /></div>
-                    {/* CORREGIDO: Se usa el componente Alerta para mostrar el error */}
                     {error && <Alerta mensaje={error} tipo="error" onClose={() => setError(null)} />}
                     <div className="pt-4">
                         <button type="submit" disabled={isSubmitting} className="w-full btn bg-success text-white hover:bg-green-700 disabled:opacity-50">

@@ -1,9 +1,9 @@
 // src/pages/RifaDetallePage.js
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
-// CORREGIDO: Se elimina 'useNavigate' que no se usa.
+// CORRECCIÓN FINAL: Se elimina 'useCallback' de la importación ya que no se utiliza.
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
-import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { db } from '../config/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useBoletos } from "../hooks/useBoletos";
@@ -22,22 +22,20 @@ import { FaExclamationTriangle } from 'react-icons/fa';
 
 function RifaDetallePage() {
     const { id: rifaId } = useParams();
-    // CORREGIDO: Se elimina la variable 'navigate' que no se usaba.
     const { currentUser, userData, cargandoAuth } = useAuth();
     const { config, cargandoConfig } = useConfig();
     const { checkCooldown } = usePurchaseCooldown();
 
     const { 
         boletosSeleccionados,
-        toggleBoleto: originalToggleBoleto,
+        boletosOcupados,
+        cargandoBoletos,
+        toggleBoleto,
         limpiarSeleccion,
         agregarBoletosEspecificos 
-    } = useBoletos();
+    } = useBoletos(rifaId);
 
     const [conflictingTickets, setConflictingTickets] = useState([]);
-
-    const [boletosOcupados, setBoletosOcupados] = useState(new Map());
-    const [cargandoBoletos, setCargandoBoletos] = useState(true);
     const [rifa, setRifa] = useState(null);
     const [cargandoRifa, setCargandoRifa] = useState(true);
     const [filtroDisponibles, setFiltroDisponibles] = useState(false);
@@ -54,53 +52,30 @@ function RifaDetallePage() {
     const location = useLocation();
     const selectionProcessed = useRef(false);
 
-    const toggleBoleto = useCallback((numero, boletosOcupados) => {
-        originalToggleBoleto(numero, boletosOcupados);
-        if (conflictingTickets.includes(numero)) {
-            setConflictingTickets(prev => prev.filter(t => t !== numero));
+    useEffect(() => {
+        const nuevosConflictos = conflictingTickets.filter(ticket => boletosSeleccionados.includes(ticket));
+        if (nuevosConflictos.length !== conflictingTickets.length) {
+            setConflictingTickets(nuevosConflictos);
         }
-    }, [originalToggleBoleto, conflictingTickets]);
+    }, [boletosSeleccionados, conflictingTickets]);
 
     const handleModalClose = (conflicts = []) => {
         setMostrarModalDatos(false);
         if (conflicts.length > 0) {
-            setConflictingTickets(conflicts);
+            setConflictingTickets(conflicts.map(Number));
         }
     };
 
     useEffect(() => {
-        if (!rifaId) return;
-        setCargandoBoletos(true);
-        const ventasRef = collection(db, 'rifas', rifaId, 'ventas');
-        const q = query(ventasRef, where("estado", "in", ["comprado", "apartado"]));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const ocupados = new Map();
-            snapshot.forEach((doc) => {
-                const venta = doc.data();
-                if (venta.numeros && venta.estado) {
-                    venta.numeros.forEach(num => ocupados.set(Number(num), venta.estado));
-                }
-            });
-            setBoletosOcupados(ocupados);
-            setCargandoBoletos(false);
-        }, (error) => {
-            console.error("[RifaDetalle] Error en listener de Firestore:", error);
-            setCargandoBoletos(false);
-        });
-        return () => unsubscribe();
-    }, [rifaId]);
-
-    useEffect(() => {
         if (location.state?.boletoSeleccionado && !selectionProcessed.current && !cargandoBoletos) {
             const numero = Number(location.state.boletoSeleccionado);
-            if (!boletosOcupados.has(numero) && !boletosSeleccionados.includes(numero)) {
-                agregarBoletosEspecificos([numero]);
-            }
+            agregarBoletosEspecificos([numero]);
             selectionProcessed.current = true;
         }
-    }, [location.state, cargandoBoletos, boletosOcupados, boletosSeleccionados, agregarBoletosEspecificos]);
+    }, [location.state, cargandoBoletos, agregarBoletosEspecificos]);
     
     useEffect(() => {
+        if (!rifaId) return;
         setCargandoRifa(true);
         const docRef = doc(db, "rifas", rifaId);
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -138,15 +113,26 @@ function RifaDetallePage() {
     const handleContinueAsGuest = () => {
         setShowInvitationModal(false);
         setMostrarModalDatos(true);
-    }
+    };
     
     const cambiarImagen = (direccion) => {
         if (!rifa?.imagenes || rifa.imagenes.length < 2) return;
         setImagenIndex((prev) => (prev + direccion + rifa.imagenes.length) % rifa.imagenes.length);
     };
 
-    if (cargandoRifa || cargandoConfig || cargandoBoletos || cargandoAuth) return <div className="text-center py-40">Cargando sorteo...</div>;
-    if (!rifa) return <div className="p-8 text-center"><h2 className="text-2xl font-bold">Sorteo no encontrado</h2><p className="text-text-subtle mt-2">Este sorteo no existe o ya ha finalizado.</p><Link to="/" className="mt-6 btn btn-primary">Volver al inicio</Link></div>;
+    if (cargandoRifa || cargandoConfig || cargandoBoletos || cargandoAuth) {
+        return <div className="text-center py-40">Cargando sorteo...</div>;
+    }
+
+    if (!rifa) {
+        return (
+            <div className="p-8 text-center">
+                <h2 className="text-2xl font-bold">Sorteo no encontrado</h2>
+                <p className="text-text-subtle mt-2">Este sorteo no existe o ya ha finalizado.</p>
+                <Link to="/" className="mt-6 btn btn-primary">Volver al inicio</Link>
+            </div>
+        );
+    }
     
     const isCompraActiva = rifa.estado === 'activa';
     const boletosVendidos = rifa.boletosVendidos || 0;
@@ -228,7 +214,7 @@ function RifaDetallePage() {
                             <div className="text-center my-4 p-4 bg-background-dark border border-border-color rounded-lg w-full max-w-lg animate-fade-in"> 
                                 <p className="font-bold mb-2">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> 
                                 <div className="flex justify-center flex-wrap gap-2 mb-2"> 
-                                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n, boletosOcupados)} className="px-3 py-1 bg-success text-white rounded-md font-mono cursor-pointer hover:bg-danger" title="Haz clic para quitar">{formatTicketNumber(n, rifa.boletos)}</span> ))} 
+                                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-success text-white rounded-md font-mono cursor-pointer hover:bg-danger" title="Haz clic para quitar">{formatTicketNumber(n, rifa.boletos)}</span> ))} 
                                 </div> 
                                 <p className="text-xs text-text-subtle italic my-2">Para eliminar un boleto, solo haz clic sobre él.</p> 
                                 <button onClick={limpiarSeleccion} className="mt-1 text-danger underline text-sm hover:text-red-400">Eliminar todos</button> 
@@ -253,7 +239,7 @@ function RifaDetallePage() {
                                 boletosOcupados={boletosOcupados} 
                                 boletosSeleccionados={boletosSeleccionados} 
                                 conflictingTickets={conflictingTickets}
-                                onToggleBoleto={toggleBoleto} 
+                                onToggleBoleto={toggleBoleto}
                                 filtroActivo={filtroDisponibles} 
                                 rangoInicio={rangoInicio} 
                                 rangoFin={rangoFin}

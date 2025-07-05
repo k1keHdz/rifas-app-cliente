@@ -1,7 +1,6 @@
 // src/components/modals/ModalVentaManual.js
 
-import React, { useState, useMemo } from 'react';
-// TAREA 1.2: Se elimina 'increment' porque la lógica se mueve al backend.
+import React, { useState, useMemo, useCallback } from 'react';
 import { doc, collection, serverTimestamp, runTransaction, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 import Alerta from '../ui/Alerta';
@@ -11,7 +10,7 @@ import { formatTicketNumber } from '../../utils/rifaHelper';
 import emailjs from '@emailjs/browser';
 import EMAIL_CONFIG from '../../emailjsConfig';
 
-function SelectorDeBoletosInterno({ numeros, boletosOcupados, boletosSeleccionados, onToggleBoleto, totalBoletos }) {
+const SelectorDeBoletosInterno = React.memo(function SelectorDeBoletosInterno({ numeros, boletosOcupados, boletosSeleccionados, onToggleBoleto, totalBoletos }) {
     return (
         <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1.5 w-max mx-auto p-1">
             {numeros.map(numeroBoleto => {
@@ -33,7 +32,7 @@ function SelectorDeBoletosInterno({ numeros, boletosOcupados, boletosSeleccionad
             })}
         </div>
     );
-}
+});
 
 function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados, setBoletosSeleccionados, onAgregarMultiples }) {
     const [step, setStep] = useState(1);
@@ -59,7 +58,7 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
 
     const handleChange = (e) => setComprador({ ...comprador, [e.target.name]: e.target.value });
 
-    const toggleBoletoManual = (numero) => {
+    const toggleBoletoManual = useCallback((numero) => {
         const estaSeleccionado = boletosSeleccionados.includes(numero);
         if (estaSeleccionado) {
             setBoletosSeleccionados(prev => prev.filter(n => n !== numero));
@@ -70,18 +69,18 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
             }
             setBoletosSeleccionados(prev => [...prev, numero]);
         }
-    };
+    }, [boletosSeleccionados, boletosOcupados, rifa.boletos, setBoletosSeleccionados]);
 
-    const generarMensajeWhatsApp = (venta) => {
+    const generarMensajeWhatsApp = useCallback((venta) => {
         const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
         let mensaje = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu compra para: "${venta.nombreRifa}" ha sido registrada con éxito.\n\n`;
         mensaje += `ID de Compra: *${venta.idCompra}*\n\n`;
         mensaje += `Aquí tienes el resumen de tu compra:\n*Tus números:* ${boletosTexto}\n*Estado:* Pagado\n\n`;
         mensaje += `¡Te deseamos mucha suerte!`;
         return encodeURIComponent(mensaje);
-    };
+    }, [rifa.boletos]);
 
-    const handleNotificarEmail = async (venta) => {
+    const handleNotificarEmail = useCallback(async (venta) => {
         if (!venta.comprador.email) {
             setFeedbackMsg({ text: 'No se proporcionó un correo para este comprador.', type: 'error' });
             return;
@@ -109,9 +108,9 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
         } finally {
             setIsSendingEmail(false);
         }
-    };
+    }, [rifa.boletos]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
         if (boletosSeleccionados.length === 0) { return setError('Debes seleccionar al menos un boleto.'); }
         if (!comprador.nombre || !comprador.apellidos || !comprador.telefono || !comprador.estado) { return setError('Nombre, apellidos, estado y teléfono son obligatorios.'); }
@@ -128,7 +127,6 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
                 for (let i = 0; i < boletosSeleccionados.length; i += CHUNK_SIZE) {
                     const chunk = boletosSeleccionados.slice(i, i + CHUNK_SIZE);
                     const q = query(ventasRef, where('numeros', 'array-contains-any', chunk));
-                    // TAREA 1.2: Se usa get en lugar de transaction.get para leer fuera de la transacción y evitar contención.
                     const snapshot = await getDocs(q);
                     
                     if (!snapshot.empty) {
@@ -157,8 +155,6 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
                 
                 const nuevaVentaRef = doc(ventasRef);
                 transaction.set(nuevaVentaRef, ventaData);
-                // TAREA 1.2: Se elimina la siguiente línea. El backend se encargará de esto.
-                // transaction.update(rifaRef, { boletosVendidos: increment(boletosSeleccionados.length) });
                 setVentaRealizada({ id: nuevaVentaRef.id, ...ventaData });
             });
 
@@ -169,7 +165,7 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
             setError(err.message || 'Ocurrió un error al registrar la venta. Intenta de nuevo.');
             setIsSubmitting(false);
         }
-    };
+    }, [boletosSeleccionados, comprador, rifa]);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-2 sm:p-4 animate-fade-in">
@@ -205,7 +201,7 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
                                         totalBoletos={rifa.boletos}
                                         boletosOcupados={boletosOcupados}
                                         boletosSeleccionados={boletosSeleccionados}
-                                        onSelectBoleto={(num) => toggleBoletoManual(num)}
+                                        onSelectBoleto={toggleBoletoManual}
                                         paddingLength={paddingLength}
                                     />
                                 </div>
@@ -284,4 +280,4 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
     );
 }
 
-export default ModalVentaManual;
+export default React.memo(ModalVentaManual);

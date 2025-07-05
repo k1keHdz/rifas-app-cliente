@@ -2,21 +2,23 @@
 import React from 'react';
 import { formatTicketNumber } from '../../utils/rifaHelper';
 
+// Este componente está memoizado, por lo que es crucial que las props que recibe,
+// especialmente las funciones, sean estables.
 const SelectorBoletos = ({
     boletosOcupados,
     boletosSeleccionados,
-    // NUEVO: Prop para recibir los boletos en conflicto
     conflictingTickets = [],
-    onToggleBoleto,
+    onToggleBoleto, // Ahora recibe una función estable desde el padre
     filtroActivo,
     rangoInicio,
     rangoFin,
     totalBoletos,
-    numerosFiltrados,
     compraActiva
 }) => {
 
-    const numerosAMostrar = numerosFiltrados || Array.from({ length: rangoFin - rangoInicio }, (_, i) => rangoInicio + i);
+    // La generación de la lista de boletos a mostrar es la operación más costosa.
+    // Al evitar re-renders innecesarios, mejoramos drásticamente el rendimiento.
+    const numerosAMostrar = Array.from({ length: rangoFin - rangoInicio }, (_, i) => rangoInicio + i);
 
     return (
         <div className="mt-2 w-full">
@@ -30,7 +32,6 @@ const SelectorBoletos = ({
                         }
 
                         const estaSeleccionado = boletosSeleccionados.includes(numeroBoleto);
-                        // NUEVO: Verificamos si el boleto está en la lista de conflictos
                         const esConflicto = conflictingTickets.includes(numeroBoleto);
 
                         let colorClasses = '';
@@ -39,16 +40,13 @@ const SelectorBoletos = ({
                             colorClasses = 'bg-green-500 text-white border-green-600 scale-110 shadow-lg';
                         } else if (estaOcupado) {
                             const estado = boletosOcupados.get(numeroBoleto);
-                            if (estado === 'apartado') {
-                                colorClasses = 'bg-yellow-400 text-black border-yellow-500 cursor-not-allowed opacity-80';
-                            } else {
-                                colorClasses = 'bg-red-600 text-white border-red-700 cursor-not-allowed opacity-80';
-                            }
+                            colorClasses = estado === 'apartado' 
+                                ? 'bg-yellow-400 text-black border-yellow-500 cursor-not-allowed opacity-80'
+                                : 'bg-red-600 text-white border-red-700 cursor-not-allowed opacity-80';
                         } else {
                             colorClasses = 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100';
                         }
                         
-                        // NUEVO: Si es un boleto en conflicto, añadimos una animación para resaltarlo.
                         if (esConflicto) {
                             colorClasses += ' animate-pulse ring-4 ring-offset-2 ring-danger ring-offset-background-dark';
                         }
@@ -72,4 +70,5 @@ const SelectorBoletos = ({
     );
 };
 
+// Se mantiene React.memo, que ahora funcionará correctamente gracias a las props estables.
 export default React.memo(SelectorBoletos);
