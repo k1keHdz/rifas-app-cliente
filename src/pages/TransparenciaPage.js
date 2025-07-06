@@ -1,26 +1,39 @@
-// src/pages/TransparenciaPage.js
-
 import React from 'react';
-import { FaGavel, FaCheckCircle } from 'react-icons/fa';
+import { FaGavel, FaCheckCircle, FaQuestionCircle, FaTrophy } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 function TransparenciaPage() {
     const sections = [
         {
-            title: 'Rifas de 100 boletos (00-99):',
+            title: 'Sorteos de 100 boletos (00-99):',
             description: 'Se utilizan las 2 últimas cifras del número ganador.',
         },
         {
-            title: 'Rifas de 1,000 boletos (000-999):',
+            title: 'Sorteos de 1,000 boletos (000-999):',
             description: 'Se utilizan las 3 últimas cifras del número ganador.',
         },
         {
-            title: 'Rifas de 10,000 boletos (0000-9999):',
+            title: 'Sorteos de 10,000 boletos (0000-9999):',
             description: 'Se utilizan las 4 últimas cifras del número ganador.',
         },
         {
-            title: 'Rifas de 100,000 boletos (00000-99999):',
+            title: 'Sorteos de 100,000 boletos (00000-99999):',
             description: 'Se utilizan las 5 cifras completas del número ganador.',
         },
+    ];
+
+    // ===== SECCIÓN DE PREGUNTAS FRECUENTES ACTUALIZADA =====
+    const faqs = [
+        {
+            question: '¿Qué pasa si el número premiado no se vendió? Nuestro Compromiso: ¡Siempre hay un ganador!',
+            answer: 'Nuestra regla de oro es que cada premio tiene que ser entregado. Si el resultado de la Lotería Nacional corresponde a un boleto que no fue pagado, el sorteo no se anula. En su lugar, tomaremos el resultado del siguiente sorteo hábil de la Lotería Nacional (misma modalidad y horario) y repetiremos este proceso hasta que el número coincida con un participante que haya completado su pago. Esta política asegura total justicia y que la suerte siempre encuentre a su dueño.',
+            icon: FaQuestionCircle,
+        },
+        {
+            question: '¿Cómo puedo verificar los ganadores anteriores?',
+            answer: 'La confianza se demuestra con hechos. Mantenemos un registro público y transparente de todos nuestros ganadores. Puedes ver la galería completa, con fotos y testimonios, en nuestra sección oficial de "Ganadores". Además, siempre anunciamos los resultados en nuestras redes sociales para celebrar junto a toda nuestra comunidad.',
+            icon: FaTrophy,
+        }
     ];
 
     const linkClass = "font-bold text-accent-primary hover:underline";
@@ -40,10 +53,10 @@ function TransparenciaPage() {
                     </p>
                 </div>
 
-                <div className="bg-background-light border border-border-color p-6 sm:p-8 rounded-2xl shadow-lg">
+                <div className="bg-background-light border border-border-color p-6 sm:p-8 rounded-2xl shadow-lg mb-12">
                     <h2 className="text-2xl font-bold text-center mb-6">¿Cómo determinamos al ganador?</h2>
                     <p className="text-lg text-text-subtle text-center mb-8">
-                        El ganador de cada rifa se determina utilizando las últimas cifras del número ganador del sorteo <a href={trisUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>"Tris"</a> de la <a href={loteriaUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>Lotería Nacional</a>, en la fecha y hora estipuladas para la rifa.
+                        El ganador de cada sorteo se determina utilizando las últimas cifras del número ganador del sorteo <a href={trisUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>"Tris"</a> de la <a href={loteriaUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>Lotería Nacional</a>, en la fecha y hora estipuladas para el sorteo.
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -62,6 +75,26 @@ function TransparenciaPage() {
                                 Este método asegura que los resultados son 100% imparciales y verificables por cualquier persona en el sitio oficial de la <a href={loteriaUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>Lotería Nacional</a>.
                             </p>
                         </div>
+                    </div>
+                </div>
+
+                <div className="bg-background-light border border-border-color p-6 sm:p-8 rounded-2xl shadow-lg">
+                    <h2 className="text-2xl font-bold text-center mb-8">Preguntas Frecuentes</h2>
+                    <div className="space-y-8">
+                        {faqs.map((faq, index) => (
+                            <div key={index} className="flex items-start">
+                                <faq.icon className="h-8 w-8 text-accent-primary flex-shrink-0 mr-5 mt-1" />
+                                <div>
+                                    <h3 className="text-lg font-bold text-text-primary">{faq.question}</h3>
+                                    <p className="mt-2 text-text-subtle">{faq.answer}
+                                        {/* Mantenemos el enlace dinámico a la página de ganadores */}
+                                        {faq.question.includes('verificar') && (
+                                             <Link to="/ganadores" className={`ml-2 ${linkClass}`}>¡Visita la galería aquí!</Link>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>

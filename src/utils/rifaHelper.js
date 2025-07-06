@@ -1,4 +1,23 @@
 // --- src/utils/rifaHelper.js ---
+
+/**
+ * Genera un mensaje a partir de una plantilla y un objeto de variables.
+ * Reemplaza todas las ocurrencias de {variable} en la plantilla.
+ * @param {string} plantilla - El texto base con placeholders como {nombreCliente}.
+ * @param {object} variables - Un objeto donde las claves son los nombres de las variables sin llaves.
+ * @returns {string} El mensaje final con las variables reemplazadas.
+ */
+export const generarMensajeDesdePlantilla = (plantilla, variables) => {
+    if (!plantilla) return '';
+    let mensaje = plantilla;
+    for (const key in variables) {
+        // Usamos una Expresión Regular global para reemplazar todas las ocurrencias.
+        const regex = new RegExp(`{${key}}`, 'g');
+        mensaje = mensaje.replace(regex, variables[key] || ''); // Reemplaza con string vacío si la variable es null/undefined
+    }
+    return mensaje;
+};
+
 export const formatTicketNumber = (number, totalTickets) => {
     if (!totalTickets || Number(totalTickets) <= 0) {
         return String(number);

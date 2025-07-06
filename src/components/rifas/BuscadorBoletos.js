@@ -1,8 +1,8 @@
-// --- src/components/rifas/BuscadorBoletos.js ---
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { formatTicketNumber } from '../../utils/rifaHelper';
 
-const BuscadorBoletos = ({
+// Envolvemos el componente en React.memo para evitar re-renders innecesarios.
+const BuscadorBoletos = React.memo(({
     totalBoletos,
     boletosOcupados,
     boletosSeleccionados,
@@ -68,6 +68,6 @@ const BuscadorBoletos = ({
             )}
         </div>
     );
-};
+});
 
 export default BuscadorBoletos;

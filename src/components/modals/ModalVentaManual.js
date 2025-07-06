@@ -1,40 +1,75 @@
-// src/components/modals/ModalVentaManual.js
-
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { doc, collection, serverTimestamp, runTransaction, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 import Alerta from '../ui/Alerta';
 import { nanoid } from 'nanoid';
 import BuscadorBoletos from '../rifas/BuscadorBoletos';
-import { formatTicketNumber } from '../../utils/rifaHelper';
+import { formatTicketNumber, generarMensajeDesdePlantilla } from '../../utils/rifaHelper';
 import emailjs from '@emailjs/browser';
 import EMAIL_CONFIG from '../../emailjsConfig';
+import { FixedSizeList as List } from 'react-window';
+import { useConfig } from '../../context/ConfigContext';
 
-const SelectorDeBoletosInterno = React.memo(function SelectorDeBoletosInterno({ numeros, boletosOcupados, boletosSeleccionados, onToggleBoleto, totalBoletos }) {
+// Componente para renderizar una sola fila de botones (para react-window)
+const Row = React.memo(({ index, style, data }) => {
+    const {
+        itemsPerRow,
+        boletosOcupados,
+        boletosSeleccionados,
+        onToggleBoleto,
+        totalBoletos,
+    } = data;
+
+    const items = [];
+    const startIndex = index * itemsPerRow;
+
+    for (let i = 0; i < itemsPerRow; i++) {
+        const numeroBoleto = startIndex + i;
+        if (numeroBoleto >= totalBoletos) break;
+
+        const estadoBoleto = boletosOcupados.get(numeroBoleto);
+        const estaSeleccionado = boletosSeleccionados.includes(numeroBoleto);
+        
+        let color = 'bg-background-dark text-text-subtle border-border-color hover:bg-border-color/50';
+        let estaOcupado = !!estadoBoleto;
+
+        if (estaSeleccionado) {
+            if (estaOcupado) {
+                color = 'bg-danger text-white ring-2 ring-offset-2 ring-danger';
+            } else {
+                color = 'bg-success text-white';
+            }
+        } else if (estadoBoleto === 'apartado') {
+            color = 'bg-yellow-400 text-black border-yellow-500';
+        } else if (estadoBoleto === 'comprado') {
+            color = 'bg-red-600 text-white border-red-700';
+        }
+        
+        const isDisabled = estaOcupado && !estaSeleccionado;
+
+        items.push(
+            <button
+                type="button"
+                key={numeroBoleto}
+                onClick={() => onToggleBoleto(numeroBoleto)}
+                disabled={isDisabled}
+                className={`border w-12 h-9 rounded text-xs font-mono transition-colors ${color} ${isDisabled ? 'cursor-not-allowed opacity-70' : 'transform hover:scale-110'}`}
+            >
+                {formatTicketNumber(numeroBoleto, totalBoletos)}
+            </button>
+        );
+    }
+
     return (
-        <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1.5 w-max mx-auto p-1">
-            {numeros.map(numeroBoleto => {
-                const estaOcupado = boletosOcupados.has(numeroBoleto);
-                if (estaOcupado && !boletosSeleccionados.includes(numeroBoleto)) return null;
-                
-                const estaSeleccionado = boletosSeleccionados.includes(numeroBoleto);
-                
-                let color = estaSeleccionado ? 'bg-success text-white' : 'bg-background-dark text-text-subtle border-border-color hover:bg-border-color/50';
-                if (estaOcupado && estaSeleccionado) {
-                    color = 'bg-danger text-white ring-2 ring-offset-2 ring-danger';
-                }
-
-                return (
-                    <button type="button" key={numeroBoleto} onClick={() => onToggleBoleto(numeroBoleto)} className={`border w-12 h-9 rounded text-xs font-mono transition-transform transform hover:scale-110 ${color}`}>
-                        {formatTicketNumber(numeroBoleto, totalBoletos)}
-                    </button>
-                );
-            })}
+        <div style={style} className="flex justify-center items-center gap-1.5 px-1">
+            {items}
         </div>
     );
 });
 
+
 function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados, setBoletosSeleccionados, onAgregarMultiples }) {
+    const { mensajesConfig } = useConfig();
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -43,65 +78,75 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
     const [cantidadAleatoria, setCantidadAleatoria] = useState(5);
     const [isSendingEmail, setIsSendingEmail] = useState(false);
     const [feedbackMsg, setFeedbackMsg] = useState('');
+    const listContainerRef = useRef(null);
+    const [listWidth, setListWidth] = useState(0);
 
-    const paddingLength = useMemo(() => String(rifa.boletos - 1).length, [rifa.boletos]);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [boletosPorPagina] = useState(5000);
-    const totalPaginas = useMemo(() => Math.ceil(rifa.boletos / boletosPorPagina), [rifa.boletos, boletosPorPagina]);
-    
-    const numerosParaMostrar = useMemo(() => {
-        const todosLosNumeros = Array.from({ length: rifa.boletos }, (_, i) => i);
-        const inicio = (currentPage - 1) * boletosPorPagina;
-        const fin = inicio + boletosPorPagina;
-        return todosLosNumeros.slice(inicio, fin);
-    }, [rifa.boletos, currentPage, boletosPorPagina]);
+    const itemsPerRow = useMemo(() => {
+        if (listWidth === 0) return 10;
+        return Math.max(1, Math.floor(listWidth / (48 + 6)));
+    }, [listWidth]);
+
+    const rowCount = useMemo(() => Math.ceil(rifa.boletos / itemsPerRow), [rifa.boletos, itemsPerRow]);
+
+    useEffect(() => {
+        if (listContainerRef.current) {
+            setListWidth(listContainerRef.current.offsetWidth);
+        }
+        const handleResize = () => {
+            if (listContainerRef.current) {
+                setListWidth(listContainerRef.current.offsetWidth);
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleChange = (e) => setComprador({ ...comprador, [e.target.name]: e.target.value });
 
     const toggleBoletoManual = useCallback((numero) => {
-        const estaSeleccionado = boletosSeleccionados.includes(numero);
-        if (estaSeleccionado) {
-            setBoletosSeleccionados(prev => prev.filter(n => n !== numero));
-        } else {
-            if (boletosOcupados.has(numero)) {
-                alert(`El boleto ${formatTicketNumber(numero, rifa.boletos)} ya está ocupado.`);
-                return;
+        setBoletosSeleccionados(prevSeleccionados => {
+            const yaEstaSeleccionado = prevSeleccionados.includes(numero);
+            if (yaEstaSeleccionado) {
+                return prevSeleccionados.filter(n => n !== numero);
+            } else {
+                if (boletosOcupados.has(numero)) {
+                    setError(`El boleto ${formatTicketNumber(numero, rifa.boletos)} ya no está disponible.`);
+                    return prevSeleccionados;
+                }
+                setError('');
+                return [...prevSeleccionados, numero];
             }
-            setBoletosSeleccionados(prev => [...prev, numero]);
-        }
-    }, [boletosSeleccionados, boletosOcupados, rifa.boletos, setBoletosSeleccionados]);
+        });
+    }, [boletosOcupados, rifa.boletos, setBoletosSeleccionados]);
 
     const generarMensajeWhatsApp = useCallback((venta) => {
-        const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
-        let mensaje = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu compra para: "${venta.nombreRifa}" ha sido registrada con éxito.\n\n`;
-        mensaje += `ID de Compra: *${venta.idCompra}*\n\n`;
-        mensaje += `Aquí tienes el resumen de tu compra:\n*Tus números:* ${boletosTexto}\n*Estado:* Pagado\n\n`;
-        mensaje += `¡Te deseamos mucha suerte!`;
+        const plantilla = mensajesConfig?.plantillaPagoConfirmadoAdmin;
+        if (!plantilla) {
+            console.error("ALERTA: La plantilla 'plantillaPagoConfirmadoAdmin' no está configurada.");
+            return encodeURIComponent(`¡Gracias por tu compra! Tu ID es ${venta.idCompra}.`);
+        }
+        const variables = {
+            nombreCliente: venta.comprador.nombre,
+            nombreRifa: venta.nombreRifa,
+            idCompra: venta.idCompra,
+            listaBoletos: venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ')
+        };
+        const mensaje = generarMensajeDesdePlantilla(plantilla, variables);
         return encodeURIComponent(mensaje);
-    }, [rifa.boletos]);
+    }, [rifa.boletos, mensajesConfig]);
 
     const handleNotificarEmail = useCallback(async (venta) => {
         if (!venta.comprador.email) {
             setFeedbackMsg({ text: 'No se proporcionó un correo para este comprador.', type: 'error' });
             return;
         }
-        
         setIsSendingEmail(true);
         setFeedbackMsg({ text: '', type: '' });
-
         try {
             const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
-            const templateParams = {
-                to_email: venta.comprador.email,
-                to_name: `${venta.comprador.nombre} ${venta.comprador.apellidos || ''}`,
-                raffle_name: venta.nombreRifa,
-                ticket_numbers: boletosTexto,
-                id_compra: venta.idCompra
-            };
-
+            const templateParams = { to_email: venta.comprador.email, to_name: `${venta.comprador.nombre} ${venta.comprador.apellidos || ''}`, raffle_name: venta.nombreRifa, ticket_numbers: boletosTexto, id_compra: venta.idCompra };
             await emailjs.send(EMAIL_CONFIG.serviceID, EMAIL_CONFIG.templateID, templateParams, EMAIL_CONFIG.publicKey);
             setFeedbackMsg({ text: 'Correo enviado exitosamente.', type: 'exito' });
-
         } catch (error) {
             console.error("Fallo al enviar el correo (EmailJS):", error);
             setFeedbackMsg({ text: 'Error al enviar el correo. Revisa la consola.', type: 'error' });
@@ -141,7 +186,7 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
                 }
                 
                 if (boletosEnConflicto.size > 0) {
-                     throw new Error(`¡Conflicto de boletos! El/los boleto(s): ${[...boletosEnConflicto].join(', ')} ya fueron tomados. Por favor, quítalos de tu selección e intenta de nuevo.`);
+                    throw new Error(`¡Conflicto de boletos! El/los boleto(s): ${[...boletosEnConflicto].join(', ')} ya fueron tomados. Por favor, quítalos de tu selección e intenta de nuevo.`);
                 }
 
                 const idCompra = nanoid(8).toUpperCase();
@@ -169,12 +214,8 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-2 sm:p-4 animate-fade-in">
-            <div className="bg-background-light border border-border-color rounded-xl shadow-2xl p-4 sm:p-6 max-w-3xl w-full max-h-[95vh] flex flex-col relative" onClick={(e) => e.stopPropagation()}>
-                <button 
-                    onClick={onClose} 
-                    className="absolute top-2 right-2 p-2 text-text-subtle hover:text-danger rounded-full transition-colors z-20"
-                    aria-label="Cerrar modal"
-                >
+            <div className="bg-background-light border border-border-color rounded-xl shadow-2xl p-4 sm:p-6 max-w-4xl w-full max-h-[95vh] flex flex-col relative" onClick={(e) => e.stopPropagation()}>
+                <button onClick={onClose} className="absolute top-2 right-2 p-2 text-text-subtle hover:text-danger rounded-full transition-colors z-20" aria-label="Cerrar modal">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
                 
@@ -202,24 +243,13 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
                                         boletosOcupados={boletosOcupados}
                                         boletosSeleccionados={boletosSeleccionados}
                                         onSelectBoleto={toggleBoletoManual}
-                                        paddingLength={paddingLength}
                                     />
                                 </div>
                                 <div>
                                     <label htmlFor="cantidad-aleatoria" className="block text-sm font-medium text-text-subtle mb-1">Máquina de la Suerte</label>
                                     <div className="flex items-center gap-2">
-                                        <input
-                                            id="cantidad-aleatoria" type="number" value={cantidadAleatoria}
-                                            onChange={(e) => setCantidadAleatoria(Number(e.target.value))}
-                                            className="input-field w-24 p-2" min="1"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => onAgregarMultiples(cantidadAleatoria)}
-                                            className="btn btn-primary flex-1 py-2"
-                                        >
-                                            Generar Boletos
-                                        </button>
+                                        <input id="cantidad-aleatoria" type="number" value={cantidadAleatoria} onChange={(e) => setCantidadAleatoria(Number(e.target.value))} className="input-field w-24 p-2" min="1"/>
+                                        <button type="button" onClick={() => onAgregarMultiples(cantidadAleatoria)} className="btn btn-primary flex-1 py-2">Generar Boletos</button>
                                     </div>
                                 </div>
                             </div>
@@ -234,18 +264,29 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
                                 </div>
                             )}
                             
-                            <div className="border border-border-color p-2 rounded-lg bg-background-dark">
-                                <SelectorDeBoletosInterno numeros={numerosParaMostrar} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onToggleBoleto={toggleBoletoManual} paddingLength={paddingLength} totalBoletos={rifa.boletos} />
+                            {/* ===== CORRECCIÓN DE DISEÑO AQUÍ ===== */}
+                            <div ref={listContainerRef} className="border border-border-color p-2 rounded-lg bg-background-dark h-64">
+                                {listWidth > 0 && (
+                                    <List
+                                        height={240}
+                                        itemCount={rowCount}
+                                        itemSize={42}
+                                        width="100%" // Se cambia a 100% para que sea adaptable
+                                        itemData={{
+                                            itemsPerRow,
+                                            boletosOcupados,
+                                            boletosSeleccionados,
+                                            onToggleBoleto: toggleBoletoManual,
+                                            totalBoletos: rifa.boletos,
+                                        }}
+                                    >
+                                        {Row}
+                                    </List>
+                                )}
                             </div>
                         </div>
                         
                         <div className='flex-shrink-0'>
-                            <div className="flex justify-between items-center mt-2 p-1">
-                                <button type="button" onClick={() => setCurrentPage(p => p > 1 ? p - 1 : 1)} disabled={currentPage === 1} className="text-sm px-3 py-1 bg-border-color/50 rounded disabled:opacity-50">Anterior</button>
-                                <span className="text-xs font-mono text-text-subtle">Página {currentPage} de {totalPaginas}</span>
-                                <button type="button" onClick={() => setCurrentPage(p => p < totalPaginas ? p + 1 : p)} disabled={currentPage === totalPaginas} className="text-sm px-3 py-1 bg-border-color/50 rounded disabled:opacity-50">Siguiente</button>
-                            </div>
-                            
                             <div className="flex justify-end gap-4 mt-4 border-t border-border-color pt-4">
                                 <button type="button" onClick={onClose} className="btn btn-secondary">Cancelar</button>
                                 <button type="submit" disabled={isSubmitting} className="btn btn-primary disabled:opacity-50">
@@ -259,16 +300,10 @@ function ModalVentaManual({ rifa, onClose, boletosOcupados, boletosSeleccionados
                     <div className="text-center animate-fade-in">
                         <h2 className="text-2xl font-bold text-success mb-4">¡Venta Registrada con Éxito!</h2>
                         <p className="mb-6 text-text-subtle">La venta ha sido guardada. Ahora puedes enviar un comprobante al cliente.</p>
-                        
                         {feedbackMsg.text && ( <div className="my-4"> <Alerta mensaje={feedbackMsg.text} tipo={feedbackMsg.type} onClose={() => setFeedbackMsg({text: '', type: ''})} /> </div> )}
-
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <a href={`https://wa.me/52${ventaRealizada.comprador.telefono}?text=${generarMensajeWhatsApp(ventaRealizada)}`} target="_blank" rel="noopener noreferrer" className="btn bg-green-500 text-white hover:bg-green-600 w-full text-center">Enviar por WhatsApp</a>
-                            <button 
-                                onClick={() => handleNotificarEmail(ventaRealizada)} 
-                                disabled={isSendingEmail || !ventaRealizada.comprador.email} 
-                                className="btn btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
+                            <button onClick={() => handleNotificarEmail(ventaRealizada)} disabled={isSendingEmail || !ventaRealizada.comprador.email} className="btn btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
                                 {isSendingEmail ? 'Enviando...' : 'Enviar por Correo'}
                             </button>
                         </div>

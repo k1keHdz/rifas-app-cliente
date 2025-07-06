@@ -1,5 +1,3 @@
-// src/hooks/useBoletos.js
-
 import { useState, useCallback, useEffect } from 'react';
 import { collection, query, onSnapshot, where } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
@@ -45,19 +43,28 @@ export const useBoletos = (rifaId) => {
 
     /**
      * Alterna la selección de un boleto. Memoizada con useCallback.
-     * Su única dependencia es el mapa de boletos ocupados.
+     * Lógica corregida para permitir siempre la deselección.
      */
     const toggleBoleto = useCallback((numero) => {
         const num = Number(numero);
         
-        if (boletosOcupados.has(num)) {
-            console.warn(`Intento de seleccionar el boleto ocupado: ${num}`);
-            return;
-        }
+        setBoletosSeleccionados(prev => {
+            const yaEstaSeleccionado = prev.includes(num);
 
-        setBoletosSeleccionados(prev => 
-            prev.includes(num) ? prev.filter(n => n !== num) : [...prev, num]
-        );
+            if (yaEstaSeleccionado) {
+                // Si ya está seleccionado, siempre permitir quitarlo.
+                return prev.filter(n => n !== num);
+            } else {
+                // Si no está seleccionado, verificar si está ocupado antes de añadirlo.
+                if (boletosOcupados.has(num)) {
+                    console.warn(`Intento de seleccionar el boleto ocupado: ${num}`);
+                    // No se añade, se devuelve el estado anterior.
+                    return prev;
+                }
+                // Si no está ocupado, se añade a la selección.
+                return [...prev, num];
+            }
+        });
     }, [boletosOcupados]);
 
     const limpiarSeleccion = useCallback(() => {
@@ -71,6 +78,12 @@ export const useBoletos = (rifaId) => {
         });
     }, [boletosOcupados]);
 
+    // ===== NUEVA FUNCIÓN =====
+    // Función para quitar boletos específicos de la selección (usada para los conflictos).
+    const removerBoletos = useCallback((numerosARemover) => {
+        setBoletosSeleccionados(prev => prev.filter(n => !numerosARemover.includes(n)));
+    }, []);
+
     return {
         boletosSeleccionados,
         boletosOcupados,
@@ -78,5 +91,6 @@ export const useBoletos = (rifaId) => {
         toggleBoleto,
         limpiarSeleccion,
         agregarBoletosEspecificos,
+        removerBoletos, // Exportamos la nueva función
     };
 };

@@ -1,4 +1,3 @@
-// --- src/components/modals/ModalDatosComprador.js ---
 import React, { useState, useEffect } from 'react';
 import { collection, doc, serverTimestamp, Timestamp, runTransaction, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
@@ -6,12 +5,12 @@ import { useAuth } from '../../context/AuthContext';
 import { useConfig } from '../../context/ConfigContext';
 import { usePurchaseCooldown } from '../../hooks/usePurchaseCooldown';
 import { nanoid } from 'nanoid';
-import { formatTicketNumber } from '../../utils/rifaHelper';
+import { formatTicketNumber, generarMensajeDesdePlantilla } from '../../utils/rifaHelper';
 import Alerta from '../ui/Alerta';
 
-function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSeleccionados, limpiarSeleccion }) {
+function ModalDatosComprador({ onClose, onConflict, datosIniciales = {}, rifa, boletosSeleccionados, limpiarSeleccion }) {
     const { currentUser } = useAuth();
-    const { config, datosGenerales } = useConfig();
+    const { config, datosGenerales, mensajesConfig } = useConfig();
     const { setCooldown } = usePurchaseCooldown();
 
     const [datos, setDatos] = useState({
@@ -19,6 +18,15 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
     });
     const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // ===== NUEVA LÓGICA PARA EL BUG DEL CARRITO VACÍO =====
+    // Este efecto vigila si la selección de boletos se queda vacía DESPUÉS de que el modal ya está abierto.
+    useEffect(() => {
+        if (boletosSeleccionados.length === 0 && isSubmitting === false) {
+            setError("Tu selección está vacía. Por favor, cierra este formulario y elige nuevos boletos.");
+        }
+    }, [boletosSeleccionados, isSubmitting]);
+
 
     useEffect(() => {
         const authEmail = currentUser?.email || '';
@@ -39,6 +47,11 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        // Doble verificación para asegurar que no se envíe un formulario sin boletos.
+        if (boletosSeleccionados.length === 0) {
+            setError("No hay boletos en tu selección. Por favor, cierra y vuelve a intentarlo.");
+            return;
+        }
         if (!datos.nombre || !datos.apellidos || !datos.telefono || !datos.estado) {
             setError('El nombre, apellidos, estado y teléfono son obligatorios.');
             return;
@@ -83,7 +96,7 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
                 if (boletosEnConflicto.size > 0) {
                     const errorMessage = (
                         <span>
-                            ¡Ups! El/los boleto(s) <strong className="text-lg font-bold">{[...boletosEnConflicto].join(', ')}</strong> ya tiene(n) dueño.
+                            ¡Ups! El/los boleto(s) <strong className="font-bold">{[...boletosEnConflicto].join(', ')}</strong> ya no están disponibles. Los hemos eliminado de tu selección para que puedas continuar.
                         </span>
                     );
                     const error = new Error("Conflicto de boletos");
@@ -92,12 +105,15 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
                     throw error;
                 }
 
-                const DOCE_HORAS_EN_MS = 12 * 60 * 60 * 1000;
+                const horasDeApartado = config?.tiempoApartadoHoras || 12;
+                const tiempoApartadoEnMs = horasDeApartado * 60 * 60 * 1000;
+
                 const idCompra = nanoid(8).toUpperCase();
                 const ventaData = {
                     idCompra, comprador: datos, numeros: boletosSeleccionados,
                     cantidad: boletosSeleccionados.length, estado: 'apartado',
-                    fechaApartado: serverTimestamp(), fechaExpiracion: Timestamp.fromDate(new Date(Date.now() + DOCE_HORAS_EN_MS)),
+                    fechaApartado: serverTimestamp(), 
+                    fechaExpiracion: Timestamp.fromDate(new Date(Date.now() + tiempoApartadoEnMs)),
                     userId: currentUser ? currentUser.uid : null, rifaId: rifa.id,
                     nombreRifa: rifa.nombre, imagenRifa: (rifa.imagenes && rifa.imagenes[0]) || null,
                     precioBoleto: rifa.precio,
@@ -117,10 +133,26 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
                     console.error("ALERTA: El número de WhatsApp principal no está configurado.");
                     return;
                 }
-                const boletosTexto = ventaRealizada.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
-                const totalAPagar = rifa.precio * ventaRealizada.cantidad;
-                const nombreCliente = `${ventaRealizada.comprador.nombre} ${ventaRealizada.comprador.apellidos || ''}`;
-                let mensaje = `¡Hola! 👋 Quiero apartar mis boletos para: "${ventaRealizada.nombreRifa}".\n\n*ID de Compra: ${ventaRealizada.idCompra}*\n\nMis números seleccionados son: *${boletosTexto}*.\nTotal a pagar: *$${totalAPagar.toLocaleString('es-MX')}*.\nMi nombre es: ${nombreCliente}.\n\nQuedo a la espera de las instrucciones para realizar el pago. ¡Tengo 12 horas para completarlo! Gracias.`;
+
+                const plantilla = mensajesConfig?.plantillaApartadoCliente;
+                if (!plantilla) {
+                    console.error("ALERTA: La plantilla 'plantillaApartadoCliente' no está configurada.");
+                    return;
+                }
+
+                const variables = {
+                    nombreCliente: `${ventaRealizada.comprador.nombre} ${ventaRealizada.comprador.apellidos || ''}`,
+                    telefonoCliente: ventaRealizada.comprador.telefono,
+                    estadoCliente: ventaRealizada.comprador.estado,
+                    nombreRifa: ventaRealizada.nombreRifa,
+                    idCompra: ventaRealizada.idCompra,
+                    listaBoletos: ventaRealizada.numeros.map(n => formatTicketNumber(n, rifa.boletos)).join(', '),
+                    totalPagar: `$${(rifa.precio * ventaRealizada.cantidad).toLocaleString('es-MX')}`,
+                    horasApartado: config?.tiempoApartadoHoras || 12,
+                };
+
+                const mensaje = generarMensajeDesdePlantilla(plantilla, variables);
+                
                 const waUrl = `https://wa.me/${numeroWhatsappAdmin}?text=${encodeURIComponent(mensaje)}`;
                 window.open(waUrl, '_blank');
                 limpiarSeleccion();
@@ -130,7 +162,7 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
             console.error("Error al confirmar apartado:", err);
             setError(err.jsxMessage || err.message || 'Ocurrió un error al intentar apartar los boletos.');
             if (err.conflictingTickets) {
-                onClose(err.conflictingTickets);
+                onConflict(err.conflictingTickets);
             }
         } finally {
             setIsSubmitting(false);
@@ -155,7 +187,7 @@ function ModalDatosComprador({ onClose, datosIniciales = {}, rifa, boletosSelecc
                     <div><label className="block text-sm font-medium text-text-subtle">Correo Electrónico (Opcional)</label><input type="email" name="email" value={datos.email} onChange={handleChange} className="input-field mt-1" /></div>
                     {error && <Alerta mensaje={error} tipo="error" onClose={() => setError(null)} />}
                     <div className="pt-4">
-                        <button type="submit" disabled={isSubmitting} className="w-full btn bg-success text-white hover:bg-green-700 disabled:opacity-50">
+                        <button type="submit" disabled={isSubmitting || boletosSeleccionados.length === 0} className="w-full btn bg-success text-white hover:bg-green-700 disabled:opacity-50">
                             {isSubmitting ? 'Verificando y Apartando...' : 'Confirmar y Apartar'}
                         </button>
                     </div>

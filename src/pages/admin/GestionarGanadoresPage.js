@@ -1,19 +1,19 @@
-// src/pages/admin/GestionarGanadoresPage.js
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, query, where, getDocs, onSnapshot, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from '../../config/firebaseConfig';
-// CORREGIDO: Se eliminó la importación de RIFAS_ESTADOS que no se usaba
 import Alerta from '../../components/ui/Alerta';
+import { useConfig } from '../../context/ConfigContext';
+import { generarMensajeDesdePlantilla, formatTicketNumber } from '../../utils/rifaHelper';
 
-// Sub-componente para el buscador
+// Sub-componente para el buscador de ganadores
 const BuscadorGanador = ({ todasLasRifas, loadingRifas }) => {
     const [rifaId, setRifaId] = useState('');
     const [boleto, setBoleto] = useState('');
     const [resultado, setResultado] = useState(null);
     const [isSearching, setIsSearching] = useState(false);
+    const { mensajesConfig } = useConfig();
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -44,10 +44,21 @@ const BuscadorGanador = ({ todasLasRifas, loadingRifas }) => {
 
     const notificarGanadorWhatsApp = () => {
         const rifa = todasLasRifas.find(r => r.id === rifaId);
-        let mensaje = `🎉 ¡MUCHAS FELICIDADES, ${resultado.comprador.nombre}! 🎉\n\n`;
-        mensaje += `¡Eres el afortunado ganador del: "${rifa.nombre}" con el boleto número *${String(boleto).padStart(5, '0')}*!\n\n`;
-        mensaje += `Nos pondremos en contacto contigo muy pronto para coordinar la entrega de tu premio. ¡Gracias por participar!`;
-        const waUrl = `https://wa.me/52${resultado.comprador.telefono}?text=${encodeURIComponent(mensaje)}`;
+        const plantilla = mensajesConfig?.plantillaNotificacionGanador;
+
+        if (!plantilla) {
+            alert("Error: La plantilla de notificación para ganadores no está configurada.");
+            return;
+        }
+
+        const variables = {
+            nombreCliente: resultado.comprador.nombre,
+            nombreRifa: rifa.nombre,
+            numeroBoleto: formatTicketNumber(boleto, rifa.boletos)
+        };
+
+        const mensaje = generarMensajeDesdePlantilla(plantilla, variables);
+        const waUrl = `https://wa.me/${resultado.comprador.telefono}?text=${encodeURIComponent(mensaje)}`;
         window.open(waUrl, '_blank');
     };
 

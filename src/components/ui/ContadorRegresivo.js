@@ -21,13 +21,10 @@ function ContadorRegresivo({ fechaExpiracion }) {
         const calcularTiempo = () => {
             const ahora = new Date().getTime();
             
-            // CORRECCIÓN: Lógica para manejar diferentes tipos de fecha
             let fechaLimite;
             if (typeof fechaExpiracion.toDate === 'function') {
-                // Es un Timestamp de Firestore (usado en MiPerfil)
                 fechaLimite = fechaExpiracion.toDate().getTime();
             } else {
-                // Es un string ISO (usado en Verificador) o un objeto Date
                 fechaLimite = new Date(fechaExpiracion).getTime();
             }
 
@@ -72,13 +69,26 @@ function ContadorRegresivo({ fechaExpiracion }) {
             </div>
         );
     }
+    
+    // ===== LÓGICA DE VISUALIZACIÓN CORREGIDA =====
+    // Ahora, el componente decide qué formato mostrar basado en si quedan días.
+    const renderTiempo = () => {
+        const { dias, horas, minutos, segundos } = tiempoRestante;
+        if (dias > 0) {
+            // Si hay días, muestra un formato más completo.
+            return `${dias}d ${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m`;
+        }
+        // Si no hay días, muestra el formato de siempre.
+        return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+    };
 
     return (
         <div className="flex items-center text-sm font-semibold text-warning bg-warning/10 px-3 py-1 rounded-full">
             <RelojIcon />
-            Expira en: {String(tiempoRestante.horas).padStart(2, '0')}:{String(tiempoRestante.minutos).padStart(2, '0')}:{String(tiempoRestante.segundos).padStart(2, '0')}
+            Expira en: {renderTiempo()}
         </div>
     );
 }
 
 export default ContadorRegresivo;
+

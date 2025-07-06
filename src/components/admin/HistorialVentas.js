@@ -1,8 +1,4 @@
-// src/components/admin/HistorialVentas.js
-
 import React from 'react';
-// CORREGIDO: Se eliminó la importación de 'Link' que no se usaba.
-// CORREGIDO: Se actualizó la ruta para el helper.
 import { formatTicketNumber } from '../../utils/rifaHelper';
 
 function HistorialVentas({ 
@@ -57,7 +53,11 @@ function HistorialVentas({
                         {ventas.map((venta) => {
                             const esApartado = venta.estado === 'apartado';
                             const esComprado = venta.estado === 'comprado';
-                            const haExpirado = esApartado && venta.fechaExpiracion && venta.fechaExpiracion.toDate() < new Date();
+                            
+                            let haExpirado = false;
+                            if (esApartado && venta.fechaExpiracion && typeof venta.fechaExpiracion.toDate === 'function') {
+                                haExpirado = venta.fechaExpiracion.toDate() < new Date();
+                            }
                             
                             return (
                                 <tr key={venta.id} className="hover:bg-border-color/20 text-sm">
@@ -81,7 +81,10 @@ function HistorialVentas({
                                         <div className="flex flex-col gap-2 items-start w-32">
                                             {esApartado && !haExpirado && (<button onClick={() => onConfirmarPago(venta)} className="w-full bg-success text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700 transition-colors text-center">Confirmar Pago</button>)}
                                             {esApartado && (<button onClick={() => onLiberarBoletos(venta)} className="w-full bg-border-color px-3 py-1 rounded text-xs font-bold hover:bg-opacity-50 transition-colors text-center">Liberar Boletos</button>)}
-                                            {esApartado && haExpirado && (<button onClick={() => onEnviarRecordatorio(venta)} className="w-full bg-accent-primary text-white px-3 py-1 rounded text-xs font-bold hover:opacity-90 transition-colors text-center">Enviar Recordatorio</button>)}
+                                            
+                                            {/* ===== CORRECCIÓN DEFINITIVA ===== */}
+                                            {/* Ahora el botón de recordatorio solo depende de si el estado es 'apartado', sin importar si ha expirado o no. */}
+                                            {esApartado && (<button onClick={() => onEnviarRecordatorio(venta)} className="w-full bg-accent-primary text-white px-3 py-1 rounded text-xs font-bold hover:opacity-90 transition-colors text-center">Enviar Recordatorio</button>)}
                                             
                                             {esComprado && (<> 
                                                 <button onClick={() => onNotificarWhatsApp(venta)} className="w-full bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600 transition-colors text-center">Notificar WhatsApp</button> 

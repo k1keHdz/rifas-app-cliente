@@ -1,5 +1,3 @@
-// src/pages/admin/RifaDetalleAdminPage.js
-
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { doc, collection, onSnapshot, query, orderBy, getDocs, limit, startAfter, where, getCountFromServer, updateDoc, deleteDoc } from "firebase/firestore";
@@ -13,9 +11,10 @@ import { useBoletos } from "../../hooks/useBoletos";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import emailjs from '@emailjs/browser';
 import EMAIL_CONFIG from '../../emailjsConfig';
-import { formatTicketNumber } from "../../utils/rifaHelper";
 import ConfirmationModal from "../../components/modals/ConfirmationModal";
 import Alerta from "../../components/ui/Alerta";
+import { useConfig } from "../../context/ConfigContext";
+import { formatTicketNumber, generarMensajeDesdePlantilla } from "../../utils/rifaHelper";
 
 const VentasIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
 const StatsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M3 3v18h18"/><path d="m18 9-5 5-4-4-3 3"/></svg>;
@@ -24,6 +23,7 @@ const AccionesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" he
 
 function RifaDetalleAdminPage() {
     const { id: rifaId } = useParams();
+    const { mensajesConfig } = useConfig();
     const [rifa, setRifa] = useState(null);
     const [activeTab, setActiveTab] = useState('ventas');
     const [ventas, setVentas] = useState([]);
@@ -42,17 +42,11 @@ function RifaDetalleAdminPage() {
     const [showMoney, setShowMoney] = useState(true);
     const graficoRef = useRef(null);
     const [apartadosRealesCount, setApartadosRealesCount] = useState(0);
-
     const [confirmationState, setConfirmationState] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
     const [pageFeedback, setPageFeedback] = useState({ msg: '', type: '' });
     const feedbackTimeoutRef = useRef(null);
-
-    const { 
-        boletosSeleccionados, 
-        setBoletosSeleccionados,
-        boletosOcupados,
-        agregarBoletosEspecificos,
-    } = useBoletos(rifaId);
+    const { boletosOcupados } = useBoletos(rifaId);
+    const [boletosParaVentaManual, setBoletosParaVentaManual] = useState([]);
 
     const showFeedback = useCallback((msg, type = 'info', duration = 4000) => {
         if (feedbackTimeoutRef.current) {
@@ -106,11 +100,23 @@ function RifaDetalleAdminPage() {
     }, [rifaId, rifa?.boletos, showFeedback]);
     
     const handleNotificarWhatsApp = useCallback((venta) => {
-        const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa?.boletos)).join(', ');
-        let mensajeWhats = `¡Felicidades, ${venta.comprador.nombre}! 🎉 Tu pago para: "${venta.nombreRifa}" ha sido confirmado.\n\nID de Compra: *${venta.idCompra}*\n\n*Tus números:* ${boletosTexto}\n\n¡Te deseamos mucha suerte en el sorteo!`;
-        const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensajeWhats)}`;
+        const plantilla = mensajesConfig?.plantillaPagoConfirmadoAdmin;
+        if (!plantilla) {
+            alert("Error: La plantilla de pago confirmado no está configurada.");
+            return;
+        }
+        
+        const variables = {
+            nombreCliente: venta.comprador.nombre,
+            nombreRifa: venta.nombreRifa,
+            idCompra: venta.idCompra,
+            listaBoletos: venta.numeros.map(n => formatTicketNumber(n, rifa?.boletos)).join(', ')
+        };
+        
+        const mensaje = generarMensajeDesdePlantilla(plantilla, variables);
+        const waUrl = `https://wa.me/${venta.comprador.telefono}?text=${encodeURIComponent(mensaje)}`;
         window.open(waUrl, '_blank');
-    }, [rifa?.boletos]);
+    }, [rifa?.boletos, mensajesConfig]);
 
     const handleNotificarEmail = useCallback((venta) => {
         const emailValido = venta.comprador.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(venta.comprador.email);
@@ -140,13 +146,22 @@ function RifaDetalleAdminPage() {
     }, [rifa?.boletos, showFeedback]);
     
     const handleEnviarRecordatorio = useCallback((venta) => {
-        const boletosTexto = venta.numeros.map(n => formatTicketNumber(n, rifa?.boletos)).join(', ');
-        const nombreCliente = venta.comprador.nombre;
-        const nombreSorteo = venta.nombreRifa;
-        let mensaje = `¡Hola, ${nombreCliente}! 👋 Te escribimos de Sorteos El Primo.\n\nNotamos que tu apartado para: "${nombreSorteo}" con los boletos *${boletosTexto}* ha expirado.\n\n¡No te preocupes! Aún podrías tener la oportunidad de participar. Contáctanos por este medio para ver si tus boletos siguen disponibles y ayudarte a completar la compra. ¡No te quedes fuera!`;
-        const waUrl = `https://wa.me/52${venta.comprador.telefono}?text=${encodeURIComponent(mensaje)}`;
+        const plantilla = mensajesConfig?.plantillaRecordatorioPagoAdmin;
+        if (!plantilla) {
+            alert("Error: La plantilla de recordatorio de pago no está configurada.");
+            return;
+        }
+
+        const variables = {
+            nombreCliente: venta.comprador.nombre,
+            nombreRifa: venta.nombreRifa,
+            listaBoletos: venta.numeros.map(n => formatTicketNumber(n, rifa?.boletos)).join(', ')
+        };
+
+        const mensaje = generarMensajeDesdePlantilla(plantilla, variables);
+        const waUrl = `https://wa.me/${venta.comprador.telefono}?text=${encodeURIComponent(mensaje)}`;
         window.open(waUrl, '_blank');
-    }, [rifa?.boletos]);
+    }, [rifa?.boletos, mensajesConfig]);
 
     useEffect(() => {
         if (!rifaId || activeTab !== 'ventas') return;
@@ -219,8 +234,7 @@ function RifaDetalleAdminPage() {
         };
     
         cargarVentas();
-    
-    }, [rifaId, activeTab, paginaActual, searchTerm, fechaInicio, filtroTabla, ventasPorPagina]);
+    }, [rifaId, activeTab, paginaActual, searchTerm, fechaInicio, fechaFin, filtroTabla, ventasPorPagina]);
 
     useEffect(() => {
         if (!rifaId) return;
@@ -306,9 +320,28 @@ function RifaDetalleAdminPage() {
     }, [searchTerm, fechaInicio, fechaFin, filtroTabla]);
     
     const handleAgregarMultiplesManual = useCallback((cantidad) => {
-        if (!rifa) return;
-        agregarBoletosEspecificos(Array.from({length: cantidad}));
-    }, [rifa, agregarBoletosEspecificos]);
+        if (!rifa || !boletosOcupados) return;
+
+        const boletosDisponibles = [];
+        for (let i = 0; i < rifa.boletos; i++) {
+            if (!boletosOcupados.has(i) && !boletosParaVentaManual.includes(i)) {
+                boletosDisponibles.push(i);
+            }
+        }
+
+        const boletosNuevos = [];
+        for (let i = 0; i < cantidad && boletosDisponibles.length > 0; i++) {
+            const randomIndex = Math.floor(Math.random() * boletosDisponibles.length);
+            const boletoSeleccionado = boletosDisponibles.splice(randomIndex, 1)[0];
+            boletosNuevos.push(boletoSeleccionado);
+        }
+
+        if (boletosNuevos.length < cantidad) {
+            showFeedback(`Solo se pudieron agregar ${boletosNuevos.length} boletos. No hay más disponibles.`, 'advertencia');
+        }
+
+        setBoletosParaVentaManual(prev => [...new Set([...prev, ...boletosNuevos])]);
+    }, [rifa, boletosOcupados, boletosParaVentaManual, showFeedback]);
     
     const estadisticasGenerales = useMemo(() => {
         if (!rifa) return { vendidosCount: 0, apartadosCount: 0, disponiblesCount: 0, vendidosDinero: 0, apartadosDinero: 0, porcentajeVendido: 0 };
@@ -338,8 +371,6 @@ function RifaDetalleAdminPage() {
     }, []);
 
     if (!rifa) return <div className="text-center p-10">{cargando ? 'Cargando...' : 'No se encontró el sorteo.'}</div>;
-
-    const TabButton = ({ active, onClick, children }) => ( <button onClick={onClick} className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${active ? 'bg-accent-primary text-white shadow' : 'bg-background-dark text-text-subtle hover:bg-border-color'}`}>{children}</button>);
 
     return (
         <div className="p-4 max-w-7xl mx-auto min-h-screen relative">
@@ -386,9 +417,9 @@ function RifaDetalleAdminPage() {
                             </div>
                         </div>
                         {!searchTerm && (<div className="mb-4 p-2 rounded-lg bg-background-dark/50"><div className="flex items-center gap-2">
-                            <TabButton active={filtroTabla === 'todos'} onClick={() => setFiltroTabla('todos')}>Todos</TabButton>
-                            <TabButton active={filtroTabla === 'manuales'} onClick={() => setFiltroTabla('manuales')}>Ventas Manuales</TabButton>
-                            <TabButton active={filtroTabla === 'apartados'} onClick={() => setFiltroTabla('apartados')}>Apartados</TabButton>
+                            <button onClick={() => setFiltroTabla('todos')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${filtroTabla === 'todos' ? 'bg-accent-primary text-white shadow' : 'bg-background-dark text-text-subtle hover:bg-border-color'}`}>Todos</button>
+                            <button onClick={() => setFiltroTabla('manuales')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${filtroTabla === 'manuales' ? 'bg-accent-primary text-white shadow' : 'bg-background-dark text-text-subtle hover:bg-border-color'}`}>Ventas Manuales</button>
+                            <button onClick={() => setFiltroTabla('apartados')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${filtroTabla === 'apartados' ? 'bg-accent-primary text-white shadow' : 'bg-background-dark text-text-subtle hover:bg-border-color'}`}>Apartados</button>
                         </div></div>)}
                         {!searchTerm && <FiltroFechas fechaDesde={fechaInicio} setFechaDesde={setFechaInicio} fechaHasta={fechaFin} setFechaHasta={setFechaFin} />}
                         <HistorialVentas ventas={ventas} showMoney={showMoney} onConfirmarPago={handleConfirmarPago} onLiberarBoletos={handleLiberarBoletos} onNotificarWhatsApp={handleNotificarWhatsApp} onNotificarEmail={handleNotificarEmail} onEnviarRecordatorio={handleEnviarRecordatorio} totalBoletos={rifa?.boletos || 0} onPaginaAnterior={() => setPaginaActual(p => Math.max(1, p - 1))} onPaginaSiguiente={() => setPaginaActual(p => p + 1)} paginaActual={paginaActual} totalPaginas={totalPaginas} cargando={cargando} isSearching={!!searchTerm}/>
@@ -403,14 +434,14 @@ function RifaDetalleAdminPage() {
                     </div>
                 )}
                 {activeTab === 'acciones' && (
-                       <div className="bg-background-light p-6 rounded-xl shadow-lg border border-border-color">
-                           <h2 className="text-2xl font-bold mb-4">Acciones del Sorteo</h2><p className="text-text-subtle mb-6">Usa estas herramientas para gestionar tu sorteo manualmente.</p>
-                           <button onClick={() => { setBoletosSeleccionados([]); setShowModalVenta(true); }} className="btn bg-success text-white hover:bg-green-700">+ Registrar Venta Manual</button>
-                           <p className="text-xs text-text-subtle mt-2">Para registrar ventas en efectivo o por otros medios.</p>
-                       </div>
+                    <div className="bg-background-light p-6 rounded-xl shadow-lg border border-border-color">
+                        <h2 className="text-2xl font-bold mb-4">Acciones del Sorteo</h2><p className="text-text-subtle mb-6">Usa estas herramientas para gestionar tu sorteo manualmente.</p>
+                        <button onClick={() => { setBoletosParaVentaManual([]); setShowModalVenta(true); }} className="btn bg-success text-white hover:bg-green-700">Registrar Venta Manual</button>
+                        <p className="text-xs text-text-subtle mt-2">Para registrar ventas en efectivo o por otros medios.</p>
+                    </div>
                 )}
             </div>
-            {showModalVenta && ( <ModalVentaManual rifa={rifa} onClose={handleCloseVentaModal} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} setBoletosSeleccionados={setBoletosSeleccionados} onAgregarMultiples={handleAgregarMultiplesManual}/> )}
+            {showModalVenta && ( <ModalVentaManual rifa={rifa} onClose={handleCloseVentaModal} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosParaVentaManual} setBoletosSeleccionados={setBoletosParaVentaManual} onAgregarMultiples={handleAgregarMultiplesManual}/> )}
             
             <ConfirmationModal
                 isOpen={confirmationState.isOpen}

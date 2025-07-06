@@ -1,10 +1,8 @@
-// src/components/layout/Footer.js
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-// CORREGIDO: La ruta ahora sube dos niveles para encontrar la carpeta 'context'
 import { useConfig } from '../../context/ConfigContext';
-import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaTelegramPlane, FaWhatsapp, FaUsers } from 'react-icons/fa';
+import { useModal } from '../../context/ModalContext';
+import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaTelegramPlane, FaWhatsapp, FaUsers, FaCode } from 'react-icons/fa';
 
 const FooterSocialIcon = ({ href, title, icon: Icon }) => (
     <a href={href} target="_blank" rel="noopener noreferrer" title={title} className="text-gray-400 hover:text-white transition-colors duration-300">
@@ -15,12 +13,14 @@ const FooterSocialIcon = ({ href, title, icon: Icon }) => (
 
 function Footer() {
     const { config, datosGenerales, cargandoConfig } = useConfig();
+    const { openDeveloperModal } = useModal();
 
     if (cargandoConfig || !config || !datosGenerales) {
         return <footer className="bg-background-dark h-48"></footer>;
     }
     
-    const logoToShow = config.logoURL || "https://i.imgur.com/a9A1Jps.png";
+    const developerName = "CodiceMXdigital"; 
+    const logoToShow = datosGenerales.logoURL || "https://i.imgur.com/a9A1Jps.png";
 
     return (
         <footer className="bg-background-dark">
@@ -71,6 +71,20 @@ function Footer() {
                 </div>
                 <div className="mt-8 border-t border-border-color pt-8 text-center">
                     <p className="text-base text-text-subtle">&copy; 2025 Sorteos El Primo. Todos los derechos reservados.</p>
+                    
+                    {/* ===== SELLO DE AUTOR CON ESTILO EQUILIBRADO ===== */}
+                    <div className="flex justify-center items-center gap-2 mt-6">
+                        <FaCode className="h-4 w-4 text-gray-500" />
+                        <p className="text-base text-gray-400">
+                            Sitio desarrollado por:{' '}
+                            <button 
+                                onClick={openDeveloperModal} 
+                                className="font-semibold text-accent-primary hover:underline"
+                            >
+                                {developerName}
+                            </button>
+                        </p>
+                    </div>
                 </div>
             </div>
         </footer>

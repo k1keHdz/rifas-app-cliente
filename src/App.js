@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { RifasProvider } from "./context/RifasContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ConfigProvider, useConfig } from "./context/ConfigContext";
+import { ModalProvider, useModal } from "./context/ModalContext"; // 1. Importamos el nuevo contexto y hook
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import RutaProtegida from "./components/RutaProtegida";
@@ -24,7 +25,9 @@ import GestionarGanadoresPage from "./pages/admin/GestionarGanadoresPage";
 import GestionarRifasPage from "./pages/admin/GestionarRifasPage";
 import RifaDetalleAdminPage from "./pages/admin/RifaDetalleAdminPage";
 import SeleccionarRifaHistorialPage from "./pages/admin/SeleccionarRifaHistorialPage";
+import DeveloperInfoModal from "./components/modals/DeveloperInfoModal"; // 2. Importamos el nuevo modal
 
+// El componente de rutas no cambia
 function AppRoutes() {
     const { config, cargandoConfig } = useConfig();
 
@@ -59,18 +62,31 @@ function AppRoutes() {
     );
 }
 
+// 3. Creamos un componente interno para poder usar el hook `useModal`
+function AppContent() {
+    const { isDeveloperModalOpen, closeDeveloperModal } = useModal();
+
+    return (
+        <Router>
+            <Navbar />
+            <main>
+                <AppRoutes />
+            </main>
+            <Footer />
+            {isDeveloperModalOpen && <DeveloperInfoModal onClose={closeDeveloperModal} />}
+        </Router>
+    );
+}
+
 function App() {
     return (
         <AuthProvider>
             <ConfigProvider>
                 <RifasProvider>
-                    <Router>
-                        <Navbar />
-                        <main>
-                            <AppRoutes />
-                        </main>
-                        <Footer />
-                    </Router>
+                    {/* 4. Envolvemos la aplicación con el ModalProvider */}
+                    <ModalProvider>
+                        <AppContent />
+                    </ModalProvider>
                 </RifasProvider>
             </ConfigProvider>
         </AuthProvider>

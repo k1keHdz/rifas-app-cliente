@@ -1,37 +1,31 @@
-// src/pages/MiPerfilPage.js
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import { getAuth, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { doc, getDoc, updateDoc, collectionGroup, query, where, onSnapshot } from 'firebase/firestore';
-// CORREGIDO: Ruta actualizada para la configuración de Firebase
 import { db } from '../config/firebaseConfig';
 import { Link } from 'react-router-dom';
-import { formatTicketNumber } from '../utils/rifaHelper';
-// CORREGIDO: Rutas actualizadas para los componentes
 import ContadorRegresivo from '../components/ui/ContadorRegresivo';
 import Avatar from '../components/ui/Avatar';
 import FeedbackModal from '../components/modals/FeedbackModal';
 import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaTelegramPlane, FaYoutube, FaUsers } from 'react-icons/fa';
+import { formatTicketNumber, generarMensajeDesdePlantilla } from '../utils/rifaHelper';
 
-// --- Iconos (sin cambios) ---
+// --- Iconos ---
 const HistorialIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>;
 const DatosIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 const SeguridadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
 const ChevronDownIcon = ({ isOpen }) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-5 h-5 text-text-subtle transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6"/></svg>);
 const PrivacyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2 flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
-
 const SocialIcon = ({ href, title, icon: Icon, className }) => (
     <a href={href} target="_blank" rel="noopener noreferrer" title={title} className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg transition-transform duration-300 transform hover:scale-110 ${className}`}>
         <Icon size={22} />
     </a>
 );
 
-// CORREGIDO: Renombrado el componente para que coincida con el nombre del archivo
 function MiPerfilPage() {
     const { currentUser, userData, updateUserData } = useAuth();
-    const { datosGenerales, cargandoConfig } = useConfig();
+    const { datosGenerales, mensajesConfig, cargandoConfig } = useConfig();
     
     const [activeTab, setActiveTab] = useState('historial');
     const [nombre, setNombre] = useState('');
@@ -53,13 +47,26 @@ function MiPerfilPage() {
     const photo = userData?.photoURL || currentUser?.photoURL;
 
     const generarMensajeSoporte = (compra) => {
+        const plantilla = mensajesConfig?.plantillaConsultaCompraUsuario;
+        if (!plantilla) {
+            alert("Error: La plantilla de consulta de compra no está configurada.");
+            return "";
+        }
+
         const totalBoletos = rifasData[compra.rifaId]?.boletos || 100;
-        const boletosTexto = compra.numeros.map(n => formatTicketNumber(n, totalBoletos)).join(', ');
         
-        let mensaje = `¡Hola! 👋 Tengo una consulta sobre mi compra para: "${compra.nombreRifa}".\n\n`;
-        mensaje += `Mis números son: *${boletosTexto}*.\n`;
-        mensaje += `Mi compra aún aparece como 'apartado' y me gustaría verificar el estado de mi pago. ¡Gracias!`;
+        // ===== CORRECCIÓN AQUÍ =====
+        // Se añaden las variables del usuario para que el mensaje sea más completo.
+        const variables = {
+            nombreRifa: compra.nombreRifa,
+            listaBoletos: compra.numeros.map(n => formatTicketNumber(n, totalBoletos)).join(', '),
+            idCompra: compra.idCompra,
+            nombreCliente: `${userData.nombre} ${userData.apellidos || ''}`,
+            telefonoCliente: userData.telefono || 'No proporcionado',
+            estadoCliente: userData.estado || 'No proporcionado'
+        };
         
+        const mensaje = generarMensajeDesdePlantilla(plantilla, variables);
         return encodeURIComponent(mensaje);
     };
     
@@ -383,5 +390,4 @@ function MiPerfilPage() {
     );
 }
 
-// CORREGIDO: Exportamos el componente con el nuevo nombre
 export default MiPerfilPage;

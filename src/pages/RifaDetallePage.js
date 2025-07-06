@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from '../config/firebaseConfig';
@@ -15,7 +15,7 @@ import SelectorBoletos from "../components/rifas/SelectorBoletos";
 import BuscadorBoletos from "../components/rifas/BuscadorBoletos";
 import Alerta from "../components/ui/Alerta";
 import { getDrawConditionText, formatTicketNumber } from "../utils/rifaHelper";
-import { FaExclamationTriangle } from 'react-icons/fa';
+import { FaExclamationTriangle, FaClock } from 'react-icons/fa';
 
 function RifaDetallePage() {
     const { id: rifaId } = useParams();
@@ -29,25 +29,43 @@ function RifaDetallePage() {
         cargandoBoletos,
         toggleBoleto,
         limpiarSeleccion,
-        agregarBoletosEspecificos 
+        agregarBoletosEspecificos,
+        removerBoletos
     } = useBoletos(rifaId);
 
     const [conflictingTickets, setConflictingTickets] = useState([]);
     const [rifa, setRifa] = useState(null);
     const [cargandoRifa, setCargandoRifa] = useState(true);
     const [filtroDisponibles, setFiltroDisponibles] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [boletosPorPagina] = useState(5000);
     const [mostrarModalDatos, setMostrarModalDatos] = useState(false);
     const [mostrarModalSuerte, setMostrarModalSuerte] = useState(false);
     const [imagenIndex, setImagenIndex] = useState(0);
     const [imagenAmpliadaIndex, setImagenAmpliadaIndex] = useState(null);
     const [showInvitationModal, setShowInvitationModal] = useState(false);
     const [cooldownInfo, setCooldownInfo] = useState({ show: false, timeLeft: '' });
-    const [alertaGeneral, setAlertaGeneral] = useState('');
+    
+    // ===== SISTEMA DE ALERTA CORREGIDO =====
+    // Volvemos a usar una alerta general, pero la mostraremos de forma fija.
+    const [alerta, setAlerta] = useState({ show: false, message: '', type: 'info' });
+    const alertaTimeoutRef = useRef(null);
     
     const location = useLocation();
     const selectionProcessed = useRef(false);
+
+    // Función para mostrar la alerta y hacer que desaparezca
+    const showAlert = useCallback((message, type = 'info', duration = 5000) => {
+        if (alertaTimeoutRef.current) {
+            clearTimeout(alertaTimeoutRef.current);
+        }
+        setAlerta({ show: true, message, type });
+        alertaTimeoutRef.current = setTimeout(() => {
+            setAlerta({ show: false, message: '', type: 'info' });
+        }, duration);
+    }, []);
+
+    const handleToggleBoleto = useCallback((numero) => {
+        toggleBoleto(numero);
+    }, [toggleBoleto]);
 
     useEffect(() => {
         const nuevosConflictos = conflictingTickets.filter(ticket => boletosSeleccionados.includes(ticket));
@@ -56,12 +74,20 @@ function RifaDetallePage() {
         }
     }, [boletosSeleccionados, conflictingTickets]);
 
-    const handleModalClose = (conflicts = []) => {
+    const handleModalClose = () => {
         setMostrarModalDatos(false);
-        if (conflicts.length > 0) {
-            setConflictingTickets(conflicts.map(Number));
-        }
     };
+
+    const handleConflict = useCallback((conflictingTicketsFound) => {
+        const ticketsAsNumbers = conflictingTicketsFound.map(Number);
+        const boletosTexto = ticketsAsNumbers.map(n => formatTicketNumber(n, rifa.boletos)).join(', ');
+        
+        showAlert(`¡Atención! Los boletos ${boletosTexto} ya no están disponibles.`, 'advertencia');
+        
+        setConflictingTickets(ticketsAsNumbers);
+        removerBoletos(ticketsAsNumbers);
+
+    }, [rifa, removerBoletos, showAlert]);
 
     useEffect(() => {
         if (location.state?.boletoSeleccionado && !selectionProcessed.current && !cargandoBoletos) {
@@ -88,11 +114,11 @@ function RifaDetallePage() {
 
     const handleReservarPorWhatsapp = async () => {
         if (boletosSeleccionados.length === 0) { 
-            setAlertaGeneral("Debes seleccionar al menos un boleto para continuar.");
+            showAlert("Debes seleccionar al menos un boleto para continuar.", 'advertencia');
             return; 
         }
         if (cargandoConfig || !config) {
-            setAlertaGeneral("Cargando configuración, por favor espera un momento...");
+            showAlert("Cargando configuración, por favor espera un momento...", 'info');
             return;
         }
         const cooldownStatus = await checkCooldown(config, currentUser, userData);
@@ -136,18 +162,23 @@ function RifaDetallePage() {
     const porcentajeVendido = rifa.boletos > 0 ? (boletosVendidos / rifa.boletos) * 100 : 0;
     const conditionText = getDrawConditionText(rifa, 'detallado');
     const imagenActual = rifa.imagenes?.[imagenIndex] || rifa.imagen;
-    const totalPaginas = Math.ceil(rifa.boletos / boletosPorPagina);
-    const rangoInicio = (currentPage - 1) * boletosPorPagina;
-    const rangoFin = Math.min(currentPage * boletosPorPagina, rifa.boletos);
 
     return (
         <div className="bg-background-dark">
-            <div className="p-4 max-w-5xl mx-auto">
-                {alertaGeneral && (
-                    <div className="my-4">
-                        <Alerta mensaje={alertaGeneral} tipo="advertencia" onClose={() => setAlertaGeneral('')}/>
+            {/* ===== ALERTA FIJA Y VISIBLE ===== */}
+            {alerta.show && (
+                <div className="fixed top-0 left-0 right-0 z-[100] p-4 animate-fade-in-down">
+                    <div className="max-w-5xl mx-auto">
+                        <Alerta 
+                            mensaje={alerta.message} 
+                            tipo={alerta.type} 
+                            onClose={() => setAlerta({ show: false, message: '', type: 'info' })} 
+                        />
                     </div>
-                )}
+                </div>
+            )}
+
+            <div className="p-4 max-w-5xl mx-auto">
                 {!isCompraActiva && (
                     <div className="mb-6 p-4 bg-warning/10 border border-warning/30 text-warning-text rounded-lg flex items-center gap-4">
                         <FaExclamationTriangle className="h-8 w-8 text-warning flex-shrink-0" />
@@ -179,6 +210,14 @@ function RifaDetallePage() {
                                 <p className="text-3xl font-bold">${rifa.precio.toLocaleString('es-MX')}</p>
                                 <span className="ml-2 text-base text-text-subtle">por boleto</span>
                             </div>
+                            <div className="mt-4 p-3 bg-background-dark rounded-lg border border-border-color flex items-center gap-3">
+                                <FaClock className="text-accent-primary h-5 w-5 flex-shrink-0" />
+                                <p className="text-sm text-text-subtle">
+                                    Una vez que apartes tus boletos, tendrás 
+                                    <span className="font-bold text-text-primary"> {config?.tiempoApartadoHoras || 24} horas </span> 
+                                    para completar tu pago.
+                                </p>
+                            </div>
                             <div className="my-3 flex items-center gap-2">
                                 <strong className="text-md">Estado:</strong>
                                 <span className={`px-3 py-1 rounded-full text-white text-sm font-semibold capitalize ${rifa.estado === "activa" ? "bg-success" : "bg-warning"}`}>{rifa.estado}</span>
@@ -206,12 +245,12 @@ function RifaDetallePage() {
                         </>
                     )}
                     <div className="flex flex-col items-center">
-                        {isCompraActiva && <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={toggleBoleto} />}
+                        {isCompraActiva && <BuscadorBoletos totalBoletos={rifa.boletos} boletosOcupados={boletosOcupados} boletosSeleccionados={boletosSeleccionados} onSelectBoleto={handleToggleBoleto} />}
                         {boletosSeleccionados.length > 0 && isCompraActiva && ( 
                             <div className="text-center my-4 p-4 bg-background-dark border border-border-color rounded-lg w-full max-w-lg animate-fade-in"> 
                                 <p className="font-bold mb-2">{boletosSeleccionados.length} BOLETO(S) SELECCIONADO(S)</p> 
                                 <div className="flex justify-center flex-wrap gap-2 mb-2"> 
-                                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => toggleBoleto(n)} className="px-3 py-1 bg-success text-white rounded-md font-mono cursor-pointer hover:bg-danger" title="Haz clic para quitar">{formatTicketNumber(n, rifa.boletos)}</span> ))} 
+                                    {boletosSeleccionados.sort((a, b) => a - b).map((n) => ( <span key={n} onClick={() => handleToggleBoleto(n)} className="px-3 py-1 bg-success text-white rounded-md font-mono cursor-pointer hover:bg-danger" title="Haz clic para quitar">{formatTicketNumber(n, rifa.boletos)}</span> ))} 
                                 </div> 
                                 <p className="text-xs text-text-subtle italic my-2">Para eliminar un boleto, solo haz clic sobre él.</p> 
                                 <button onClick={limpiarSeleccion} className="mt-1 text-danger underline text-sm hover:text-red-400">Eliminar todos</button> 
@@ -225,21 +264,14 @@ function RifaDetallePage() {
                                 {filtroDisponibles ? 'Mostrar Todos los Boletos' : 'Mostrar Solo Disponibles'} 
                             </button> 
                         </div>
-                        <div className="flex justify-center items-center gap-4 my-4 w-full">
-                            <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="px-4 py-2 bg-background-light border border-border-color font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"> Anterior </button>
-                            <span className="font-mono text-lg text-text-subtle"> Página {currentPage} de {totalPaginas} </span>
-                            <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPaginas} className="px-4 py-2 bg-background-light border border-border-color font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"> Siguiente </button>
-                        </div>
                         {cargandoBoletos ? <p className="text-center py-10">Cargando boletos...</p> : 
                             <SelectorBoletos 
                                 totalBoletos={rifa.boletos}
                                 boletosOcupados={boletosOcupados} 
                                 boletosSeleccionados={boletosSeleccionados} 
                                 conflictingTickets={conflictingTickets}
-                                onToggleBoleto={toggleBoleto}
+                                onToggleBoleto={handleToggleBoleto}
                                 filtroActivo={filtroDisponibles} 
-                                rangoInicio={rangoInicio} 
-                                rangoFin={rangoFin}
                                 compraActiva={isCompraActiva}
                             /> 
                         }
@@ -249,6 +281,7 @@ function RifaDetallePage() {
             
             {mostrarModalDatos && <ModalDatosComprador 
                 onClose={handleModalClose}
+                onConflict={handleConflict}
                 datosIniciales={userData}
                 rifa={rifa}
                 boletosSeleccionados={boletosSeleccionados}
