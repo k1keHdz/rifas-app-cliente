@@ -3,7 +3,7 @@ import { FaLaptopCode, FaRocket, FaWhatsapp, FaTimes } from 'react-icons/fa';
 
 // Este es el número de WhatsApp al que los clientes potenciales te contactarán.
 // ¡Recuerda cambiarlo por tu número personal o de negocios!
-const TU_NUMERO_DE_WHATSAPP = '527773367064'; // Ejemplo: 521 seguido de tu número de 10 dígitos.
+const TU_NUMERO_DE_WHATSAPP = '527776229688'; // Ejemplo: 521 seguido de tu número de 10 dígitos.
 
 const DeveloperInfoModal = ({ onClose }) => {
     const mensajeWhatsApp = encodeURIComponent("Hola, visité un sitio desarrollado por ti y estoy interesado en tus servicios de desarrollo web. ¿Podrías darme más información?");

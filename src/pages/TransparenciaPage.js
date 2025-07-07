@@ -26,7 +26,7 @@ function TransparenciaPage() {
     const faqs = [
         {
             question: '¿Qué pasa si el número premiado no se vendió? Nuestro Compromiso: ¡Siempre hay un ganador!',
-            answer: 'Nuestra regla de oro es que cada premio tiene que ser entregado. Si el resultado de la Lotería Nacional corresponde a un boleto que no fue pagado, el sorteo no se anula. En su lugar, tomaremos el resultado del siguiente sorteo hábil de la Lotería Nacional (misma modalidad y horario) y repetiremos este proceso hasta que el número coincida con un participante que haya completado su pago. Esta política asegura total justicia y que la suerte siempre encuentre a su dueño.',
+            answer: 'Nuestra regla de oro es que cada premio tiene que ser entregado. Si el resultado de la Lotería Nacional (tris) corresponde a un boleto que no fue pagado, el sorteo no se anula. En su lugar, tomaremos el resultado del siguiente sorteo hábil de la Lotería Nacional (misma modalidad y horario) y repetiremos este proceso hasta que el número coincida con un participante que haya completado su pago. Esto lo anunciaremos antes en nuestras Redes Sociales. Esta política asegura total justicia y que la suerte siempre encuentre a su dueño.',
             icon: FaQuestionCircle,
         },
         {

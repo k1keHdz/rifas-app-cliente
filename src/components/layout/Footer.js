@@ -19,7 +19,7 @@ function Footer() {
         return <footer className="bg-background-dark h-48"></footer>;
     }
     
-    const developerName = "CodiceMXdigital"; 
+    const developerName = "AxiomaLabs"; 
     const logoToShow = datosGenerales.logoURL || "https://i.imgur.com/a9A1Jps.png";
 
     return (
