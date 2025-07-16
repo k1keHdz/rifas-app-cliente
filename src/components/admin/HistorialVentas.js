@@ -59,16 +59,22 @@ function HistorialVentas({
                                 haExpirado = venta.fechaExpiracion.toDate() < new Date();
                             }
                             
+                            // ===== LÍNEA CORREGIDA =====
+                            // Usamos un objeto vacío como fallback para evitar errores si 'comprador' no existe.
+                            const comprador = venta.comprador || {};
+
                             return (
                                 <tr key={venta.id} className="hover:bg-border-color/20 text-sm">
                                     <td className="px-4 py-2 align-top font-mono text-xs font-bold text-accent-primary/80">{venta.idCompra || '-'}</td>
                                     <td className="px-4 py-2 align-top whitespace-nowrap text-text-subtle">{venta.fechaApartado?.toDate?.().toLocaleString('es-MX') || "-"}</td>
                                     <td className="px-4 py-2 align-top">
-                                        <p className="font-medium">{venta.comprador?.nombre} {venta.comprador?.apellidos || ''}</p>
-                                        <p className="text-text-subtle">{venta.comprador?.telefono || ''}</p>
-                                        <p className="text-text-subtle text-xs italic">{venta.comprador?.email || ''}</p>
+                                        {/* ===== LÍNEAS CORREGIDAS ===== */}
+                                        {/* Ahora usamos la variable segura 'comprador' y damos valores por defecto claros. */}
+                                        <p className="font-medium">{comprador.nombre || '(Invitado)'} {comprador.apellidos || ''}</p>
+                                        <p className="text-text-subtle">{comprador.telefono || 'N/A'}</p>
+                                        <p className="text-text-subtle text-xs italic">{comprador.email || 'N/A'}</p>
                                     </td>
-                                    <td className="px-4 py-2 align-top"><p className="font-medium">{venta.comprador?.estado || 'N/A'}</p></td>
+                                    <td className="px-4 py-2 align-top"><p className="font-medium">{comprador.estado || 'N/A'}</p></td>
                                     <td className="px-4 py-2 align-top font-mono text-text-subtle"><div className="max-w-xs break-words">{venta.numeros?.map(n => formatTicketNumber(n, totalBoletos)).join(', ')}</div></td>
                                     <td className="px-4 py-2 align-top text-center font-bold">{venta.cantidad}</td>
                                     <td className="px-4 py-2 align-top">
@@ -82,13 +88,11 @@ function HistorialVentas({
                                             {esApartado && !haExpirado && (<button onClick={() => onConfirmarPago(venta)} className="w-full bg-success text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700 transition-colors text-center">Confirmar Pago</button>)}
                                             {esApartado && (<button onClick={() => onLiberarBoletos(venta)} className="w-full bg-border-color px-3 py-1 rounded text-xs font-bold hover:bg-opacity-50 transition-colors text-center">Liberar Boletos</button>)}
                                             
-                                            {/* ===== CORRECCIÓN DEFINITIVA ===== */}
-                                            {/* Ahora el botón de recordatorio solo depende de si el estado es 'apartado', sin importar si ha expirado o no. */}
                                             {esApartado && (<button onClick={() => onEnviarRecordatorio(venta)} className="w-full bg-accent-primary text-white px-3 py-1 rounded text-xs font-bold hover:opacity-90 transition-colors text-center">Enviar Recordatorio</button>)}
                                             
                                             {esComprado && (<> 
                                                 <button onClick={() => onNotificarWhatsApp(venta)} className="w-full bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600 transition-colors text-center">Notificar WhatsApp</button> 
-                                                <button onClick={() => onNotificarEmail(venta)} className="w-full bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-600 disabled:opacity-50 transition-colors text-center" disabled={!venta.comprador?.email}>Notificar Correo</button> 
+                                                <button onClick={() => onNotificarEmail(venta)} className="w-full bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-600 disabled:opacity-50 transition-colors text-center" disabled={!comprador.email}>Notificar Correo</button> 
                                             </>)}
                                         </div>
                                     </td>

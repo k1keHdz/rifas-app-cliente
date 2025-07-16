@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, doc, serverTimestamp, Timestamp, runTransaction, query, where, getDocs } from "firebase/firestore";
-import { db } from "../../config/firebaseConfig";
+import { db } from "../../config/firebaseConfig"; // Import normal
 import { useAuth } from '../../context/AuthContext';
 import { useConfig } from '../../context/ConfigContext';
 import { usePurchaseCooldown } from '../../hooks/usePurchaseCooldown';
@@ -19,8 +19,6 @@ function ModalDatosComprador({ onClose, onConflict, datosIniciales = {}, rifa, b
     const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // ===== NUEVA LÓGICA PARA EL BUG DEL CARRITO VACÍO =====
-    // Este efecto vigila si la selección de boletos se queda vacía DESPUÉS de que el modal ya está abierto.
     useEffect(() => {
         if (boletosSeleccionados.length === 0 && isSubmitting === false) {
             setError("Tu selección está vacía. Por favor, cierra este formulario y elige nuevos boletos.");
@@ -47,7 +45,6 @@ function ModalDatosComprador({ onClose, onConflict, datosIniciales = {}, rifa, b
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // Doble verificación para asegurar que no se envíe un formulario sin boletos.
         if (boletosSeleccionados.length === 0) {
             setError("No hay boletos en tu selección. Por favor, cierra y vuelve a intentarlo.");
             return;

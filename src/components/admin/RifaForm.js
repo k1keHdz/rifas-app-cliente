@@ -54,7 +54,7 @@ function RifaForm() {
 
     const handleImagenesChange = (e) => {
         const files = Array.from(e.target.files);
-        const nuevasImagenes = files.map(file => ({ file, preview: URL.createObjectURL(file), id: `temp-${file.name}-${Date.now()}` }));
+        const nuevasImagenes = files.map(file => ({ file, preview: (typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : file.name), id: `temp-${file.name}-${Date.now()}` }));
         setImagenes(prev => [...prev, ...nuevasImagenes]);
     };
 

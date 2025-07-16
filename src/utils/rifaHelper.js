@@ -1,5 +1,3 @@
-// --- src/utils/rifaHelper.js ---
-
 /**
  * Genera un mensaje a partir de una plantilla y un objeto de variables.
  * Reemplaza todas las ocurrencias de {variable} en la plantilla.
@@ -9,13 +7,14 @@
  */
 export const generarMensajeDesdePlantilla = (plantilla, variables) => {
     if (!plantilla) return '';
-    let mensaje = plantilla;
-    for (const key in variables) {
-        // Usamos una Expresión Regular global para reemplazar todas las ocurrencias.
-        const regex = new RegExp(`{${key}}`, 'g');
-        mensaje = mensaje.replace(regex, variables[key] || ''); // Reemplaza con string vacío si la variable es null/undefined
-    }
-    return mensaje;
+  
+    // Usamos una Expresión Regular para encontrar CUALQUIER {variable} en la plantilla.
+    // El patrón /{(\w+)}/g busca "{" seguido de una o más letras/números y luego "}".
+    // (match, key) -> match es el texto completo (e.g., "{nombre}"), key es solo el contenido (e.g., "nombre").
+    return plantilla.replace(/{(\w+)}/g, (match, key) => {
+      // Para cada {variable} encontrada, la reemplazamos con su valor. Si no existe, usamos ''.
+      return variables[key] || '';
+    });
 };
 
 export const formatTicketNumber = (number, totalTickets) => {
@@ -35,13 +34,16 @@ export const getDrawConditionText = (rifa, mode = 'detallado') => {
         if (!timestamp?.toDate) return '';
         const date = timestamp.toDate();
         if (short) {
-            return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+            // Creamos el formato manualmente para asegurar consistencia.
+            const day = date.getDate();
+            const month = date.toLocaleDateString('es-MX', { month: 'short' }).replace('.', ''); // Quitamos el punto si lo hubiera
+            return `${day} de ${month}.`; // Produce: "28 de oct."
         }
         return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
     }
 
     const detailedDate = formatDate(fechaCierre);
-    const shortDate = formatDate(fechaCierre, true);
+    const shortDate = formatDate(fechaCierre, true); // Ahora producirá '28 de oct.'
 
     if (mode === 'resumido') {
         switch (tipoRifa) {

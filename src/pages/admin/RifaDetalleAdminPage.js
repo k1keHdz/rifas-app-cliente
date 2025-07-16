@@ -155,6 +155,7 @@ function RifaDetalleAdminPage() {
         const variables = {
             nombreCliente: venta.comprador.nombre,
             nombreRifa: venta.nombreRifa,
+            idCompra: venta.idCompra,
             listaBoletos: venta.numeros.map(n => formatTicketNumber(n, rifa?.boletos)).join(', ')
         };
 
